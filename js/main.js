@@ -221,11 +221,16 @@
       }
 
       // ─── 3. ULTRA-SMOOTH HARDWARE-ACCELERATED RENDER LOOP ───
+      let lastRenderTime = 0;
       function render(now) {
         if (!isHeroVisible) {
           heroAnimId = null;
+          lastRenderTime = 0;
           return;
         }
+
+        const dt = (lastRenderTime > 0) ? Math.min(0.05, (now - lastRenderTime) / 1000) : 0.016;
+        lastRenderTime = now;
 
         // Clear both layers
         bgCtx.clearRect(0, 0, w, h);
@@ -233,7 +238,7 @@
 
         // Decay star sparkle burst effect over time
         if (globalStarSparkle > 0) {
-          globalStarSparkle *= 0.992;
+          globalStarSparkle *= Math.pow(0.992, dt / 0.016);
           if (globalStarSparkle < 0.01) globalStarSparkle = 0;
         }
 
@@ -495,7 +500,7 @@
         // ═══════════════════════════════════════════════
         // LAYER 2 (FOREGROUND AVATAR CANVAS — IN FRONT OF LOGO)
         // ═══════════════════════════════════════════════
-        updateAndRenderHeroTinkerbell(aCtx, now);
+        updateAndRenderHeroTinkerbell(aCtx, now, dt);
 
         heroAnimId = requestAnimationFrame(render);
       }
@@ -747,12 +752,12 @@
       // ─── STAR SPARKLE BURST CONTROLLER ───
       let globalStarSparkle = 0;
 
-      function updateAndRenderHeroTinkerbell(ctx, now) {
+      function updateAndRenderHeroTinkerbell(ctx, now, dt = 0.016) {
         // Guiding Celestial Star at sky apex (Source of descent)
         const starX = w * 0.5;
-        const starY = Math.max(38, h * 0.08);
+        const starY = Math.max(30, h * 0.06);
 
-        // Target 1: Crescent Moon crest on top of the Logo
+        // Target 1: Crescent Moon crest on top of the Logo (responsive)
         let logoMoonX = w * 0.5;
         let logoMoonY = h * 0.33;
         const heroLogo = document.querySelector('.hero__logo-img');
@@ -762,22 +767,24 @@
           const canvasRect = heroAvatarCanvas.getBoundingClientRect();
           if (rect.width > 0) {
             logoMoonX = rect.left + rect.width * 0.5 - canvasRect.left;
-            logoMoonY = rect.top - canvasRect.top + (rect.height * 0.04) - 22;
+            const crestOffset = Math.max(14, rect.height * 0.11);
+            logoMoonY = rect.top - canvasRect.top + (rect.height * 0.04) - crestOffset;
           }
         }
 
-        // Target 2: "Intuitive Wisdom & Energy Healing" Tagline Pill Bar
-        let badgeRightX = w * 0.65;
-        let badgeLeftX = w * 0.35;
-        let badgeTopY = Math.max(60, h * 0.18);
+        // Target 2: "Intuitive Wisdom & Energy Healing" Tagline Pill Bar (responsive)
+        let badgeRightX = w * 0.70;
+        let badgeLeftX = w * 0.30;
+        let badgeTopY = Math.max(50, h * 0.16);
         const pillBadge = document.querySelector('.hero__tagline-pill');
         if (pillBadge && heroAvatarCanvas) {
           const bRect = pillBadge.getBoundingClientRect();
           const cRect = heroAvatarCanvas.getBoundingClientRect();
           if (bRect.width > 0 && bRect.height > 0) {
-            badgeRightX = bRect.left + bRect.width - 28 - cRect.left;
-            badgeLeftX = bRect.left + 28 - cRect.left;
-            badgeTopY = bRect.top - cRect.top - 12;
+            const marginPad = Math.min(24, bRect.width * 0.12);
+            badgeRightX = bRect.left + bRect.width - marginPad - cRect.left;
+            badgeLeftX = bRect.left + marginPad - cRect.left;
+            badgeTopY = bRect.top - cRect.top - 10;
           }
         }
 
@@ -838,8 +845,8 @@
 
         // ─── STATE MACHINE TRANSITIONS & CHOREOGRAPHY ───
         
-        // Target 5: "Book a Reading" hero CTA button
-        let bookBtnX = w * 0.42;
+        // Target 5: "Book a Reading" hero CTA button (responsive)
+        let bookBtnX = w * 0.5;
         let bookBtnY = h * 0.72;
         const bookBtn = document.querySelector('.hero__cta-group .btn-primary');
         if (bookBtn && heroAvatarCanvas) {
@@ -851,16 +858,18 @@
           }
         }
 
-        // Target 6: aEye assistant widget (actual viewport position → canvas-relative)
-        let aeyeX = w - 68;
-        let aeyeY = h - 68;
+        // Target 6: aEye assistant widget (safely clamped for mobile/tablet portrait)
+        let aeyeX = Math.max(40, w - 60);
+        let aeyeY = Math.max(40, h - 60);
         const aeyeWidget = document.getElementById('assistant-avatar-btn');
         if (aeyeWidget && heroAvatarCanvas) {
           const aeRect = aeyeWidget.getBoundingClientRect();
           const cRect2 = heroAvatarCanvas.getBoundingClientRect();
           if (aeRect.width > 0) {
-            aeyeX = aeRect.left + aeRect.width * 0.5 - cRect2.left;
-            aeyeY = aeRect.top + aeRect.height * 0.5 - cRect2.top;
+            const rawAeX = aeRect.left + aeRect.width * 0.5 - cRect2.left;
+            const rawAeY = aeRect.top + aeRect.height * 0.5 - cRect2.top;
+            aeyeX = Math.max(36, Math.min(w - 36, rawAeX));
+            aeyeY = Math.max(36, Math.min(h - 36, rawAeY));
           }
         }
 
@@ -880,7 +889,7 @@
 
         // 2. ORB FLOATING — Slow, dreamy descent with gentle drifting (~8.5s)
         else if (heroTinkerbell.state === 'ORB_FLOATING') {
-          heroTinkerbell.orbFlightTime += 0.016;
+          heroTinkerbell.orbFlightTime += dt;
           const oft = heroTinkerbell.orbFlightTime;
           const orbDuration = 8.5; // Dreamy slow 8.5s starlight descent
           const progress = Math.min(1, oft / orbDuration);
@@ -891,7 +900,7 @@
           
           heroTinkerbell.x = starX + drift + (logoMoonX - starX) * (progress * 0.45);
           heroTinkerbell.y = starY + (logoMoonY - starY) * (progress * 0.65) + gentleBob;
-          heroTinkerbell.wingPhase += 0.15;
+          heroTinkerbell.wingPhase += dt * 10.0;
 
           if (Math.random() > 0.25) {
             emitPixieDust(heroTinkerbell.x, heroTinkerbell.y + 8, 1, ['#C77DFF', '#FFD700', '#FFFFFF', '#00FFC8']);
@@ -908,10 +917,10 @@
           }
         }
         
-        // 3. FLYING TO LOGO MOON (Smooth, seamless arrival onto logo moon)
+        // 3. FLYING TO LOGO MOON (Smooth, seamless arrival onto logo moon ~3.2s)
         else if (heroTinkerbell.state === 'FLYING_TO_LOGO') {
-          heroTinkerbell.progress += 0.005; // Very slow, graceful swoop (~3.3s)
-          heroTinkerbell.wingPhase += 0.35;
+          heroTinkerbell.progress += dt / 3.2;
+          heroTinkerbell.wingPhase += dt * 22.0;
 
           const p = Math.min(1, heroTinkerbell.progress);
           const easeP = p * p * (3 - 2 * p); // Cubic ease-in-out
@@ -938,8 +947,8 @@
         
         // 4. PERCHED ON LOGO — John Travolta Look-Around (~3.5s)
         else if (heroTinkerbell.state === 'PERCHED_LOGO') {
-          heroTinkerbell.perchedTime += 0.016;
-          heroTinkerbell.wingPhase += 0.12;
+          heroTinkerbell.perchedTime += dt;
+          heroTinkerbell.wingPhase += dt * 8.0;
           const pt = heroTinkerbell.perchedTime;
 
           heroTinkerbell.x = logoMoonX;
@@ -991,10 +1000,10 @@
           }
         }
         
-        // 5. FLYING DOWN TO "BOOK A READING" BUTTON
+        // 5. FLYING DOWN TO "BOOK A READING" BUTTON (~2.2s)
         else if (heroTinkerbell.state === 'FLYING_TO_BOOK_BTN') {
-          heroTinkerbell.progress += 0.008; // Slow graceful swoop (~2s)
-          heroTinkerbell.wingPhase += 0.38;
+          heroTinkerbell.progress += dt / 2.2;
+          heroTinkerbell.wingPhase += dt * 25.0;
 
           const p = Math.min(1, heroTinkerbell.progress);
           const easeP = p * p * (3 - 2 * p);
@@ -1025,8 +1034,8 @@
 
         // 5b. PERCHED ON BOOK BUTTON (brief pause ~1.5s)
         else if (heroTinkerbell.state === 'PERCHED_BOOK_BTN') {
-          heroTinkerbell.perchedTime += 0.016;
-          heroTinkerbell.wingPhase += 0.14;
+          heroTinkerbell.perchedTime += dt;
+          heroTinkerbell.wingPhase += dt * 9.0;
           heroTinkerbell.bodySway = Math.sin(heroTinkerbell.perchedTime * 3) * 1.0;
 
           if (Math.random() > 0.5) {
@@ -1045,10 +1054,10 @@
           }
         }
 
-        // 6. FLYING UP TO LEFT SIDE OF PILL BAR
+        // 6. FLYING UP TO LEFT SIDE OF PILL BAR (~2.2s)
         else if (heroTinkerbell.state === 'FLYING_TO_BADGE') {
-          heroTinkerbell.progress += 0.008; // Slow ascent (~2s)
-          heroTinkerbell.wingPhase += 0.42;
+          heroTinkerbell.progress += dt / 2.2;
+          heroTinkerbell.wingPhase += dt * 26.0;
 
           const p = Math.min(1, heroTinkerbell.progress);
           const easeP = p * p * (3 - 2 * p);
@@ -1074,10 +1083,10 @@
           }
         }
 
-        // 7. DOING THE WORM LEFT→RIGHT (head-first, halfway across bar)
+        // 7. DOING THE WORM LEFT→RIGHT (head-first, halfway across bar ~3.5s)
         else if (heroTinkerbell.state === 'DOING_THE_WORM') {
-          heroTinkerbell.wormTime += 0.016;
-          heroTinkerbell.wingPhase += 0.38;
+          heroTinkerbell.wormTime += dt;
+          heroTinkerbell.wingPhase += dt * 24.0;
           const wt = heroTinkerbell.wormTime;
           const totalWormDuration = 3.5; // Slow, dramatic worm (~3.5s)
           const wormProgress = Math.min(1, wt / totalWormDuration);
@@ -1106,10 +1115,10 @@
           }
         }
 
-        // 8. MOONWALKING (profile view) from halfway to right edge
+        // 8. MOONWALKING (profile view) from halfway to right edge (~3.5s)
         else if (heroTinkerbell.state === 'MOONWALK_ON_BADGE') {
-          heroTinkerbell.moonwalkTime += 0.016;
-          heroTinkerbell.wingPhase += 0.18;
+          heroTinkerbell.moonwalkTime += dt;
+          heroTinkerbell.wingPhase += dt * 12.0;
           const mt = heroTinkerbell.moonwalkTime;
           const totalMoonwalkDuration = 3.5; // Slow moonwalk (~3.5s)
           const mwProgress = Math.min(1, mt / totalMoonwalkDuration);
@@ -1140,10 +1149,10 @@
           }
         }
 
-        // 9. OLYMPIC DIVE — Arc up, flip, and plunge directly into aEye
+        // 9. OLYMPIC DIVE — Arc up, flip, and plunge directly into aEye (~2.4s)
         else if (heroTinkerbell.state === 'OLYMPIC_DIVE') {
-          heroTinkerbell.progress += 0.007; // Slow dramatic dive (~2.3s)
-          heroTinkerbell.wingPhase += 0.5;
+          heroTinkerbell.progress += dt / 2.4;
+          heroTinkerbell.wingPhase += dt * 32.0;
 
           const p = Math.min(1, heroTinkerbell.progress);
           const easeP = p * p * (3 - 2 * p);
