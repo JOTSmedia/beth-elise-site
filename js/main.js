@@ -52,12 +52,14 @@
     });
 
     // ═══════════════════════════════════════════════
-    // HERO 60FPS TINKERBELL & FIREFLY PIXIE ENGINE
+    // HERO ULTRA-SMOOTH 60FPS TINKERBELL & PIXIE ENGINE
     // ═══════════════════════════════════════════════
     const heroCanvas = document.getElementById('hero-celestial-canvas');
     if (heroCanvas) {
-      const ctx = heroCanvas.getContext('2d');
+      const ctx = heroCanvas.getContext('2d', { alpha: true });
       let w, h;
+      let isHeroVisible = true;
+      let heroAnimId = null;
       const mouse = { x: -1000, y: -1000, vx: 0, vy: 0, lastX: 0, lastY: 0 };
       const pixies = [];
       const meteors = [];
@@ -65,6 +67,7 @@
       const pixieDust = [];
       let lastMeteorTime = performance.now();
       let lastBolideTime = performance.now();
+      let lastMouseMoveTime = 0;
 
       function resize() {
         w = heroCanvas.width = heroCanvas.offsetWidth || window.innerWidth;
@@ -73,8 +76,20 @@
       resize();
       window.addEventListener('resize', resize, { passive: true });
 
-      // Track mouse coordinates for pixie attraction & stardust
+      // Pause rendering loop when hero is out of viewport (saves 60% GPU/CPU on scroll)
+      if ('IntersectionObserver' in window) {
+        const heroObserver = new IntersectionObserver((entries) => {
+          isHeroVisible = entries[0].isIntersecting;
+          if (isHeroVisible && !heroAnimId) {
+            heroAnimId = requestAnimationFrame(render);
+          }
+        }, { threshold: 0.05 });
+        heroObserver.observe(heroCanvas);
+      }
+
+      // Track mouse coordinates for pixie attraction & stardust (Throttled)
       window.addEventListener('mousemove', (e) => {
+        const now = performance.now();
         const dx = e.clientX - mouse.lastX;
         const dy = e.clientY - mouse.lastY;
         mouse.vx = dx * 0.3 + mouse.vx * 0.7;
@@ -84,9 +99,11 @@
         mouse.lastX = e.clientX;
         mouse.lastY = e.clientY;
 
-        // Emit instant pixie dust sparkles on mouse move
-        if (Math.random() > 0.35) {
-          emitPixieDust(e.clientX, e.clientY, 3, ['#FFD700', '#00FFC8', '#00E5D4', '#FFF']);
+        if (now - lastMouseMoveTime > 80) {
+          lastMouseMoveTime = now;
+          if (pixieDust.length < 40) {
+            emitPixieDust(e.clientX, e.clientY, 2, ['#FFD700', '#00FFC8', '#00E5D4', '#FFF']);
+          }
         }
       }, { passive: true });
 
@@ -97,120 +114,118 @@
 
       // ─── 1. TINKERBELL & FIREFLY PIXIE PALETTES ───────
       const pixiePalettes = [
-        // 0: Classic Golden Tinkerbell (Golden Core, Glowing Starlight & Aqua Dust)
-        { core: '#FFFFFF', firefly: '#FFD700', aura: 'rgba(255, 215, 0, 0.95)', wing: 'rgba(255, 245, 180, 0.9)', dust: '#FFD700' },
-        // 1: Aquamarine Glade Pixie (Electric Aqua & Emerald Firefly)
-        { core: '#FFFFFF', firefly: '#00FFC8', aura: 'rgba(0, 255, 200, 0.95)', wing: 'rgba(122, 255, 227, 0.9)', dust: '#00FFC8' },
-        // 2: Tiffany Starlight Pixie (Neon Tiffany & Cyan Glow)
-        { core: '#FFFFFF', firefly: '#00E5D4', aura: 'rgba(0, 229, 212, 0.95)', wing: 'rgba(163, 255, 248, 0.9)', dust: '#38FFF0' },
-        // 3: Violet-Rose Starlight Pixie (Royal Lavender & Soft Violet Firefly)
-        { core: '#FFFFFF', firefly: '#C77DFF', aura: 'rgba(199, 125, 255, 0.95)', wing: 'rgba(224, 170, 255, 0.9)', dust: '#E0AAFF' }
+        { core: '#FFFFFF', firefly: '#FFD700', aura: 'rgba(255, 215, 0, 0.85)', wing: 'rgba(255, 245, 180, 0.85)', dust: '#FFD700' },
+        { core: '#FFFFFF', firefly: '#00FFC8', aura: 'rgba(0, 255, 200, 0.85)', wing: 'rgba(122, 255, 227, 0.85)', dust: '#00FFC8' },
+        { core: '#FFFFFF', firefly: '#00E5D4', aura: 'rgba(0, 229, 212, 0.85)', wing: 'rgba(163, 255, 248, 0.85)', dust: '#38FFF0' },
+        { core: '#FFFFFF', firefly: '#C77DFF', aura: 'rgba(199, 125, 255, 0.85)', wing: 'rgba(224, 170, 255, 0.85)', dust: '#E0AAFF' }
       ];
 
-      // Spawn 24 Active Tinkerbell & Firefly Pixies
-      for (let i = 0; i < 24; i++) {
+      // Spawn 16 Highly Detailed Tinkerbell Fairies (Silky smooth 60fps)
+      for (let i = 0; i < 16; i++) {
         const pal = pixiePalettes[i % pixiePalettes.length];
         pixies.push({
           x: Math.random() * (w || window.innerWidth),
           y: Math.random() * ((h || window.innerHeight) * 0.85),
-          z: 0.5 + Math.random() * 0.8,
-          vx: (Math.random() - 0.5) * 3.2,
-          vy: (Math.random() - 0.5) * 2.5,
+          z: 0.6 + Math.random() * 0.7,
+          vx: (Math.random() - 0.5) * 2.8,
+          vy: (Math.random() - 0.5) * 2.2,
           targetX: Math.random() * (w || window.innerWidth),
           targetY: Math.random() * ((h || window.innerHeight) * 0.8),
           hoverTimer: Math.random() * 40,
           changeTimer: Math.random() * 80,
           wingPhase: Math.random() * Math.PI * 2,
-          wingSpeed: 0.55 + Math.random() * 0.35, // High-frequency hummingbird flutter
+          wingSpeed: 0.55 + Math.random() * 0.35,
           fireflyPulse: Math.random() * Math.PI * 2,
           fireflySpeed: 0.05 + Math.random() * 0.05,
-          size: 10 + Math.random() * 12,
-          palette: pal,
-          trail: []
+          size: 10 + Math.random() * 11,
+          palette: pal
         });
       }
 
       // ─── 2. BIOLUMINESCENT RISING EMBERS ──────────────
-      for (let i = 0; i < 65; i++) {
+      for (let i = 0; i < 40; i++) {
         embers.push({
           x: Math.random() * (w || window.innerWidth),
           y: Math.random() * (h || window.innerHeight),
-          radius: 0.8 + Math.random() * 2.5,
-          alpha: 0.3 + Math.random() * 0.65,
+          radius: 0.8 + Math.random() * 2.2,
+          alpha: 0.3 + Math.random() * 0.6,
           twinkleSpeed: 0.02 + Math.random() * 0.04,
           phase: Math.random() * Math.PI * 2,
-          vy: -(0.25 + Math.random() * 0.55),
-          vx: (Math.random() - 0.5) * 0.3,
+          vy: -(0.25 + Math.random() * 0.5),
+          vx: (Math.random() - 0.5) * 0.25,
           color: ['#FFD700', '#00FFC8', '#00E5D4', '#C77DFF', '#FFFDF5'][Math.floor(Math.random() * 5)]
         });
       }
 
       function emitPixieDust(x, y, count = 2, colors = ['#FFD700', '#00FFC8', '#FFF']) {
+        if (pixieDust.length > 45) pixieDust.splice(0, count);
         for (let i = 0; i < count; i++) {
           pixieDust.push({
-            x: x + (Math.random() - 0.5) * 8,
-            y: y + (Math.random() - 0.5) * 8,
-            vx: (Math.random() - 0.5) * 1.6,
-            vy: (Math.random() - 0.5) * 1.4 + 0.4,
+            x: x + (Math.random() - 0.5) * 6,
+            y: y + (Math.random() - 0.5) * 6,
+            vx: (Math.random() - 0.5) * 1.4,
+            vy: (Math.random() - 0.5) * 1.2 + 0.3,
             life: 1.0,
-            decay: 0.025 + Math.random() * 0.035,
-            size: 1.5 + Math.random() * 3.5,
-            isDiamond: Math.random() > 0.4,
+            decay: 0.03 + Math.random() * 0.035,
+            size: 1.5 + Math.random() * 3.0,
+            isDiamond: Math.random() > 0.45,
             color: colors[Math.floor(Math.random() * colors.length)]
           });
         }
       }
 
       function triggerMeteor(isBolide = false) {
+        if (meteors.length >= 6) return;
         const startX = Math.random() * (w * 0.9);
         const startY = Math.random() * (h * 0.35);
         const angle = (24 + Math.random() * 32) * Math.PI / 180;
-        const speed = isBolide ? (18 + Math.random() * 10) : (24 + Math.random() * 16);
+        const speed = isBolide ? (16 + Math.random() * 8) : (22 + Math.random() * 12);
 
         meteors.push({
           x: startX,
           y: startY,
           vx: Math.cos(angle) * speed,
           vy: Math.sin(angle) * speed,
-          length: isBolide ? (260 + Math.random() * 220) : (180 + Math.random() * 180),
+          length: isBolide ? (240 + Math.random() * 180) : (160 + Math.random() * 140),
           life: 1.0,
-          decay: isBolide ? 0.015 : 0.024,
+          decay: isBolide ? 0.016 : 0.026,
           isBolide: isBolide,
           color: isBolide ? '#FFD700' : ['#00FFC8', '#00E5D4', '#FFFFFF', '#38FFF0'][Math.floor(Math.random() * 4)]
         });
       }
 
-      // ─── 3. 60FPS RENDERING LOOP ───────────────────────
+      // ─── 3. ULTRA-FAST HARDWARE-ACCELERATED RENDER LOOP ───
       function render(now) {
+        if (!isHeroVisible) {
+          heroAnimId = null;
+          return;
+        }
+
         ctx.clearRect(0, 0, w, h);
 
-        // A. Dynamic Glowing Aurora Waves in the Night Sky
+        // A. Dynamic Glowing Aurora Waves
         ctx.save();
-        for (let j = 0; j < 3; j++) {
+        for (let j = 0; j < 2; j++) {
           ctx.beginPath();
           ctx.moveTo(0, h * 0.25);
-          for (let x = 0; x <= w; x += 30) {
-            const y = h * (0.12 + j * 0.07) +
-                      Math.sin(x * 0.003 + now * 0.0012 + j) * 45 +
-                      Math.sin(x * 0.007 - now * 0.0008) * 25;
+          for (let x = 0; x <= w; x += 45) {
+            const y = h * (0.14 + j * 0.08) +
+                      Math.sin(x * 0.003 + now * 0.0012 + j) * 40 +
+                      Math.sin(x * 0.007 - now * 0.0008) * 20;
             ctx.lineTo(x, y);
           }
           ctx.lineTo(w, 0);
           ctx.lineTo(0, 0);
           ctx.closePath();
 
-          const auroraGrad = ctx.createLinearGradient(0, 0, w, h * 0.4);
+          const auroraGrad = ctx.createLinearGradient(0, 0, w, h * 0.35);
           if (j === 0) {
-            auroraGrad.addColorStop(0, 'rgba(0, 229, 212, 0.12)');
-            auroraGrad.addColorStop(0.5, 'rgba(0, 255, 200, 0.18)');
-            auroraGrad.addColorStop(1, 'transparent');
-          } else if (j === 1) {
-            auroraGrad.addColorStop(0, 'rgba(157, 78, 221, 0.14)');
-            auroraGrad.addColorStop(0.6, 'rgba(0, 229, 212, 0.12)');
+            auroraGrad.addColorStop(0, 'rgba(0, 229, 212, 0.10)');
+            auroraGrad.addColorStop(0.6, 'rgba(0, 255, 200, 0.14)');
             auroraGrad.addColorStop(1, 'transparent');
           } else {
-            auroraGrad.addColorStop(0, 'rgba(0, 255, 200, 0.15)');
-            auroraGrad.addColorStop(0.5, 'rgba(255, 215, 0, 0.08)');
+            auroraGrad.addColorStop(0, 'rgba(157, 78, 221, 0.11)');
+            auroraGrad.addColorStop(0.6, 'rgba(0, 229, 212, 0.09)');
             auroraGrad.addColorStop(1, 'transparent');
           }
           ctx.fillStyle = auroraGrad;
@@ -218,22 +233,17 @@
         }
         ctx.restore();
 
-        // B. High-Frequency Meteors (Trigger every 700ms - 1.4s)
-        if (now - lastMeteorTime > 750 + Math.random() * 650) {
+        // B. Meteors
+        if (now - lastMeteorTime > 900 + Math.random() * 700) {
           triggerMeteor(false);
-          if (Math.random() > 0.45) {
-            setTimeout(() => triggerMeteor(false), 200 + Math.random() * 300);
-          }
           lastMeteorTime = now;
         }
 
-        // Fiery Bolides every 4.5s
-        if (now - lastBolideTime > 4500 + Math.random() * 2500) {
+        if (now - lastBolideTime > 5000 + Math.random() * 3000) {
           triggerMeteor(true);
           lastBolideTime = now;
         }
 
-        // Render Meteors
         for (let i = meteors.length - 1; i >= 0; i--) {
           const m = meteors[i];
           m.x += m.vx;
@@ -251,7 +261,7 @@
           const grad = ctx.createLinearGradient(m.x, m.y, tailX, tailY);
           grad.addColorStop(0, '#FFFFFF');
           grad.addColorStop(0.2, m.color);
-          grad.addColorStop(0.7, m.isBolide ? 'rgba(255, 69, 0, 0.6)' : 'rgba(0, 229, 212, 0.4)');
+          grad.addColorStop(0.7, m.isBolide ? 'rgba(255, 69, 0, 0.5)' : 'rgba(0, 229, 212, 0.35)');
           grad.addColorStop(1, 'transparent');
 
           ctx.save();
@@ -259,25 +269,23 @@
           ctx.moveTo(m.x, m.y);
           ctx.lineTo(tailX, tailY);
           ctx.strokeStyle = grad;
-          ctx.lineWidth = (m.isBolide ? 4.5 : 2.8) * m.life;
-          ctx.shadowColor = m.color;
-          ctx.shadowBlur = m.isBolide ? 24 : 16;
+          ctx.lineWidth = (m.isBolide ? 4.0 : 2.5) * m.life;
           ctx.globalAlpha = m.life;
           ctx.stroke();
 
-          // Core Head
+          // Core Head Glow
           ctx.beginPath();
-          ctx.arc(m.x, m.y, (m.isBolide ? 4.0 : 2.8) * m.life, 0, Math.PI * 2);
+          ctx.arc(m.x, m.y, (m.isBolide ? 3.8 : 2.5) * m.life, 0, Math.PI * 2);
           ctx.fillStyle = '#FFFFFF';
           ctx.fill();
           ctx.restore();
 
-          if (Math.random() > 0.3) {
+          if (Math.random() > 0.4) {
             emitPixieDust(m.x, m.y, 1, [m.color, '#FFF']);
           }
         }
 
-        // C. Render Sparkling Pixie Dust Particles
+        // C. Render Pixie Dust Particles (High-FPS direct fill)
         for (let i = pixieDust.length - 1; i >= 0; i--) {
           const p = pixieDust[i];
           p.x += p.vx;
@@ -291,30 +299,26 @@
 
           ctx.save();
           ctx.fillStyle = p.color;
-          ctx.shadowColor = p.color;
-          ctx.shadowBlur = 8;
-          ctx.globalAlpha = p.life * 0.95;
+          ctx.globalAlpha = p.life * 0.92;
 
           if (p.isDiamond) {
-            // 4-Point Diamond Sparkle Star
             const s = p.size * p.life;
             ctx.beginPath();
-            ctx.moveTo(p.x, p.y - s * 1.6);
+            ctx.moveTo(p.x, p.y - s * 1.5);
             ctx.lineTo(p.x + s * 0.6, p.y);
-            ctx.lineTo(p.x, p.y + s * 1.6);
+            ctx.lineTo(p.x, p.y + s * 1.5);
             ctx.lineTo(p.x - s * 0.6, p.y);
             ctx.closePath();
             ctx.fill();
           } else {
-            // Round Glitter Sparkle
             ctx.beginPath();
-            ctx.arc(p.x, p.y, p.size * p.life * 0.7, 0, Math.PI * 2);
+            ctx.arc(p.x, p.y, p.size * p.life * 0.65, 0, Math.PI * 2);
             ctx.fill();
           }
           ctx.restore();
         }
 
-        // D. Render Rising Bioluminescent Embers
+        // D. Render Rising Embers
         embers.forEach(e => {
           e.x += e.vx;
           e.y += e.vy;
@@ -327,85 +331,81 @@
           const a = e.alpha * (0.6 + Math.sin(e.phase) * 0.4);
 
           ctx.save();
-          const g = ctx.createRadialGradient(e.x, e.y, 0, e.x, e.y, e.radius * 3.5);
+          const g = ctx.createRadialGradient(e.x, e.y, 0, e.x, e.y, e.radius * 3.0);
           g.addColorStop(0, e.color);
           g.addColorStop(1, 'transparent');
           ctx.fillStyle = g;
           ctx.globalAlpha = a;
           ctx.beginPath();
-          ctx.arc(e.x, e.y, e.radius * 3.5, 0, Math.PI * 2);
+          ctx.arc(e.x, e.y, e.radius * 3.0, 0, Math.PI * 2);
           ctx.fill();
           ctx.restore();
         });
 
-        // E. Render Tinkerbell & Firefly Pixies (Luminous Orbs with Pointed Gossamer Wings & Pixie Dust)
+        // E. Render Tinkerbell & Firefly Pixies
         pixies.forEach(p => {
           p.changeTimer--;
           if (p.changeTimer <= 0) {
             p.targetX = Math.random() * w;
             p.targetY = Math.random() * (h * 0.8);
-            p.changeTimer = 60 + Math.random() * 110;
-            // Occasional quick hover-flutter pause like a hummingbird
-            if (Math.random() > 0.6) p.hoverTimer = 25 + Math.random() * 30;
+            p.changeTimer = 70 + Math.random() * 110;
+            if (Math.random() > 0.65) p.hoverTimer = 20 + Math.random() * 25;
           }
 
           if (p.hoverTimer > 0) {
             p.hoverTimer--;
-            p.vx *= 0.88;
-            p.vy *= 0.88;
+            p.vx *= 0.9;
+            p.vy *= 0.9;
           } else {
             const dx = p.targetX - p.x;
             const dy = p.targetY - p.y;
             const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-            const speed = (3.0 + Math.sin(now * 0.003 + p.wingPhase) * 1.2) * p.z;
+            const speed = (2.8 + Math.sin(now * 0.003 + p.wingPhase) * 1.0) * p.z;
 
-            p.vx += (dx / dist) * 0.14;
-            p.vy += (dy / dist) * 0.14;
+            p.vx += (dx / dist) * 0.12;
+            p.vy += (dy / dist) * 0.12;
 
-            // Interactive cursor attraction
             if (mouse.x > 0) {
               const mdx = mouse.x - p.x;
               const mdy = mouse.y - p.y;
               const mdist = Math.sqrt(mdx * mdx + mdy * mdy);
-              if (mdist < 220) {
+              if (mdist < 200) {
                 const angle = Math.atan2(mdy, mdx) + Math.PI * 0.45;
-                p.vx += Math.cos(angle) * 0.65;
-                p.vy += Math.sin(angle) * 0.65;
+                p.vx += Math.cos(angle) * 0.55;
+                p.vy += Math.sin(angle) * 0.55;
               }
             }
 
-            p.vx = Math.max(-speed * 1.4, Math.min(speed * 1.4, p.vx * 0.98));
-            p.vy = Math.max(-speed * 1.4, Math.min(speed * 1.4, p.vy * 0.98));
+            p.vx = Math.max(-speed * 1.3, Math.min(speed * 1.3, p.vx * 0.98));
+            p.vy = Math.max(-speed * 1.3, Math.min(speed * 1.3, p.vy * 0.98));
           }
 
           p.x += p.vx;
           p.y += p.vy;
 
-          if (p.x < -60) p.x = w + 40;
-          if (p.x > w + 60) p.x = -40;
-          if (p.y < -60) p.y = h * 0.8;
+          if (p.x < -50) p.x = w + 30;
+          if (p.x > w + 50) p.x = -30;
+          if (p.y < -50) p.y = h * 0.8;
           if (p.y > h * 0.85) p.y = -20;
 
-          // High-frequency wing flutter & firefly breathing glow
           p.wingPhase += p.wingSpeed;
           p.fireflyPulse += p.fireflySpeed;
 
-          // Continuous sparkling pixie dust trail
-          if (Math.random() > 0.3) {
+          if (Math.random() > 0.4) {
             emitPixieDust(p.x, p.y, 1, [p.palette.dust, '#FFFFFF', '#FFF4CC']);
           }
 
           drawPhotorealisticTinkerbell(ctx, p, now);
         });
 
-        requestAnimationFrame(render);
+        heroAnimId = requestAnimationFrame(render);
       }
 
-      requestAnimationFrame(render);
+      heroAnimId = requestAnimationFrame(render);
     }
 
     // ═══════════════════════════════════════════════
-    // PHOTOREALISTIC TINKERBELL PIXIE DRAWING ENGINE
+    // HIGH-PERFORMANCE PHOTOREALISTIC TINKERBELL DRAW ENGINE
     // ═══════════════════════════════════════════════
     function drawPhotorealisticTinkerbell(ctx, p, now) {
       ctx.save();
@@ -414,59 +414,48 @@
       ctx.scale(scale, scale);
       
       const heading = Math.atan2(p.vy || 0, p.vx || 1);
-      ctx.rotate(heading * 0.22);
+      ctx.rotate(heading * 0.2);
 
       const flap = Math.sin(p.wingPhase || 0);
-      const pulse = 1 + Math.sin(p.fireflyPulse || 0) * 0.25;
+      const pulse = 1 + Math.sin(p.fireflyPulse || 0) * 0.22;
       const s = p.size;
 
       // 1. Soft Volumetric Stardust Aura
-      const aura = ctx.createRadialGradient(0, 0, 1, 0, 0, s * 3.6 * pulse);
+      const aura = ctx.createRadialGradient(0, 0, 1, 0, 0, s * 3.4 * pulse);
       aura.addColorStop(0, p.palette.aura);
-      aura.addColorStop(0.4, p.palette.aura.replace(/[\d\.]+\)$/, '0.35)'));
+      aura.addColorStop(0.45, p.palette.aura.replace(/[\d\.]+\)$/, '0.30)'));
       aura.addColorStop(1, 'transparent');
       ctx.fillStyle = aura;
       ctx.beginPath();
-      ctx.arc(0, 0, s * 3.6 * pulse, 0, Math.PI * 2);
+      ctx.arc(0, 0, s * 3.4 * pulse, 0, Math.PI * 2);
       ctx.fill();
 
-      // 2. Photorealistic Gossamer Fairy Wings (Left & Right with Veins)
+      // 2. Photorealistic Gossamer Wings
       function drawWingSide(flip) {
         ctx.save();
         ctx.scale(flip * flap, 1);
 
-        // Large Upper Flutter Wing
-        const wg = ctx.createLinearGradient(0, 0, -s * 2.6, -s * 1.6);
+        const wg = ctx.createLinearGradient(0, 0, -s * 2.5, -s * 1.5);
         wg.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
         wg.addColorStop(0.4, p.palette.wing);
         wg.addColorStop(1, 'rgba(0, 229, 212, 0.25)');
 
         ctx.fillStyle = wg;
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
-        ctx.lineWidth = 0.9;
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+        ctx.lineWidth = 0.8;
         ctx.beginPath();
         ctx.moveTo(0, -s * 0.2);
-        ctx.bezierCurveTo(-s * 0.8, -s * 1.5, -s * 2.3, -s * 1.9, -s * 2.5, -s * 0.8);
-        ctx.bezierCurveTo(-s * 2.2, s * 0.1, -s * 0.9, s * 0.3, 0, -s * 0.1);
+        ctx.bezierCurveTo(-s * 0.8, -s * 1.4, -s * 2.2, -s * 1.8, -s * 2.4, -s * 0.8);
+        ctx.bezierCurveTo(-s * 2.1, s * 0.1, -s * 0.9, s * 0.3, 0, -s * 0.1);
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
 
-        // Internal Gossamer Veins
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
-        ctx.lineWidth = 0.5;
-        ctx.beginPath();
-        ctx.moveTo(0, -s * 0.2);
-        ctx.quadraticCurveTo(-s * 1.2, -s * 1.0, -s * 2.2, -s * 0.9);
-        ctx.moveTo(0, -s * 0.2);
-        ctx.quadraticCurveTo(-s * 1.0, -s * 0.4, -s * 1.9, -s * 0.1);
-        ctx.stroke();
-
-        // Lower Secondary Flutter Wing
+        // Lower Wing
         ctx.beginPath();
         ctx.moveTo(0, 0);
-        ctx.bezierCurveTo(-s * 0.6, s * 0.3, -s * 1.6, s * 1.1, -s * 1.3, s * 1.45);
-        ctx.bezierCurveTo(-s * 0.8, s * 1.35, -s * 0.3, s * 0.6, 0, 0);
+        ctx.bezierCurveTo(-s * 0.6, s * 0.3, -s * 1.5, s * 1.0, -s * 1.2, s * 1.4);
+        ctx.bezierCurveTo(-s * 0.8, s * 1.3, -s * 0.3, s * 0.6, 0, 0);
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
@@ -477,57 +466,64 @@
       drawWingSide(1);
       drawWingSide(-1);
 
-      // 3. Graceful Fairy Ballerina Silhouette & Topknot
+      // 3. Graceful Silhouette
       ctx.fillStyle = '#FFFFFF';
-      ctx.shadowColor = p.palette.firefly;
-      ctx.shadowBlur = 15;
 
-      // Head & Classic Tinkerbell Topknot Bun
+      // Head & Topknot Bun
       ctx.beginPath();
-      ctx.arc(0, -s * 0.6, s * 0.22, 0, Math.PI * 2); // Head
-      ctx.arc(s * 0.08, -s * 0.85, s * 0.14, 0, Math.PI * 2); // High topknot bun
+      ctx.arc(0, -s * 0.6, s * 0.22, 0, Math.PI * 2);
+      ctx.arc(s * 0.08, -s * 0.85, s * 0.14, 0, Math.PI * 2);
       ctx.fill();
 
-      // Slender Torso / Dress
+      // Torso
       ctx.beginPath();
       ctx.moveTo(-s * 0.18, -s * 0.4);
       ctx.lineTo(s * 0.18, -s * 0.4);
-      ctx.lineTo(s * 0.25, s * 0.15);
-      ctx.lineTo(0, s * 0.35); // Arched fairy waist
-      ctx.lineTo(-s * 0.25, s * 0.15);
+      ctx.lineTo(s * 0.24, s * 0.15);
+      ctx.lineTo(0, s * 0.35);
+      ctx.lineTo(-s * 0.24, s * 0.15);
       ctx.closePath();
       ctx.fill();
 
-      // Arched Ballerina Legs & Pointed Slippers
+      // Legs
       ctx.beginPath();
       ctx.moveTo(-s * 0.08, s * 0.3);
-      ctx.quadraticCurveTo(-s * 0.15, s * 0.7, -s * 0.05, s * 1.05); // Left leg
+      ctx.quadraticCurveTo(-s * 0.15, s * 0.7, -s * 0.05, s * 1.05);
       ctx.lineTo(-s * 0.02, s * 1.05);
       ctx.moveTo(s * 0.08, s * 0.3);
-      ctx.quadraticCurveTo(s * 0.18, s * 0.75, s * 0.12, s * 1.15); // Right leg trailing
+      ctx.quadraticCurveTo(s * 0.18, s * 0.75, s * 0.12, s * 1.15);
       ctx.lineTo(s * 0.15, s * 1.15);
       ctx.strokeStyle = '#FFFFFF';
       ctx.lineWidth = 1.2;
       ctx.stroke();
 
-      // Radiant Glowing Stardust Heart Core
+      // Heart Core with Soft Halo
+      const heartHalo = ctx.createRadialGradient(0, -s * 0.1, 0, 0, -s * 0.1, s * 0.8);
+      heartHalo.addColorStop(0, p.palette.firefly);
+      heartHalo.addColorStop(0.5, p.palette.aura);
+      heartHalo.addColorStop(1, 'transparent');
+      ctx.fillStyle = heartHalo;
       ctx.beginPath();
-      ctx.arc(0, -s * 0.1, s * 0.26, 0, Math.PI * 2);
-      ctx.fillStyle = p.palette.firefly;
-      ctx.shadowColor = '#FFFFFF';
-      ctx.shadowBlur = 20;
+      ctx.arc(0, -s * 0.1, s * 0.8, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(0, -s * 0.1, s * 0.25, 0, Math.PI * 2);
+      ctx.fillStyle = '#FFFFFF';
       ctx.fill();
 
       ctx.restore();
     }
 
     // ═══════════════════════════════════════════════
-    // FOOTER 60FPS CELESTIAL CANVAS ENGINE (Matches Hero)
+    // FOOTER ULTRA-SMOOTH CELESTIAL CANVAS ENGINE
     // ═══════════════════════════════════════════════
     const footerCanvas = document.getElementById('footer-celestial-canvas');
     if (footerCanvas) {
-      const fCtx = footerCanvas.getContext('2d');
+      const fCtx = footerCanvas.getContext('2d', { alpha: true });
       let fw, fh;
+      let isFooterVisible = false;
+      let footerAnimId = null;
       const fPixies = [];
       const fMeteors = [];
       const fEmbers = [];
@@ -540,49 +536,61 @@
       fResize();
       window.addEventListener('resize', fResize, { passive: true });
 
+      // Pause footer canvas when scrolled away (saves massive GPU on main content)
+      if ('IntersectionObserver' in window) {
+        const footerObserver = new IntersectionObserver((entries) => {
+          isFooterVisible = entries[0].isIntersecting;
+          if (isFooterVisible && !footerAnimId) {
+            footerAnimId = requestAnimationFrame(renderFooter);
+          }
+        }, { threshold: 0.05 });
+        footerObserver.observe(footerCanvas);
+      }
+
       const fPalettes = [
-        { core: '#FFFFFF', firefly: '#FFD700', aura: 'rgba(255, 215, 0, 0.95)', wing: 'rgba(255, 245, 180, 0.9)', dust: '#FFD700' },
-        { core: '#FFFFFF', firefly: '#00FFC8', aura: 'rgba(0, 255, 200, 0.95)', wing: 'rgba(122, 255, 227, 0.9)', dust: '#00FFC8' },
-        { core: '#FFFFFF', firefly: '#00E5D4', aura: 'rgba(0, 229, 212, 0.95)', wing: 'rgba(163, 255, 248, 0.9)', dust: '#38FFF0' },
-        { core: '#FFFFFF', firefly: '#C77DFF', aura: 'rgba(199, 125, 255, 0.95)', wing: 'rgba(224, 170, 255, 0.9)', dust: '#E0AAFF' }
+        { core: '#FFFFFF', firefly: '#FFD700', aura: 'rgba(255, 215, 0, 0.85)', wing: 'rgba(255, 245, 180, 0.85)', dust: '#FFD700' },
+        { core: '#FFFFFF', firefly: '#00FFC8', aura: 'rgba(0, 255, 200, 0.85)', wing: 'rgba(122, 255, 227, 0.85)', dust: '#00FFC8' },
+        { core: '#FFFFFF', firefly: '#00E5D4', aura: 'rgba(0, 229, 212, 0.85)', wing: 'rgba(163, 255, 248, 0.85)', dust: '#38FFF0' },
+        { core: '#FFFFFF', firefly: '#C77DFF', aura: 'rgba(199, 125, 255, 0.85)', wing: 'rgba(224, 170, 255, 0.85)', dust: '#E0AAFF' }
       ];
 
-      for (let i = 0; i < 12; i++) {
+      for (let i = 0; i < 8; i++) {
         fPixies.push({
           x: Math.random() * (fw || window.innerWidth),
           y: Math.random() * (fh || 340),
-          vx: (Math.random() - 0.5) * 2.2,
-          vy: (Math.random() - 0.5) * 1.6,
+          vx: (Math.random() - 0.5) * 2.0,
+          vy: (Math.random() - 0.5) * 1.5,
           targetX: Math.random() * (fw || window.innerWidth),
           targetY: Math.random() * (fh || 340),
           wingPhase: Math.random() * Math.PI * 2,
           wingSpeed: 0.6 + Math.random() * 0.3,
           fireflyPulse: Math.random() * Math.PI * 2,
           fireflySpeed: 0.05,
-          size: 8 + Math.random() * 6,
+          size: 8 + Math.random() * 5,
           palette: fPalettes[i % fPalettes.length],
-          z: 0.8 + Math.random() * 0.4
+          z: 0.8 + Math.random() * 0.3
         });
       }
 
-      for (let i = 0; i < 35; i++) {
+      for (let i = 0; i < 22; i++) {
         fEmbers.push({
           x: Math.random() * (fw || window.innerWidth),
           y: Math.random() * (fh || 340),
-          radius: 0.8 + Math.random() * 2.2,
+          radius: 0.8 + Math.random() * 2.0,
           phase: Math.random() * Math.PI * 2,
-          vy: -(0.2 + Math.random() * 0.4),
+          vy: -(0.2 + Math.random() * 0.35),
           vx: (Math.random() - 0.5) * 0.2,
           color: ['#FFD700', '#00FFC8', '#00E5D4', '#C77DFF'][Math.floor(Math.random() * 4)]
         });
       }
 
       function spawnFMeteor() {
+        if (fMeteors.length >= 4) return;
         fMeteors.push({
           x: Math.random() * (fw * 1.2),
           y: -20,
-          length: 90 + Math.random() * 140,
-          speed: 14 + Math.random() * 18,
+          length: 90 + Math.random() * 120,
+          speed: 13 + Math.random() * 16,
           angle: (Math.PI / 4) + (Math.random() - 0.5) * 0.2,
           color: ['#00FFC8', '#FFD700', '#C77DFF', '#FFFFFF'][Math.floor(Math.random() * 4)],
           alpha: 1.0
@@ -590,11 +598,14 @@
       }
 
       function renderFooter(now) {
-        if (!fCtx) return;
+        if (!fCtx || !isFooterVisible) {
+          footerAnimId = null;
+          return;
+        }
         fCtx.clearRect(0, 0, fw, fh);
 
         // Meteors
-        if (now - lastFMeteor > 1600) {
+        if (now - lastFMeteor > 1800) {
           spawnFMeteor();
           lastFMeteor = now;
         }
@@ -604,7 +615,7 @@
           const m = fMeteors[i];
           m.x += Math.cos(m.angle) * m.speed;
           m.y += Math.sin(m.angle) * m.speed;
-          m.alpha -= 0.024;
+          m.alpha -= 0.026;
 
           if (m.alpha <= 0 || m.y > fh + 100) {
             fMeteors.splice(i, 1);
@@ -622,7 +633,7 @@
           fCtx.moveTo(m.x, m.y);
           fCtx.lineTo(tx, ty);
           fCtx.strokeStyle = grad;
-          fCtx.lineWidth = 2.2;
+          fCtx.lineWidth = 2.0;
           fCtx.stroke();
         }
 
@@ -657,30 +668,30 @@
           drawPhotorealisticTinkerbell(fCtx, p, now);
         });
 
-        requestAnimationFrame(renderFooter);
+        footerAnimId = requestAnimationFrame(renderFooter);
       }
-
-      requestAnimationFrame(renderFooter);
     }
 
-    // ─── SPARKLE CURSOR TRAIL ────────────────────────
+    // ─── SPARKLE CURSOR TRAIL (GPU-Accelerated & Throttled) ──────
     const sparkleColors = ['#FFD700', '#00FFC8', '#00E5D4', '#38FFF0', '#C77DFF'];
     let lastSparkle = 0;
+    let activeSparkleCount = 0;
 
     document.addEventListener('mousemove', (e) => {
       const now = performance.now();
-      if (now - lastSparkle < 30) return;
+      if (now - lastSparkle < 55 || activeSparkleCount >= 18) return;
       lastSparkle = now;
+      activeSparkleCount++;
 
       const sparkle = document.createElement('div');
       sparkle.className = 'sparkle-particle';
-      const size = 5 + Math.random() * 9;
-      const sx   = (Math.random() - 0.5) * 45;
+      const size = 5 + Math.random() * 8;
+      const sx   = (Math.random() - 0.5) * 40;
       const color = sparkleColors[Math.floor(Math.random() * sparkleColors.length)];
 
       sparkle.style.cssText = `
-        left: ${e.clientX + (Math.random() - 0.5) * 18}px;
-        top:  ${e.clientY + (Math.random() - 0.5) * 18}px;
+        left: ${e.clientX + (Math.random() - 0.5) * 14}px;
+        top:  ${e.clientY + (Math.random() - 0.5) * 14}px;
         width: ${size}px;
         height: ${size}px;
         background: ${color};
@@ -688,40 +699,40 @@
         --sx: ${sx}px;
       `;
       document.body.appendChild(sparkle);
-      setTimeout(() => sparkle.remove(), 1200);
-    });
+      setTimeout(() => {
+        sparkle.remove();
+        activeSparkleCount--;
+      }, 1000);
+    }, { passive: true });
 
-    // ─── HOLLYWOOD-GRADE 3D TILT & SPECULAR GLARE ENGINE (Scroll-Optimized) ───
+    // ─── HOLLYWOOD-GRADE 3D TILT (Zero Layout Thrashing) ───
     let isUserScrolling = false;
     let scrollTimeout = null;
 
     window.addEventListener('scroll', () => {
       isUserScrolling = true;
       clearTimeout(scrollTimeout);
-      scrollTimeout = setTimeout(() => { isUserScrolling = false; }, 100);
+      scrollTimeout = setTimeout(() => { isUserScrolling = false; }, 80);
     }, { passive: true });
 
     const tiltCards = document.querySelectorAll('.service-card, .merch-card, .testimonial-card, .notes-step, .pricing-card, .about__image-frame');
     tiltCards.forEach(card => {
-      let bounds;
+      let cachedBounds = null;
+
       function rotateToMouse(e) {
-        if (isUserScrolling) return;
-        bounds = card.getBoundingClientRect();
-        const mouseX = e.clientX;
-        const mouseY = e.clientY;
-        const leftX = mouseX - bounds.x;
-        const topY = mouseY - bounds.y;
+        if (isUserScrolling || !cachedBounds) return;
+        const leftX = e.clientX - cachedBounds.x;
+        const topY = e.clientY - cachedBounds.y;
         const center = {
-          x: leftX - bounds.width / 2,
-          y: topY - bounds.height / 2
+          x: leftX - cachedBounds.width / 2,
+          y: topY - cachedBounds.height / 2
         };
-        const distance = Math.sqrt(center.x ** 2 + center.y ** 2);
         
         card.style.transform = `
           perspective(1000px)
           scale3d(1.02, 1.02, 1.02)
-          rotateX(${-center.y / 16}deg)
-          rotateY(${center.x / 16}deg)
+          rotateX(${-center.y / 18}deg)
+          rotateY(${center.x / 18}deg)
         `;
         
         let glare = card.querySelector('.card-specular-glare');
@@ -733,42 +744,49 @@
           card.appendChild(glare);
         }
         glare.style.opacity = '1';
-        glare.style.background = `radial-gradient(circle at ${(leftX / bounds.width) * 100}% ${(topY / bounds.height) * 100}%, rgba(255, 255, 255, 0.22) 0%, rgba(0, 229, 212, 0.12) 30%, transparent 65%)`;
+        glare.style.background = `radial-gradient(circle at ${(leftX / cachedBounds.width) * 100}% ${(topY / cachedBounds.height) * 100}%, rgba(255, 255, 255, 0.22) 0%, rgba(0, 229, 212, 0.12) 30%, transparent 65%)`;
       }
 
       function removeListener() {
         card.style.transform = '';
+        cachedBounds = null;
         const glare = card.querySelector('.card-specular-glare');
         if (glare) glare.style.opacity = '0';
       }
 
       card.addEventListener('mouseenter', () => {
-        bounds = card.getBoundingClientRect();
+        cachedBounds = card.getBoundingClientRect();
         card.style.transition = 'transform 0.1s ease-out';
-      });
-      card.addEventListener('mousemove', rotateToMouse);
+      }, { passive: true });
+
+      card.addEventListener('mousemove', rotateToMouse, { passive: true });
       card.addEventListener('mouseleave', () => {
         card.style.transition = 'transform 0.5s cubic-bezier(0.2, 1, 0.3, 1)';
         removeListener();
-      });
+      }, { passive: true });
     });
 
-    // ─── MAGNETIC CTA BUTTONS ─────────────────────────
+    // ─── MAGNETIC CTA BUTTONS (Cached Bounding Rect) ─────────
     const magneticBtns = document.querySelectorAll('.btn-primary, .btn-secondary, .btn-inquire, .cart-toggle-btn');
     magneticBtns.forEach(btn => {
+      let btnRect = null;
+      btn.addEventListener('mouseenter', () => {
+        btnRect = btn.getBoundingClientRect();
+        btn.style.transition = 'transform 0.1s ease-out';
+      }, { passive: true });
+
       btn.addEventListener('mousemove', (e) => {
-        const rect = btn.getBoundingClientRect();
-        const x = e.clientX - rect.left - rect.width / 2;
-        const y = e.clientY - rect.top - rect.height / 2;
-        btn.style.transform = `translate(${x * 0.25}px, ${y * 0.25}px) scale(1.04)`;
-      });
+        if (!btnRect) btnRect = btn.getBoundingClientRect();
+        const x = e.clientX - btnRect.left - btnRect.width / 2;
+        const y = e.clientY - btnRect.top - btnRect.height / 2;
+        btn.style.transform = `translate3d(${x * 0.22}px, ${y * 0.22}px, 0) scale(1.04)`;
+      }, { passive: true });
+
       btn.addEventListener('mouseleave', () => {
         btn.style.transform = '';
         btn.style.transition = 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-      });
-      btn.addEventListener('mouseenter', () => {
-        btn.style.transition = 'transform 0.1s ease-out';
-      });
+        btnRect = null;
+      }, { passive: true });
     });
 
     // ─── INTERSECTION OBSERVER (Fade-in animations) ───
@@ -895,10 +913,11 @@
     });
 
     // ─── CELESTIAL WEB AUDIO ENGINE (Crystal Solfeggio Chimes) ────
+    // ─── CELESTIAL WEB AUDIO ENGINE (Crystal Solfeggio Chimes) ────
     class CelestialAudioEngine {
       constructor() {
         this.ctx = null;
-        this.enabled = true; // Active on-click chimes
+        this.enabled = false; // Default: muted / off until visitor activates
         this.currentFreq = 528;
       }
       init() {
@@ -943,6 +962,7 @@
         } catch(e) {}
       }
       playGlissando() {
+        if (!this.enabled) this.enabled = true;
         [528, 639, 741, 852, 963].forEach((f, idx) => {
           setTimeout(() => this.playChime(f, 1.6), idx * 80);
         });
@@ -970,6 +990,22 @@
     const navFreqMobileLabel = document.getElementById('nav-sound-freq-mobile-label');
     const soundModalGrid = document.getElementById('sound-modal-grid');
 
+    const updateAudioUIState = () => {
+      const muteIcon = document.getElementById('sound-mute-icon');
+      const muteText = document.getElementById('sound-mute-text');
+      if (window.celestialAudio.enabled) {
+        if (muteIcon) muteIcon.textContent = '🔔';
+        if (muteText) muteText.textContent = 'Chimes Active';
+        if (navFreqLabel) navFreqLabel.textContent = `${window.celestialAudio.currentFreq} Hz`;
+        if (navFreqMobileLabel) navFreqMobileLabel.textContent = `${window.celestialAudio.currentFreq} Hz`;
+      } else {
+        if (muteIcon) muteIcon.textContent = '🔕';
+        if (muteText) muteText.textContent = 'Chimes Off (Click to Enable)';
+        if (navFreqLabel) navFreqLabel.textContent = 'Sound';
+        if (navFreqMobileLabel) navFreqMobileLabel.textContent = 'Sound (Off)';
+      }
+    };
+
     const openSoundModal = () => {
       soundModal?.classList.add('active');
     };
@@ -994,41 +1030,36 @@
       if (e.target === soundModal) closeSoundModal();
     });
 
-    // Frequency Card Selection
+    // Frequency Card Selection (Auto-enables chime)
     soundModalGrid?.querySelectorAll('.sound-modal-freq-card').forEach(card => {
       card.addEventListener('click', () => {
         soundModalGrid.querySelectorAll('.sound-modal-freq-card').forEach(c => c.classList.remove('active'));
         card.classList.add('active');
         const freq = parseInt(card.getAttribute('data-freq') || '528', 10);
         window.celestialAudio.currentFreq = freq;
-        if (navFreqLabel) navFreqLabel.textContent = `${freq} Hz`;
-        if (navFreqMobileLabel) navFreqMobileLabel.textContent = `${freq} Hz`;
+        window.celestialAudio.enabled = true;
+        updateAudioUIState();
         window.celestialAudio.playChime(freq);
-        showToast(`✨ Solfeggio Tuned to ${freq}Hz`);
+        showToast(`✨ Solfeggio Tuned to ${freq}Hz (Chimes Active)`);
       });
     });
 
     // Mute / Unmute Toggle
     soundMuteToggleBtn?.addEventListener('click', () => {
       window.celestialAudio.enabled = !window.celestialAudio.enabled;
-      const muteIcon = document.getElementById('sound-mute-icon');
-      const muteText = document.getElementById('sound-mute-text');
+      updateAudioUIState();
       if (window.celestialAudio.enabled) {
-        if (muteIcon) muteIcon.textContent = '🔔';
-        if (muteText) muteText.textContent = 'Chimes Active';
-        if (navFreqLabel) navFreqLabel.textContent = `${window.celestialAudio.currentFreq} Hz`;
         window.celestialAudio.playChime();
-        showToast('🔔 Click Chimes Activated');
+        showToast('🔔 Chimes Activated');
       } else {
-        if (muteIcon) muteIcon.textContent = '🔕';
-        if (muteText) muteText.textContent = 'Chimes Muted';
-        if (navFreqLabel) navFreqLabel.textContent = 'Muted';
-        showToast('🔕 Sound Muted');
+        showToast('🔕 Chimes Muted');
       }
     });
 
-    // Test Chime Button
+    // Test Chime Button (Auto-enables chime)
     testChimeBtn?.addEventListener('click', () => {
+      window.celestialAudio.enabled = true;
+      updateAudioUIState();
       window.celestialAudio.playGlissando();
       showToast(`✨ Harmonizing at ${window.celestialAudio.currentFreq}Hz`);
     });
