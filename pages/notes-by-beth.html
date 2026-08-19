@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Notes by Beth: A Love Note to Your Soul. Bespoke handwritten spiritual letters channeled and sealed by Beth Elise." />
+  <title>Notes by Beth | Sacred Channeled Handwritten Letters</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Great+Vibes&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Satisfy&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    .notes-page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 4rem 2rem;
+    }
+    .notes-hero-layout {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 4rem;
+      align-items: center;
+      margin-bottom: 5rem;
+    }
+    .notes-hero-img-wrap {
+      position: relative;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(31, 0, 56, 0.4), 0 0 35px rgba(0, 229, 212, 0.3);
+      border: 2px solid rgba(0, 229, 212, 0.4);
+    }
+    .notes-hero-img-wrap img {
+      width: 100%;
+      height: auto;
+      display: block;
+      transition: transform 0.6s ease;
+    }
+    .notes-hero-img-wrap:hover img {
+      transform: scale(1.03);
+    }
+    .notes-step-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.5rem;
+      margin: 4rem 0;
+    }
+    .notes-step-card {
+      background: var(--white);
+      padding: 2rem 1.5rem;
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-card);
+      border: 1px solid rgba(54, 0, 94, 0.1);
+      text-align: center;
+      transition: var(--transition-med);
+    }
+    .notes-step-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-hover);
+      border-color: var(--tiffany);
+    }
+    .notes-step-num {
+      width: 42px;
+      height: 42px;
+      margin: 0 auto 1rem;
+      border-radius: 50%;
+      background: var(--gradient-cta);
+      color: var(--indigo-deep);
+      font-family: var(--font-serif);
+      font-size: 1.2rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 15px rgba(0, 229, 212, 0.4);
+    }
+    .notes-step-title {
+      font-family: var(--font-body);
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #FFFFFF;
+      text-shadow: 0 0 10px rgba(0, 229, 212, 0.6);
+      margin-bottom: 0.5rem;
+    }
+    .notes-step-desc {
+      font-size: 0.92rem;
+      font-weight: 500;
+      color: #E2D9F3;
+      line-height: 1.6;
+    }
+    .order-note-card {
+      background: linear-gradient(135deg, #1F0038 0%, #2D0052 60%, #100024 100%);
+      color: #FFFFFF;
+      padding: 3.5rem 3rem;
+      border-radius: var(--radius-xl);
+      border: 2px solid rgba(0, 229, 212, 0.4);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(0, 229, 212, 0.25);
+      margin: 4rem 0;
+    }
+    @media (max-width: 900px) {
+      .notes-hero-layout { grid-template-columns: 1fr; gap: 2.5rem; }
+      .notes-step-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 600px) {
+      .notes-step-grid { grid-template-columns: 1fr; }
+      .order-note-card { padding: 2rem 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ✦ ENCHANTED PRELOADER ✦ -->
+  <div id="site-preloader" class="preloader" aria-hidden="true">
+    <div class="preloader__inner">
+      <div class="preloader__orb">
+        <div class="preloader__eye">
+          <div class="preloader__eye-sclera">
+            <div class="preloader__eye-iris">
+              <div class="preloader__eye-pupil"></div>
+            </div>
+          </div>
+          <div class="preloader__eye-lashes"></div>
+        </div>
+        <div class="preloader__fairy"></div>
+        <div class="preloader__ring"></div>
+        <div class="preloader__ring preloader__ring--outer"></div>
+      </div>
+      <img src="../images/logo.png" alt="Beth Elise Psychic Medium" class="preloader__logo">
+      <div class="preloader__bar">
+        <div class="preloader__progress"></div>
+      </div>
+      <p class="preloader__text">Aligning with the Spirits & Light...</p>
+    </div>
+  </div>
+
+  <!-- ✦ NAVIGATION ✦ -->
+  <nav class="nav" role="navigation" aria-label="Main navigation">
+    <div class="nav__logo">
+      <a href="../index.html"><img src="../images/logo.png" alt="Beth Elise Psychic Medium" /></a>
+    </div>
+
+    <div class="nav__links">
+      <a href="../index.html#about">About</a>
+      <a href="services.html">Services</a>
+      <a href="merch.html">Merch</a>
+      <a href="testimonials.html">Testimonials</a>
+      <a href="contact.html">Contact</a>
+    </div>
+
+    <div class="nav__cta">
+      <button type="button" class="cart-toggle-btn" aria-label="Open sacred shopping bag">
+        <span>🛍️</span> <span class="cart-badge">0</span>
+      </button>
+      <a href="contact.html" class="btn-inquire">
+        <span>✨</span> Inquire Now
+      </a>
+    </div>
+
+    <button class="nav__hamburger" aria-label="Toggle navigation" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <!-- ✦ MOBILE NAV ✦ -->
+  <div class="nav__mobile" role="menu">
+    <a href="../index.html#about" role="menuitem">About</a>
+    <a href="services.html" role="menuitem">Services</a>
+    <a href="merch.html" role="menuitem">Merch</a>
+    <a href="testimonials.html" role="menuitem">Testimonials</a>
+    <a href="contact.html" role="menuitem">Contact</a>
+    <button type="button" class="cart-toggle-btn" style="width:100%; justify-content:center;" aria-label="Open sacred shopping bag">
+      <span>🛍️</span> View Sacred Cart (<span class="cart-badge">0</span>)
+    </button>
+    <a href="contact.html" class="btn-inquire" role="menuitem">✨ Inquire Now</a>
+  </div>
+
+  <!-- ✦ PAGE HERO ✦ -->
+  <div class="page-hero">
+    <div class="page-hero__content">
+      <span class="section__eyebrow">✦ Bespoke Spiritual Offering ✦</span>
+      <h1 class="section__title">Notes by Beth</h1>
+      <p class="section__desc">A Love Note to Your Soul — Personally Channeled, Handwritten & Shipped Worldwide</p>
+    </div>
+  </div>
+
+  <div class="notes-page">
+
+    <!-- Hero Story Section -->
+    <div class="notes-hero-layout">
+      <div class="notes-hero-img-wrap fade-in">
+        <img src="../images/notes-by-beth.jpg" alt="Notes by Beth: A Love Note to Your Soul on deckle parchment with wax seal">
+      </div>
+      <div class="notes-hero-content fade-in fade-in-delay-1">
+        <span style="font-family:var(--font-serif); color:var(--indigo-medium); font-size:1.15rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; display:block; margin-bottom:0.5rem;">A Sacred Physical Keepsake</span>
+        <h2 style="font-family:var(--font-script); font-size:3.5rem; color:var(--indigo-deep); line-height:1.1; margin-bottom:1.25rem;">Handwritten Spiritual Guidance</h2>
+        <p style="font-size:1.02rem; color:var(--soft-text); line-height:1.8; margin-bottom:1.25rem;">
+          In our fast-paced digital world, receiving a physical, tactile letter written by hand carries immense energetic weight. <strong>Notes by Beth</strong> is a bespoke spiritual service where Beth Elise personally tunes into the energetic field of you or your chosen recipient to channel a message of comfort, confirmation, soul reassurance, and unconditional love.
+        </p>
+        <p style="font-size:1.02rem; color:var(--soft-text); line-height:1.8; margin-bottom:1.75rem;">
+          Every note is inscribed in rich gold or botanical ink on heavy archival deckle-edge parchment, sealed with a celestial teal or royal gold moon-and-fairy wax stamp, charged with healing Reiki energy, and shipped with clear quartz blessings.
+        </p>
+        <div style="display:flex; align-items:center; gap:1.5rem; flex-wrap:wrap;">
+          <div style="font-family:var(--font-serif); font-size:2rem; font-weight:700; color:var(--indigo-deep);">$28.00 <span style="font-size:0.85rem; color:var(--soft-text); font-weight:500;">/ includes worldwide shipping</span></div>
+          <a href="#order-form" class="btn-primary"><span>💌</span> Order a Love Note</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- How It Works Steps -->
+    <div class="section__header fade-in">
+      <span class="section__eyebrow">✦ The Sacred Process ✦</span>
+      <h2 class="section__title">How It Works</h2>
+      <p class="section__desc">From soul connection to your recipient's mailbox</p>
+    </div>
+
+    <div class="notes-step-grid">
+      <div class="notes-step-card fade-in">
+        <div class="notes-step-num">1</div>
+        <h3 class="notes-step-title">Set Intention</h3>
+        <p class="notes-step-desc">Choose who the letter is for (yourself or a loved one) and specify the occasion or soul intention.</p>
+      </div>
+
+      <div class="notes-step-card fade-in fade-in-delay-1">
+        <div class="notes-step-num">2</div>
+        <h3 class="notes-step-title">Beth Channels</h3>
+        <p class="notes-step-desc">Beth connects in sacred meditation to channel intuitive guidance, spirit confirmations, and loving reassurance.</p>
+      </div>
+
+      <div class="notes-step-card fade-in fade-in-delay-2">
+        <div class="notes-step-num">3</div>
+        <h3 class="notes-step-title">Handwritten & Sealed</h3>
+        <p class="notes-step-desc">Inscribed on botanical deckle-edge parchment and sealed with an ornate celestial wax stamp.</p>
+      </div>
+
+      <div class="notes-step-card fade-in fade-in-delay-3">
+        <div class="notes-step-num">4</div>
+        <h3 class="notes-step-title">Blessed & Shipped</h3>
+        <p class="notes-step-desc">Infused with Reiki energy and packaged carefully to arrive as an unforgettable soul gift.</p>
+      </div>
+    </div>
+
+    <!-- Interactive Order Section -->
+    <div class="order-note-card fade-in" id="order-form">
+      <div style="text-align:center; max-width:680px; margin:0 auto 2.5rem;">
+        <span class="notes__tagline">Bespoke Offering</span>
+        <h2 class="notes__title">Send a Love Note</h2>
+        <p style="color:var(--tiffany-pale); font-size:1rem; line-height:1.7;">
+          Fill out the recipient details and intention below. Beth will personally channel and craft this unique physical letter.
+        </p>
+      </div>
+
+      <form id="notes-order-form" style="max-width:720px; margin:0 auto;">
+        <div class="form__row">
+          <div class="form-group">
+            <label for="note-sender-name" style="color:var(--tiffany-pale);">Your Name *</label>
+            <input type="text" id="note-sender-name" required placeholder="Your full name" />
+          </div>
+          <div class="form-group">
+            <label for="note-sender-email" style="color:var(--tiffany-pale);">Your Email *</label>
+            <input type="email" id="note-sender-email" required placeholder="For order confirmation" />
+          </div>
+        </div>
+
+        <div class="form__row">
+          <div class="form-group">
+            <label for="note-recipient-name" style="color:var(--tiffany-pale);">Recipient's Full Name *</label>
+            <input type="text" id="note-recipient-name" required placeholder="Name of person receiving the note" />
+          </div>
+          <div class="form-group">
+            <label for="note-occasion" style="color:var(--tiffany-pale);">Soul Occasion / Intention *</label>
+            <select id="note-occasion" required>
+              <option value="" disabled selected>Select Intention...</option>
+              <option value="Soul Reassurance & Comfort">Soul Reassurance & Comfort</option>
+              <option value="Healing Grief & Spirit Connection">Healing Grief & Spirit Connection</option>
+              <option value="Birthday or Life Transition Blessing">Birthday or Life Transition Blessing</option>
+              <option value="Deep Gratitude & Love">Deep Gratitude & Love</option>
+              <option value="Surprise Uplifting Channeled Message">Surprise Uplifting Channeled Message</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="note-shipping-address" style="color:var(--tiffany-pale);">Recipient Shipping Address *</label>
+          <textarea id="note-shipping-address" required placeholder="Street Address, City, State/Province, Postal Code, Country" style="min-height:90px;"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="note-context" style="color:var(--tiffany-pale);">Special Notes or Context for Beth (Optional)</label>
+          <textarea id="note-context" placeholder="Share any specific situation, loved ones in spirit, or personal context you'd like Beth to hold in meditation..." style="min-height:90px;"></textarea>
+        </div>
+
+        <div class="form__row" style="align-items:center;">
+          <div class="form-group">
+            <label style="color:var(--tiffany-pale);">Wax Seal Stamp Color</label>
+            <div style="display:flex; gap:0.75rem; margin-top:0.5rem;">
+              <label style="display:flex; align-items:center; gap:0.4rem; color:#FFFFFF; font-size:0.88rem; cursor:pointer;">
+                <input type="radio" name="seal_color" value="Celestial Teal" checked /> Celestial Teal
+              </label>
+              <label style="display:flex; align-items:center; gap:0.4rem; color:#FFFFFF; font-size:0.88rem; cursor:pointer;">
+                <input type="radio" name="seal_color" value="Royal Gold" /> Royal Gold
+              </label>
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-family:var(--font-serif); font-size:1.8rem; font-weight:700; color:var(--gold);">$28.00</div>
+            <div style="font-size:0.78rem; color:var(--tiffany-pale);">Includes handwritten craft & postage</div>
+          </div>
+        </div>
+
+        <button type="submit" class="form__submit" style="margin-top:1.5rem; width:100%;">
+          ✨ Complete & Send Sacred Love Note ($28.00)
+        </button>
+      </form>
+    </div>
+
+  </div>
+
+  <!-- ✦ CONCISE ANIMATED FOOTER ✦ -->
+  <footer class="footer" role="contentinfo">
+    <canvas id="footer-celestial-canvas" aria-hidden="true"></canvas>
+    <div class="container">
+      <div class="footer__content-row">
+        <div class="footer__brand-block">
+          <img src="../images/logo.png" alt="Beth Elise Psychic Medium" class="footer__logo" />
+          <div class="footer__slogan">Intuitive Wisdom ✦ Energy Healing ✦ Somatic EFT</div>
+        </div>
+
+        <nav class="footer__nav-strip" aria-label="Footer Navigation">
+          <a href="../index.html">Home</a>
+          <a href="../index.html#about">About</a>
+          <a href="services.html">Services</a>
+          <a href="notes-by-beth.html">Notes by Beth</a>
+          <a href="merch.html">Merch</a>
+          <a href="testimonials.html">Testimonials</a>
+          <a href="contact.html">Contact</a>
+        </nav>
+
+        <div class="footer__social-row" aria-label="Social Media Links">
+          <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="footer__social-btn" aria-label="Instagram">
+            <i class="fa-brands fa-instagram"></i>
+          </a>
+          <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" class="footer__social-btn" aria-label="TikTok">
+            <i class="fa-brands fa-tiktok"></i>
+          </a>
+          <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" class="footer__social-btn" aria-label="YouTube">
+            <i class="fa-brands fa-youtube"></i>
+          </a>
+          <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" class="footer__social-btn" aria-label="Facebook">
+            <i class="fa-brands fa-facebook-f"></i>
+          </a>
+          <a href="https://spotify.com" target="_blank" rel="noopener noreferrer" class="footer__social-btn" aria-label="Spotify Podcast">
+            <i class="fa-brands fa-spotify"></i>
+          </a>
+        </div>
+      </div>
+
+      <div class="footer__bottom-bar">
+        <span>&copy; 2026 Beth Elise Psychic Medium · All Rights Reserved</span>
+        <span>Clifton, New Jersey & Worldwide (Virtual)</span>
+        <div>
+          <a href="contact.html">Privacy</a> · <a href="contact.html">Terms</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ✦ SACRED CART DRAWER ✦ -->
+  <div id="cart-drawer-overlay" class="cart-drawer-overlay" aria-hidden="true"></div>
+  <aside id="cart-drawer" class="cart-drawer" role="dialog" aria-label="Shopping Bag">
+    <div class="cart-drawer__header">
+      <h3 class="cart-drawer__title">Sacred Bag</h3>
+      <button type="button" id="cart-close-btn" class="cart-drawer__close" aria-label="Close cart">&times;</button>
+    </div>
+    <div id="cart-drawer-items" class="cart-drawer__items"></div>
+    <div class="cart-drawer__footer">
+      <div class="cart-subtotal">
+        <span>Subtotal</span>
+        <span id="cart-subtotal-val" class="cart-subtotal-price">$0.00</span>
+      </div>
+      <button type="button" id="cart-checkout-btn" class="cart-checkout-btn">
+        <span>✨</span> Proceed to Secure Checkout
+      </button>
+    </div>
+  </aside>
+
+  <script src="../js/main.js"></script>
+  <script>
+    document.getElementById('notes-order-form')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const btn = e.target.querySelector('button[type="submit"]');
+      if (btn) { btn.textContent = '✨ Channeling & Placing Order...'; btn.disabled = true; }
+      setTimeout(() => {
+        alert('🌟 Sacred Love Note Ordered! Beth Elise will channel, handwrite, and ship your note with blessing.');
+        e.target.reset();
+        if (btn) { btn.textContent = '✨ Complete & Send Sacred Love Note ($28.00)'; btn.disabled = false; }
+      }, 1200);
+    });
+  </script>
+</body>
+</html>
