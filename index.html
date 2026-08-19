@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Alex+Brush&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Dancing+Script:wght@500;600;700&family=Great+Vibes&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Satisfy&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=15.0" />
+  <link rel="stylesheet" href="css/style.css?v=20.0" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 </head>
 <body>
@@ -388,27 +388,44 @@
   </section>
 
   <!-- ✦ INTERACTIVE DAILY SOUL ORACLE CARD ✦ -->
-  <section class="oracle-section" aria-label="Daily Soul Oracle Card">
+  <section class="oracle-section" id="oracle" aria-label="Daily Soul Oracle Card">
     <div class="container">
       <span class="section__eyebrow">✦ Daily Channeled Blessing ✦</span>
       <h2 class="section__title">Daily Soul Guidance</h2>
-      <p class="section__desc">Click the sacred card below to draw your channeled affirmation and energetic message for today.</p>
+      <p class="section__desc">Touch the glowing crystal sphere below to draw your channeled affirmation and energetic message for today.</p>
 
       <div class="oracle-card-container fade-in" id="daily-oracle-card" title="Click to draw your daily card">
-        <div class="oracle-card-flipper">
-          <div class="oracle-card-front">
-            <div class="oracle-card-pattern">🔮</div>
-            <h3 style="font-family:var(--font-serif); font-size:1.35rem; color:var(--gold); margin-bottom:0.4rem;">Touch to Reveal</h3>
-            <p style="font-size:0.8rem; color:var(--tiffany-pale);">Your Soul Message Awaits</p>
+        <div class="oracle-sphere-stage">
+          <!-- 3D Large Earth-Rotating Crystal Ball (Fills containing circle, no stand) -->
+          <div class="crystal-ball-wrapper">
+            <div class="crystal-ball-ambient-glow"></div>
+            <div class="crystal-ball-orbital-ring crystal-ball-orbital-ring--outer"></div>
+            <div class="crystal-ball-orbital-ring crystal-ball-orbital-ring--inner"></div>
+            <canvas id="oracle-crystal-ball-canvas" width="480" height="480"></canvas>
+            <div class="crystal-ball-sparkle star-1">✦</div>
+            <div class="crystal-ball-sparkle star-2">✨</div>
+            <div class="crystal-ball-sparkle star-3">✦</div>
           </div>
-          <div class="oracle-card-back">
-            <div class="oracle-result-icon" id="oracle-res-icon">⭐</div>
-            <h4 class="oracle-result-title" id="oracle-res-title">The Sacred Glade</h4>
-            <p class="oracle-result-text" id="oracle-res-text">
-              You are held in divine sanctuary. Surrender current worries to spirit; alignment and clarity are blossoming.
-            </p>
-            <div style="margin-top:1.25rem; font-size:0.75rem; color:var(--gold); font-weight:700; text-transform:uppercase; letter-spacing:0.1em;">
-              ✦ Click to Draw Again ✦
+
+          <!-- Front State Prompt -->
+          <div class="oracle-overlay-front" id="oracle-overlay-front">
+            <h3 class="oracle-front-title">Touch to Reveal</h3>
+            <p class="oracle-front-subtitle">Your Sacred Soul Message Awaits</p>
+          </div>
+
+          <!-- Channeled Result Overlay (Animated Photorealistic Ball pulses & remains fully visible!) -->
+          <div class="oracle-overlay-result" id="oracle-overlay-result">
+            <div class="oracle-result-glass-card">
+              <div class="oracle-result-icon-wrap" id="oracle-res-icon-wrap">
+                <span class="oracle-result-lum-icon" id="oracle-res-icon">✦</span>
+              </div>
+              <h4 class="oracle-result-title" id="oracle-res-title">The Sacred Glade</h4>
+              <p class="oracle-result-text" id="oracle-res-text">
+                You are held in divine sanctuary. Surrender current worries to spirit; alignment and clarity are blossoming.
+              </p>
+              <div class="oracle-redraw-badge">
+                ✦ Click to Draw Again ✦
+              </div>
             </div>
           </div>
         </div>
@@ -920,28 +937,32 @@
   </section>
 
   <!-- ✦ INTUITIVE SOUL ALIGNMENT GUIDE (Interactive Experience) ✦ -->
-  <section class="alignment-quiz-section" aria-label="Intuitive Soul Alignment Guide">
+  <section class="alignment-quiz-section" id="quiz" aria-label="Intuitive Soul Alignment Guide">
     <div class="container">
       <div class="section__header fade-in">
         <span class="section__eyebrow">✦ 30-Second Energetic Diagnostic ✦</span>
         <h2 class="section__title">Intuitive Alignment Guide</h2>
-        <p class="section__desc">Discover the sacred modality tailored to your spirit's current vibration and soul journey.</p>
+        <p class="section__desc">Discover the sacred modality and physical talisman tailored to your spirit's current vibration and soul journey.</p>
       </div>
 
       <div class="quiz-container fade-in" id="alignment-quiz">
         <!-- Step 1 -->
         <div class="quiz-step active" id="quiz-step-1">
+          <div class="quiz-progress-bar-wrap">
+            <span class="quiz-progress-label">Step 1 of 2: Soul Intention</span>
+            <div class="quiz-progress-track"><div class="quiz-progress-fill" style="width: 50%;"></div></div>
+          </div>
           <h3 class="quiz-question">What is your soul seeking most today?</h3>
           <div class="quiz-options-grid">
             <button type="button" class="quiz-btn quiz-opt-1" data-val="mediumship">
               <span class="quiz-btn-icon">🔮</span>
-              <span class="quiz-btn-title">Spiritual Validation & Mediumship</span>
-              <span class="quiz-btn-subtitle">Connect with departed loved ones & soul destiny</span>
+              <span class="quiz-btn-title">Spiritual Validation &amp; Mediumship</span>
+              <span class="quiz-btn-subtitle">Connect with departed loved ones &amp; soul destiny</span>
             </button>
             <button type="button" class="quiz-btn quiz-opt-1" data-val="reiki">
               <span class="quiz-btn-icon">✋</span>
               <span class="quiz-btn-title">Chakra Energy Restructuring</span>
-              <span class="quiz-btn-subtitle">Clear fatigue & unblock heavy emotional stagnation</span>
+              <span class="quiz-btn-subtitle">Clear fatigue &amp; unblock heavy emotional stagnation</span>
             </button>
             <button type="button" class="quiz-btn quiz-opt-1" data-val="tapping">
               <span class="quiz-btn-icon">🌿</span>
@@ -958,6 +979,10 @@
 
         <!-- Step 2 -->
         <div class="quiz-step" id="quiz-step-2">
+          <div class="quiz-progress-bar-wrap">
+            <span class="quiz-progress-label">Step 2 of 2: Sacred Delivery</span>
+            <div class="quiz-progress-track"><div class="quiz-progress-fill" style="width: 100%;"></div></div>
+          </div>
           <h3 class="quiz-question">How would you like to receive your healing?</h3>
           <div class="quiz-options-grid">
             <button type="button" class="quiz-btn quiz-opt-2" data-val="live">
@@ -968,20 +993,43 @@
             <button type="button" class="quiz-btn quiz-opt-2" data-val="mail">
               <span class="quiz-btn-icon">🕊️</span>
               <span class="quiz-btn-title">Physical Artifact Delivered</span>
-              <span class="quiz-btn-subtitle">Archival deckle parchment shipped to your door</span>
+              <span class="quiz-btn-subtitle">Archival deckle parchment &amp; sacred tool shipped to your door</span>
             </button>
           </div>
         </div>
 
         <!-- Result -->
         <div class="quiz-step" id="quiz-result">
-          <span class="section__eyebrow">Your Recommended Sacred Path</span>
-          <h3 class="quiz-result-title" id="quiz-res-title">Evidential Mediumship Reading</h3>
-          <p class="quiz-result-desc" id="quiz-res-desc">
-            Your soul is calling for direct spiritual connection and closure with loved ones in the higher realms.
-          </p>
-          <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap;">
-            <a href="#contact" class="btn-primary" id="quiz-res-cta">✨ Book Your Recommended Session</a>
+          <div class="quiz-result-header">
+            <span class="section__eyebrow">✦ Your Bespoke Alignment Blueprint ✦</span>
+            <h3 class="quiz-result-title" id="quiz-res-title">Evidential Psychic Mediumship</h3>
+            <p class="quiz-result-desc" id="quiz-res-desc">
+              Your soul is calling for direct spiritual validation, heartfelt connection with departed loved ones, and reassuring confirmation of your destiny.
+            </p>
+          </div>
+
+          <!-- Dual Prescription Grid: Energetic Modality + Physical Artifact -->
+          <div class="quiz-prescription-grid">
+            <!-- Card 1: Energetic Soul Modality -->
+            <div class="quiz-prescription-card">
+              <span class="prescription-badge">✦ Recommended Modality ✦</span>
+              <div class="prescription-icon" id="quiz-modality-icon">🔮</div>
+              <h4 class="prescription-name" id="quiz-modality-name">Evidential Mediumship</h4>
+              <p class="prescription-text" id="quiz-modality-desc">1-on-1 sacred channeled session connecting with your departed loved ones and spirit team.</p>
+              <a href="#contact" class="btn-primary" id="quiz-res-cta">✨ Book Your Sacred Session</a>
+            </div>
+
+            <!-- Card 2: Sacred Physical Artifact (Direct Store Integration) -->
+            <div class="quiz-prescription-card quiz-prescription-card--artifact">
+              <span class="prescription-badge prescription-badge--gold">✦ Sacred Physical Artifact ✦</span>
+              <div class="prescription-icon prescription-icon--artifact" id="quiz-artifact-icon">👕</div>
+              <h4 class="prescription-name" id="quiz-artifact-name">The Eye Believe Heavyweight Cotton Tee</h4>
+              <p class="prescription-text" id="quiz-artifact-desc">Anointed organic cotton daily ritual garment imbued with protective sacred geometry ($48).</p>
+              <a href="#merch" class="btn-gold" id="quiz-artifact-cta">🛍️ View &amp; Order in Store →</a>
+            </div>
+          </div>
+
+          <div style="margin-top: 2rem; display:flex; justify-content:center;">
             <button type="button" class="btn-secondary" id="quiz-reset-btn">🔄 Retake Diagnostic</button>
           </div>
         </div>
@@ -1620,20 +1668,24 @@
     <div class="assistant-modal-card" role="dialog" aria-modal="true" aria-labelledby="assistant-modal-title">
       <button type="button" class="modal-close" id="close-assistant-modal-btn" aria-label="Close Assistant Menu">×</button>
       <div class="assistant-modal-header">
-        <span class="assistant-modal-icon">👁️</span>
+        <div class="assistant-modal-icon-orb">
+          <img src="images/photorealistic_purple_iris_orb.png" alt="aEYE Sacred Guide" class="assistant-modal-eye-img" />
+        </div>
         <h3 id="assistant-modal-title"><span class="aeye-brand">aEYE</span> — SACRED GUIDE</h3>
         <p>How may I guide your sacred journey today?</p>
       </div>
 
       <!-- Search / Ask a Question -->
       <div class="aeye-search-wrap">
-        <span class="aeye-search-icon">🔍</span>
+        <span class="aeye-search-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00FFC8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        </span>
         <input type="text" class="aeye-search-input" id="aeye-search-input" placeholder="Ask aEYE anything or search the site..." autocomplete="off" />
       </div>
 
       <div class="assistant-quick-links">
         <a href="#contact" class="assistant-link-card" onclick="closeAssistantModal()">
-          <span class="assistant-link-icon">✨</span>
+          <span class="assistant-link-icon-badge">✦</span>
           <div>
             <strong>Book a Reading</strong>
             <span>Evidential Psychic Mediumship &amp; Distance Reiki</span>
@@ -1642,7 +1694,7 @@
         </a>
 
         <a href="#chakra-resonance" class="assistant-link-card" onclick="closeAssistantModal()">
-          <span class="assistant-link-icon">🧘‍♀️</span>
+          <span class="assistant-link-icon-badge">✧</span>
           <div>
             <strong>Seven Chakras Resonance</strong>
             <span>Tune your energy &amp; play Solfeggio sound bowls</span>
@@ -1651,7 +1703,7 @@
         </a>
 
         <a href="#events" class="assistant-link-card" onclick="closeAssistantModal()">
-          <span class="assistant-link-icon">👻</span>
+          <span class="assistant-link-icon-badge">❖</span>
           <div>
             <strong>Ghost Key West Special Event</strong>
             <span>Live paranormal tour &amp; evidential mediumship</span>
@@ -1660,7 +1712,7 @@
         </a>
 
         <a href="#merch" class="assistant-link-card" onclick="closeAssistantModal()">
-          <span class="assistant-link-icon">🛍️</span>
+          <span class="assistant-link-icon-badge">✪</span>
           <div>
             <strong>Sacred Merch Collection</strong>
             <span>"Eye Believe" apparel, hats, and crystal sets</span>
@@ -1671,6 +1723,6 @@
     </div>
   </div>
 
-  <script src="js/main.js?v=15.0"></script>
+  <script src="js/main.js?v=20.0"></script>
 </body>
 </html>

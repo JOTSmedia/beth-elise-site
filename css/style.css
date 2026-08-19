@@ -428,17 +428,19 @@ p {
   pointer-events: none;
 }
 
-/* High-Definition Purple / Amethyst Iris with Limbal Ring */
+/* High-Definition Photorealistic Purple / Amethyst Iris with Limbal Ring */
 .preloader__iris {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   position: relative;
-  /* Deep dark limbal ring with rich radiating purple layers */
-  background: radial-gradient(circle at center, #240046 0%, #5A189A 35%, #9D4EDD 65%, #C77DFF 85%, #10002B 100%);
-  box-shadow: 0 0 3px 1.5px #10002B,
-              0 0 14px rgba(199, 125, 255, 0.85),
-              inset 0 0 6px rgba(0, 0, 0, 0.7);
+  background-image: url('../images/photorealistic_purple_iris_orb.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  box-shadow: 0 0 4px 1.5px #10002B,
+              0 0 16px rgba(199, 125, 255, 0.9),
+              inset 0 0 6px rgba(0, 0, 0, 0.8);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3444,99 +3446,247 @@ p {
    ═══════════════════════════════════════════ */
 .oracle-section {
   background: radial-gradient(circle at center, #240046 0%, #120024 100%);
-  padding: 5rem 0;
+  padding: 5.5rem 0;
   text-align: center;
   position: relative;
   overflow: hidden;
 }
 
 .oracle-card-container {
-  perspective: 1200px;
-  width: 280px;
-  height: 420px;
+  width: min(94vw, 440px);
+  min-height: 560px;
   margin: 2.5rem auto;
   cursor: pointer;
-}
-
-.oracle-card-flipper {
-  width: 100%;
-  height: 100%;
+  border-radius: var(--radius-xl);
+  background: linear-gradient(155deg, #1C0035 0%, #2E0050 50%, #0F001D 100%);
+  border: 2px solid rgba(0, 229, 212, 0.65);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 45px rgba(0, 229, 212, 0.45);
   position: relative;
-  transform-style: preserve-3d;
-  transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  overflow: hidden;
+  padding: 2.5rem 1.8rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease, border-color 0.4s ease;
 }
 
-.oracle-card-container.flipped .oracle-card-flipper {
-  transform: rotateY(180deg);
+.oracle-card-container:hover {
+  transform: translateY(-4px);
+  border-color: #00FFC8;
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.85), 0 0 60px rgba(0, 229, 212, 0.6);
 }
 
-.oracle-card-front, .oracle-card-back {
+.oracle-sphere-stage {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ✦ PHOTOREALISTIC LARGE 3D SPHERICAL CRYSTAL BALL ✦ */
+.crystal-ball-wrapper {
+  position: relative;
+  width: 320px;
+  height: 320px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.crystal-ball-ambient-glow {
   position: absolute;
-  inset: 0;
-  border-radius: var(--radius-lg);
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6), 0 0 30px rgba(0, 229, 212, 0.35);
-  border: 2px solid rgba(0, 229, 212, 0.5);
-}
-
-.oracle-card-front {
-  background: linear-gradient(145deg, #1F0038, #36005E);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-  color: #FFFFFF;
-}
-
-.oracle-card-pattern {
-  width: 120px;
-  height: 120px;
-  border: 2px dashed var(--tiffany);
+  width: 290px;
+  height: 290px;
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 3.5rem;
-  color: var(--gold);
-  margin-bottom: 1.5rem;
-  box-shadow: 0 0 25px rgba(0, 229, 212, 0.4);
-  animation: preloader-spin 12s linear infinite;
+  background: radial-gradient(circle, rgba(0, 255, 200, 0.5) 0%, rgba(199, 125, 255, 0.45) 45%, rgba(255, 215, 0, 0.25) 70%, transparent 88%);
+  filter: blur(16px);
+  animation: crystal-ambient-pulse 3.5s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 1;
 }
 
-.oracle-card-back {
-  background: linear-gradient(145deg, #2D0052, #100024);
-  transform: rotateY(180deg);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 2.2rem;
-  color: #FFFFFF;
+@keyframes crystal-ambient-pulse {
+  0% { transform: scale(0.92); opacity: 0.75; }
+  100% { transform: scale(1.14); opacity: 1; filter: blur(22px); }
+}
+
+.crystal-ball-orbital-ring {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.crystal-ball-orbital-ring--outer {
+  width: 316px;
+  height: 316px;
+  border: 1.5px dashed rgba(0, 255, 200, 0.75);
+  box-shadow: 0 0 25px rgba(0, 229, 212, 0.45);
+  animation: preloader-spin 18s linear infinite;
+}
+
+.crystal-ball-orbital-ring--inner {
+  width: 288px;
+  height: 288px;
+  border: 1.2px dotted rgba(255, 215, 0, 0.75);
+  animation: preloader-spin 14s linear infinite reverse;
+}
+
+#oracle-crystal-ball-canvas {
+  width: 320px;
+  height: 320px;
+  display: block;
+  border-radius: 50%;
+  filter: drop-shadow(0 0 35px rgba(0, 229, 212, 0.85)) drop-shadow(0 0 60px rgba(199, 125, 255, 0.65)) drop-shadow(0 0 90px rgba(255, 215, 0, 0.45));
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s ease;
+  user-select: none;
+  z-index: 3;
+}
+
+.oracle-card-container:hover #oracle-crystal-ball-canvas {
+  transform: scale(1.04);
+  filter: drop-shadow(0 0 50px rgba(0, 255, 200, 0.95)) drop-shadow(0 0 95px rgba(255, 215, 0, 0.85)) brightness(1.2);
+}
+
+.crystal-ball-sparkle {
+  position: absolute;
+  color: #FFD700;
+  font-size: 1.2rem;
+  pointer-events: none;
+  filter: drop-shadow(0 0 8px #FFD700);
+  animation: crystal-sparkle-orbit 4s ease-in-out infinite alternate;
+  z-index: 4;
+}
+
+.crystal-ball-sparkle.star-1 { top: 8%; left: 10%; animation-delay: 0s; font-size: 1.3rem; color: #00FFC8; }
+.crystal-ball-sparkle.star-2 { top: 14%; right: 8%; animation-delay: 1.2s; font-size: 1.5rem; }
+.crystal-ball-sparkle.star-3 { bottom: 12%; left: 12%; animation-delay: 2.4s; font-size: 1.1rem; color: #E0AAFF; }
+
+/* ✦ FRONT & REVEALED PROMPTS ✦ */
+.oracle-overlay-front {
+  text-align: center;
+  margin-top: 1.5rem;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.oracle-card-container.revealed .oracle-overlay-front {
+  display: none;
+}
+
+.oracle-front-title {
+  font-family: 'Dancing Script', 'Alex Brush', cursive !important;
+  font-size: 2.3rem !important;
+  color: #FFD700 !important;
+  text-shadow: 0 0 15px rgba(255, 215, 0, 0.7) !important;
+  margin-bottom: 0.3rem !important;
+  text-transform: none !important;
+}
+
+.oracle-front-subtitle {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #D4FFF8;
+  letter-spacing: 0.06em;
+}
+
+/* ✦ CHANNELED RESULT OVERLAY (Pulsing Ball Remains Visible in Background) ✦ */
+.oracle-overlay-result {
+  display: none;
+  width: 100%;
+  margin-top: 1.2rem;
+}
+
+.oracle-card-container.revealed .oracle-overlay-result {
+  display: block;
+  animation: fadeUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.oracle-result-glass-card {
+  background: rgba(18, 0, 36, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1.5px solid rgba(0, 229, 212, 0.55);
+  border-radius: var(--radius-lg);
+  padding: 1.6rem 1.4rem;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8), 0 0 35px rgba(0, 229, 212, 0.35);
   text-align: center;
 }
 
-.oracle-result-icon {
-  font-size: 2.8rem;
-  color: var(--gold);
-  margin-bottom: 0.75rem;
+.oracle-result-icon-wrap {
+  margin-bottom: 0.5rem;
+}
+
+.oracle-result-lum-icon {
+  font-size: 1.8rem;
+  color: #FFD700;
   filter: drop-shadow(0 0 12px #FFD700);
 }
 
 .oracle-result-title {
   font-family: var(--font-serif);
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   font-weight: 700;
-  color: var(--tiffany);
-  margin-bottom: 0.75rem;
-  text-shadow: 0 0 10px rgba(0, 229, 212, 0.6);
+  color: #00FFC8;
+  margin-bottom: 0.65rem;
+  text-shadow: 0 0 12px rgba(0, 229, 212, 0.7);
 }
 
 .oracle-result-text {
-  font-size: 0.92rem;
-  color: var(--tiffany-pale);
+  font-size: 0.96rem;
+  color: #F0FFF9;
   line-height: 1.7;
+  font-weight: 500;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.oracle-redraw-badge {
+  margin-top: 1.2rem;
+  font-size: 0.8rem;
+  color: #FFD700;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  background: rgba(255, 215, 0, 0.14);
+  border: 1px solid rgba(255, 215, 0, 0.45);
+  padding: 0.45rem 1.1rem;
+  border-radius: var(--radius-pill);
+  display: inline-block;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.oracle-redraw-badge:hover {
+  background: rgba(255, 215, 0, 0.25);
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+  transform: translateY(-2px);
+}
+
+/* ✦ aEYE MODAL PHOTOREALISTIC PURPLE EYE ICON ✦ */
+.assistant-modal-icon-orb {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid #FFD700;
+  box-shadow: 0 0 18px rgba(0, 229, 212, 0.65), 0 0 25px rgba(157, 78, 221, 0.5);
+  margin: 0 auto 0.75rem;
+}
+
+.assistant-modal-eye-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.assistant-link-icon-badge {
+  font-size: 1.3rem;
+  color: #00FFC8;
+  filter: drop-shadow(0 0 8px #00E5D4);
+  margin-right: 0.5rem;
 }
 
 /* ═══════════════════════════════════════════
@@ -3833,6 +3983,234 @@ p {
 }
 
 /* ═══════════════════════════════════════════
+   ✦ INTUITIVE SOUL ALIGNMENT GUIDE ✦
+   ═══════════════════════════════════════════ */
+.alignment-quiz-section {
+  background: radial-gradient(circle at center, #260048 0%, #100020 100%);
+  padding: 6rem 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.quiz-container {
+  max-width: 860px;
+  margin: 2.5rem auto 0;
+  background: linear-gradient(155deg, rgba(28, 1, 52, 0.94) 0%, rgba(13, 0, 28, 0.98) 100%);
+  border: 1.5px solid rgba(0, 229, 212, 0.45);
+  border-radius: var(--radius-xl);
+  padding: 3.5rem 3rem;
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.8), 0 0 45px rgba(0, 229, 212, 0.25);
+  text-align: center;
+  position: relative;
+}
+
+.quiz-progress-bar-wrap {
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.quiz-progress-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #00FFC8;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.quiz-progress-track {
+  width: 100%;
+  max-width: 320px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.quiz-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00FFC8, #FFD700);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.quiz-step { display: none; }
+.quiz-step.active { display: block; animation: fadeUp 0.4s ease forwards; }
+
+.quiz-question {
+  font-family: 'Dancing Script', 'Alex Brush', cursive !important;
+  font-size: clamp(2.5rem, 5.2vw, 3.4rem) !important;
+  color: #FFFFFF !important;
+  margin-bottom: 2rem !important;
+  text-shadow: 0 0 15px rgba(0, 229, 212, 0.6) !important;
+  text-transform: none !important;
+}
+
+.quiz-options-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 650px) {
+  .quiz-options-grid { grid-template-columns: 1fr; }
+  .quiz-container { padding: 2rem 1.25rem; }
+}
+
+.quiz-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1.5px solid rgba(0, 229, 212, 0.35);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem 1.25rem;
+  color: #FFFFFF;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.65rem;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: center;
+}
+
+.quiz-btn-icon { font-size: 2.2rem; filter: drop-shadow(0 0 8px #00E5D4); }
+.quiz-btn-title { font-family: var(--font-body); font-size: 1.02rem; font-weight: 800; color: #FFFFFF; }
+.quiz-btn-subtitle { font-size: 0.85rem; color: #D4FFF8; font-weight: 500; }
+
+.quiz-btn:hover {
+  background: rgba(0, 229, 212, 0.16);
+  border-color: #00FFC8;
+  transform: translateY(-4px);
+  box-shadow: 0 0 25px rgba(0, 229, 212, 0.55);
+}
+
+.quiz-result-header {
+  margin-bottom: 2.5rem;
+}
+
+.quiz-result-title {
+  font-family: 'Dancing Script', 'Alex Brush', cursive !important;
+  font-size: clamp(2.6rem, 5vw, 3.4rem) !important;
+  color: #FFD700 !important;
+  margin-bottom: 0.85rem !important;
+  text-shadow: 0 0 18px rgba(255, 215, 0, 0.7) !important;
+  text-transform: none !important;
+}
+
+.quiz-result-desc {
+  font-size: 1.1rem;
+  color: #F0FFF9;
+  line-height: 1.8;
+  max-width: 680px;
+  margin: 0 auto;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+/* ✦ DUAL PRESCRIPTION GRID (Modality + Physical Store Artifact) ✦ */
+.quiz-prescription-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  text-align: left;
+  margin-top: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .quiz-prescription-grid { grid-template-columns: 1fr; }
+}
+
+.quiz-prescription-card {
+  background: linear-gradient(155deg, rgba(38, 2, 68, 0.9) 0%, rgba(16, 0, 34, 0.95) 100%);
+  border: 1.5px solid rgba(0, 229, 212, 0.45);
+  border-radius: var(--radius-lg);
+  padding: 1.8rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6);
+  position: relative;
+  transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.quiz-prescription-card:hover {
+  transform: translateY(-4px);
+  border-color: #00FFC8;
+}
+
+.quiz-prescription-card--artifact {
+  border-color: rgba(255, 215, 0, 0.55);
+  background: linear-gradient(155deg, rgba(46, 12, 0, 0.85) 0%, rgba(20, 2, 38, 0.95) 100%);
+}
+
+.quiz-prescription-card--artifact:hover {
+  border-color: #FFD700;
+  box-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
+}
+
+.prescription-badge {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #00FFC8;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.75rem;
+  display: inline-block;
+}
+
+.prescription-badge--gold {
+  color: #FFD700;
+}
+
+.prescription-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  filter: drop-shadow(0 0 10px #00E5D4);
+}
+
+.prescription-icon--artifact {
+  filter: drop-shadow(0 0 10px #FFD700);
+}
+
+.prescription-name {
+  font-family: var(--font-body);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #FFFFFF;
+  margin-bottom: 0.5rem;
+}
+
+.prescription-text {
+  font-size: 0.92rem;
+  color: #E2D9F3;
+  line-height: 1.65;
+  margin-bottom: 1.5rem;
+}
+
+/* Gold Button for Store Artifact CTA */
+.btn-gold {
+  display: inline-block;
+  text-align: center;
+  padding: 0.85rem 1.4rem;
+  background: linear-gradient(135deg, #FFD700 0%, #FFA000 100%);
+  color: #16002E !important;
+  font-size: 0.85rem;
+  font-weight: 900;
+  border-radius: var(--radius-pill);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+  transition: all 0.25s ease;
+  cursor: pointer;
+}
+
+.btn-gold:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 25px rgba(255, 215, 0, 0.8);
+}
+
+/* ═══════════════════════════════════════════
    CELESTIAL SOUND CHIME MODAL
    ═══════════════════════════════════════════ */
 .sound-modal-card {
@@ -3970,99 +4348,7 @@ p {
   box-shadow: 0 0 25px rgba(0, 255, 200, 0.8);
 }
 
-/* ═══════════════════════════════════════════
-   INTUITIVE SOUL ALIGNMENT GUIDE (Quiz)
-   ═══════════════════════════════════════════ */
-.alignment-quiz-section {
-  background: radial-gradient(circle at center, #260048 0%, #100020 100%);
-  padding: 6rem 2rem;
-  position: relative;
-  overflow: hidden;
-}
 
-.quiz-container {
-  max-width: 800px;
-  margin: 2.5rem auto 0;
-  background: rgba(18, 0, 36, 0.85);
-  border: 1.5px solid rgba(0, 229, 212, 0.4);
-  border-radius: var(--radius-xl);
-  padding: 3.5rem 3rem;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 40px rgba(0, 229, 212, 0.2);
-  text-align: center;
-  position: relative;
-}
-
-.quiz-step { display: none; }
-.quiz-step.active { display: block; animation: fadeUp 0.4s ease forwards; }
-
-.quiz-question {
-  font-family: var(--font-script);
-  font-size: clamp(2.4rem, 5vw, 3.2rem);
-  color: #FFFFFF;
-  margin-bottom: 2rem;
-  text-shadow: 0 0 15px rgba(0, 229, 212, 0.6);
-}
-
-.quiz-options-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.25rem;
-  margin-bottom: 2rem;
-}
-
-@media (max-width: 650px) {
-  .quiz-options-grid { grid-template-columns: 1fr; }
-  .quiz-container { padding: 2rem 1.5rem; }
-}
-
-.quiz-btn {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1.5px solid rgba(0, 229, 212, 0.3);
-  border-radius: var(--radius-lg);
-  padding: 1.5rem 1.25rem;
-  color: #FFFFFF;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.6rem;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  text-align: center;
-}
-
-.quiz-btn-icon { font-size: 2rem; filter: drop-shadow(0 0 8px #00E5D4); }
-.quiz-btn-title { font-family: var(--font-body); font-size: 1rem; font-weight: 800; }
-.quiz-btn-subtitle { font-size: 0.82rem; color: #E2D9F3; }
-
-.quiz-btn:hover {
-  background: rgba(0, 229, 212, 0.15);
-  border-color: #00FFC8;
-  transform: translateY(-4px);
-  box-shadow: 0 0 25px rgba(0, 229, 212, 0.5);
-}
-
-.quiz-result-card {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1.5px solid var(--tiffany);
-  border-radius: var(--radius-lg);
-  padding: 2.5rem;
-  margin-top: 1.5rem;
-}
-
-.quiz-result-title {
-  font-family: var(--font-script);
-  font-size: 2.8rem;
-  color: var(--gold);
-  margin-bottom: 0.75rem;
-  text-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
-}
-
-.quiz-result-desc {
-  font-size: 1.05rem;
-  color: #FFFFFF;
-  line-height: 1.8;
-  margin-bottom: 2rem;
-}
 
 /* ═══════════════════════════════════════════
    BACK TO TOP CELESTIAL BUTTON

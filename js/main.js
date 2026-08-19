@@ -2580,7 +2580,7 @@
     class CelestialAudioEngine {
       constructor() {
         this.ctx = null;
-        this.enabled = true; // Auto-enabled for intuitive chakra interaction
+        this.enabled = false; // OFF by default as requested by user
         this.currentFreq = 528;
       }
       init() {
@@ -2592,7 +2592,9 @@
           this.ctx.resume();
         }
       }
-      playChime(freq = this.currentFreq, duration = 2.2) {
+      playChime(freq = this.currentFreq, duration = 2.2, force = false) {
+        // Only play if enabled or explicitly forced by user action
+        if (!this.enabled && !force) return;
         try {
           this.init();
           if (!this.ctx) return;
@@ -2627,9 +2629,9 @@
         } catch(e) {}
       }
       playGlissando() {
-        this.enabled = true;
+        if (!this.enabled) return;
         [528, 639, 741, 852, 963].forEach((f, idx) => {
-          setTimeout(() => this.playChime(f, 1.8), idx * 90);
+          setTimeout(() => this.playChime(f, 1.8, true), idx * 90);
         });
       }
     }
@@ -2670,6 +2672,7 @@
         if (navFreqMobileLabel) navFreqMobileLabel.textContent = 'Sound (Off)';
       }
     };
+    updateAudioUIState();
 
     const openSoundModal = () => {
       soundModal?.classList.add('active');
@@ -2736,6 +2739,13 @@
     const quizResTitle = document.getElementById('quiz-res-title');
     const quizResDesc = document.getElementById('quiz-res-desc');
     const quizResCta = document.getElementById('quiz-res-cta');
+    const quizModalityIcon = document.getElementById('quiz-modality-icon');
+    const quizModalityName = document.getElementById('quiz-modality-name');
+    const quizModalityDesc = document.getElementById('quiz-modality-desc');
+    const quizArtifactIcon = document.getElementById('quiz-artifact-icon');
+    const quizArtifactName = document.getElementById('quiz-artifact-name');
+    const quizArtifactDesc = document.getElementById('quiz-artifact-desc');
+    const quizArtifactCta = document.getElementById('quiz-artifact-cta');
     let quizAnswers = {};
 
     document.querySelectorAll('.quiz-opt-1').forEach(btn => {
@@ -2743,7 +2753,7 @@
         quizAnswers.need = btn.getAttribute('data-val');
         quizStep1?.classList.remove('active');
         quizStep2?.classList.add('active');
-        window.celestialAudio.playChime(639);
+        if (window.celestialAudio && window.celestialAudio.enabled) window.celestialAudio.playChime(639);
       });
     });
 
@@ -2752,31 +2762,110 @@
         quizAnswers.style = btn.getAttribute('data-val');
         quizStep2?.classList.remove('active');
         quizResult?.classList.add('active');
-        window.celestialAudio.playGlissando();
+        if (window.celestialAudio && window.celestialAudio.enabled) window.celestialAudio.playGlissando();
 
-        // Compute Recommendation
+        // Dynamic Recommendations: Modality + Sacred Store Artifact
         if (quizAnswers.need === 'mediumship') {
-          quizResTitle.textContent = '🔮 Evidential Psychic Mediumship';
-          quizResDesc.textContent = 'Your soul is calling for direct spiritual validation, heartfelt connection with departed loved ones, and reassuring confirmation of your destiny.';
-          quizResCta.href = '#contact';
-          quizResCta.textContent = '✨ Book Psychic Mediumship Session';
+          quizResTitle.textContent = '🔮 Evidential Psychic Mediumship & Spirit Connection';
+          quizResDesc.textContent = 'Your soul is calling for direct spiritual validation, heartfelt communion with departed loved ones, and divine confirmation of your life path.';
+          
+          if (quizModalityIcon) quizModalityIcon.textContent = '🔮';
+          if (quizModalityName) quizModalityName.textContent = 'Evidential Mediumship Session';
+          if (quizModalityDesc) quizModalityDesc.textContent = '1-on-1 private virtual reading bridging the veil to deliver evidential proof, sacred closure, and channeled messages.';
+          if (quizResCta) {
+            quizResCta.href = '#contact';
+            quizResCta.textContent = '✨ Book Psychic Mediumship Session';
+          }
+
+          if (quizArtifactIcon) quizArtifactIcon.textContent = '👕';
+          if (quizArtifactName) quizArtifactName.textContent = 'The Eye Believe Heavyweight Cotton Tee';
+          if (quizArtifactDesc) quizArtifactDesc.textContent = 'Anointed organic heavyweight ritual garment featuring the sacred talisman embroidery ($48).';
+          if (quizArtifactCta) {
+            quizArtifactCta.href = '#merch';
+            quizArtifactCta.setAttribute('data-target-product', 'tee');
+          }
         } else if (quizAnswers.need === 'reiki') {
-          quizResTitle.textContent = '✋ Restorative Reiki Chakra Alignment';
-          quizResDesc.textContent = 'Your energetic field is ready to shed physical fatigue and somatic constriction, restoring luminous equilibrium to all 7 chakra centers.';
-          quizResCta.href = '#contact';
-          quizResCta.textContent = '🌿 Book Reiki Healing Session';
+          quizResTitle.textContent = '✋ Restorative Reiki Energy Restructuring';
+          quizResDesc.textContent = 'Your energetic field is ready to shed physical fatigue, dissolve energy cords, and restore luminous equilibrium across all 7 chakra centers.';
+          
+          if (quizModalityIcon) quizModalityIcon.textContent = '✋';
+          if (quizModalityName) quizModalityName.textContent = 'Distance Reiki Healing Session';
+          if (quizModalityDesc) quizModalityDesc.textContent = 'Multi-dimensional subtle-body purification, chakra cord clearing, and restorative biofield amplification.';
+          if (quizResCta) {
+            quizResCta.href = '#contact';
+            quizResCta.textContent = '🌿 Book Reiki Energy Session';
+          }
+
+          if (quizArtifactIcon) quizArtifactIcon.textContent = '🧥';
+          if (quizArtifactName) quizArtifactName.textContent = 'The Eye Believe Heavyweight Sweatshirt';
+          if (quizArtifactDesc) quizArtifactDesc.textContent = 'Ultra-plush fleece sanctuary layer for post-session integration and daily warmth ($68).';
+          if (quizArtifactCta) {
+            quizArtifactCta.href = '#merch';
+            quizArtifactCta.setAttribute('data-target-product', 'sweatshirt');
+          }
         } else if (quizAnswers.need === 'tapping') {
-          quizResTitle.textContent = '🌿 The Tapping Solution (EFT Acupressure)';
-          quizResDesc.textContent = 'Rapid nervous system reprogramming to dissolve anxiety, release past trauma loops, and establish sovereign emotional calm.';
-          quizResCta.href = '#contact';
-          quizResCta.textContent = '✨ Book EFT Tapping Session';
+          quizResTitle.textContent = '🌿 Somatic EFT Acupressure Tapping';
+          quizResDesc.textContent = 'Rapid nervous system reprogramming to dissolve anxiety loops, release stored cellular tension, and establish sovereign grounded peace.';
+          
+          if (quizModalityIcon) quizModalityIcon.textContent = '🌿';
+          if (quizModalityName) quizModalityName.textContent = 'EFT Tapping Solution Session';
+          if (quizModalityDesc) quizModalityDesc.textContent = 'Clinical meridian acupressure protocols to clear chronic anxiety, fear triggers, and emotional overload.';
+          if (quizResCta) {
+            quizResCta.href = '#contact';
+            quizResCta.textContent = '✨ Book EFT Tapping Session';
+          }
+
+          if (quizArtifactIcon) quizArtifactIcon.textContent = '🧢';
+          if (quizArtifactName) quizArtifactName.textContent = 'The Eye Believe Classic Trucker Hat';
+          if (quizArtifactDesc) quizArtifactDesc.textContent = 'Structured mesh crown with raised dimensional third-eye embroidery for outdoor protection ($34).';
+          if (quizArtifactCta) {
+            quizArtifactCta.href = '#merch';
+            quizArtifactCta.setAttribute('data-target-product', 'hat');
+          }
         } else {
-          quizResTitle.textContent = '✉️ Notes by Beth (Handwritten Channeled Letter)';
+          quizResTitle.textContent = '💌 Notes by Beth (Handwritten Channeled Letter)';
           quizResDesc.textContent = 'A sacred, tactile love note channeled directly for your soul, sealed in teal wax and infused with high-vibrational crystal blessings.';
-          quizResCta.href = 'pages/notes-by-beth.html';
-          quizResCta.textContent = '💌 Order Your Soul Letter';
+          
+          if (quizModalityIcon) quizModalityIcon.textContent = '💌';
+          if (quizModalityName) quizModalityName.textContent = 'Notes by Beth Soul Letter';
+          if (quizModalityDesc) quizModalityDesc.textContent = 'A bespoke physical channeled letter handwritten by Beth Elise on archival deckle-edge parchment ($28).';
+          if (quizResCta) {
+            quizResCta.href = '#notes';
+            quizResCta.textContent = '💌 Order Your Soul Letter ($28)';
+          }
+
+          if (quizArtifactIcon) quizArtifactIcon.textContent = '✨';
+          if (quizArtifactName) quizArtifactName.textContent = 'The Eye Believe Sacred Merch Collection';
+          if (quizArtifactDesc) quizArtifactDesc.textContent = 'Complete your sacred space with physical ritual attire and protective apparel.';
+          if (quizArtifactCta) {
+            quizArtifactCta.href = '#merch';
+            quizArtifactCta.setAttribute('data-target-product', 'all');
+          }
         }
+
+        // Scroll smoothly to result
+        quizResult?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       });
+    });
+
+    // Handle physical artifact CTA click with store card highlight
+    quizArtifactCta?.addEventListener('click', (e) => {
+      e.preventDefault();
+      const merchSection = document.getElementById('merch');
+      if (merchSection) {
+        merchSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        showToast('🛍️ Navigated to Sacred Merch Store');
+        const cards = merchSection.querySelectorAll('.merch-card');
+        cards.forEach(card => {
+          card.style.transition = 'transform 0.4s ease, box-shadow 0.4s ease';
+          card.style.transform = 'scale(1.04)';
+          card.style.boxShadow = '0 0 35px rgba(0, 229, 212, 0.8), 0 0 50px rgba(255, 215, 0, 0.5)';
+          setTimeout(() => {
+            card.style.transform = '';
+            card.style.boxShadow = '';
+          }, 2200);
+        });
+      }
     });
 
     document.getElementById('quiz-reset-btn')?.addEventListener('click', () => {
@@ -3481,12 +3570,227 @@
 
     updateCartUI();
 
-    // ─── INTERACTIVE ORACLE CARD PULL WIDGET ──────────
+    // ─── 3D EARTH-ROTATING PHOTOREALISTIC CRYSTAL BALL CANVAS ENGINE ───
+    function initOracleRotatingCrystalBall() {
+      const canvas = document.getElementById('oracle-crystal-ball-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      const cw = canvas.width;
+      const ch = canvas.height;
+      const cx = cw * 0.5;
+      const cy = ch * 0.5; // Perfectly centered spherical orb
+      const sphereRadius = 215; // Fills entire containing circle!
+      const earthTilt = 23.5 * (Math.PI / 180); // 23.5 deg axial Earth tilt
+
+      // Load Photorealistic Assets
+      const imgPano = new Image();
+      imgPano.src = 'images/crystal_nebula_panorama.jpg';
+
+      const imgSpec = new Image();
+      imgSpec.src = 'images/crystal_glass_specular.png';
+
+      // Generate 3D Spherical Cosmic Features (Constellations & Stardust)
+      const celestialPoints = [];
+      const numPoints = 280;
+
+      for (let i = 0; i < numPoints; i++) {
+        const u = Math.random();
+        const v = Math.random();
+        const lat = Math.acos(2 * u - 1) - Math.PI / 2;
+        const lon = 2 * Math.PI * v;
+        const r = sphereRadius * (0.45 + Math.random() * 0.52);
+        const size = 1.4 + Math.random() * 3.2;
+        const color = ['#FFFFFF', '#00FFC8', '#FFD700', '#C77DFF', '#E0AAFF', '#76FF03'][Math.floor(Math.random() * 6)];
+        const isMajorStar = Math.random() > 0.8;
+        celestialPoints.push({ lat, lon, r, size, color, isMajorStar });
+      }
+
+      let animId = null;
+
+      function renderCrystalBall(now) {
+        ctx.clearRect(0, 0, cw, ch);
+
+        // Continuous planetary rotation like Earth
+        const rotAngle = (now * 0.00065) % (Math.PI * 2);
+        const pulse = 1.0 + Math.sin(now * 0.0025) * 0.12;
+
+        ctx.save();
+
+        // ─── 1. BASE VOLUMETRIC AURA (Transparent Multi-tier Radiant Halo) ───
+        const auraGrad = ctx.createRadialGradient(cx, cy, sphereRadius * 0.2, cx, cy, sphereRadius * 1.35 * pulse);
+        auraGrad.addColorStop(0, 'rgba(0, 255, 200, 0.45)');
+        auraGrad.addColorStop(0.35, 'rgba(157, 78, 221, 0.35)');
+        auraGrad.addColorStop(0.7, 'rgba(255, 215, 0, 0.2)');
+        auraGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = auraGrad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, sphereRadius * 1.35 * pulse, 0, Math.PI * 2);
+        ctx.fill();
+
+        // ─── 2. PHOTOREALISTIC ROTATING COSMIC GALAXY SPHERE ───
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cx, cy, sphereRadius, 0, Math.PI * 2);
+        ctx.clip(); // Constrain internal 3D elements inside sphere
+
+        // Base Deep Cosmos Glass Gradient
+        const cosmosGrad = ctx.createRadialGradient(cx, cy - sphereRadius * 0.2, 0, cx, cy, sphereRadius);
+        cosmosGrad.addColorStop(0, '#2D0052');
+        cosmosGrad.addColorStop(0.4, '#1C0035');
+        cosmosGrad.addColorStop(0.8, '#0E001A');
+        cosmosGrad.addColorStop(1, '#05000C');
+        ctx.fillStyle = cosmosGrad;
+        ctx.fillRect(cx - sphereRadius, cy - sphereRadius, sphereRadius * 2, sphereRadius * 2);
+
+        // Draw Photorealistic Rotating Panoramic Nebula Texture
+        if (imgPano.complete && imgPano.naturalWidth > 0) {
+          ctx.save();
+          ctx.translate(cx, cy);
+          ctx.rotate(earthTilt); // 23.5° axial Earth tilt
+
+          const panoW = sphereRadius * 4;
+          const panoH = sphereRadius * 2.2;
+          const scrollSpeed = 0.035;
+          const panoOffset = (now * scrollSpeed) % (panoW * 0.5);
+
+          ctx.globalAlpha = 0.88 * pulse;
+          ctx.drawImage(imgPano, -panoW * 0.5 - panoOffset, -panoH * 0.5, panoW, panoH);
+          ctx.drawImage(imgPano, -panoW * 0.5 - panoOffset + panoW * 0.5, -panoH * 0.5, panoW, panoH);
+          ctx.restore();
+        }
+
+        // Pulsing luminous core flare
+        const coreNebula = ctx.createRadialGradient(cx + Math.sin(rotAngle) * 22, cy + Math.cos(rotAngle) * 16, 0, cx, cy, sphereRadius * 0.95);
+        coreNebula.addColorStop(0, `rgba(255, 255, 255, ${0.92 * pulse})`);
+        coreNebula.addColorStop(0.25, `rgba(0, 255, 200, ${0.8 * pulse})`);
+        coreNebula.addColorStop(0.55, `rgba(199, 125, 255, ${0.7 * pulse})`);
+        coreNebula.addColorStop(0.85, 'rgba(28, 0, 53, 0.4)');
+        coreNebula.addColorStop(1, 'transparent');
+        ctx.fillStyle = coreNebula;
+        ctx.fillRect(cx - sphereRadius, cy - sphereRadius, sphereRadius * 2, sphereRadius * 2);
+
+        // ─── 3. ROTATING 3D CELESTIAL STARDUST PARTICLES ───
+        const projectedPoints = [];
+        celestialPoints.forEach(pt => {
+          const curLon = pt.lon + rotAngle;
+          const x3 = pt.r * Math.cos(pt.lat) * Math.sin(curLon);
+          const y3 = pt.r * Math.sin(pt.lat) * Math.cos(earthTilt) - pt.r * Math.cos(pt.lat) * Math.cos(curLon) * Math.sin(earthTilt);
+          const z3 = pt.r * Math.cos(pt.lat) * Math.cos(curLon) * Math.cos(earthTilt) + pt.r * Math.sin(pt.lat) * Math.sin(earthTilt);
+
+          if (z3 > -sphereRadius * 0.3) {
+            projectedPoints.push({
+              x: cx + x3,
+              y: cy + y3,
+              z: z3,
+              size: pt.size,
+              color: pt.color,
+              isMajor: pt.isMajorStar,
+              alpha: Math.max(0.2, Math.min(1.0, (z3 + sphereRadius * 0.3) / (sphereRadius * 1.3)))
+            });
+          }
+        });
+
+        projectedPoints.sort((a, b) => a.z - b.z);
+
+        projectedPoints.forEach(p => {
+          ctx.save();
+          ctx.globalAlpha = p.alpha;
+          ctx.fillStyle = p.color;
+
+          if (p.isMajor) {
+            const s = p.size * (1.2 + Math.sin(now * 0.003 + p.x) * 0.4);
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y - s * 2.2);
+            ctx.lineTo(p.x + s * 0.3, p.y);
+            ctx.lineTo(p.x, p.y + s * 2.2);
+            ctx.lineTo(p.x - s * 0.3, p.y);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.moveTo(p.x - s * 2.2, p.y);
+            ctx.lineTo(p.x, p.y - s * 0.3);
+            ctx.lineTo(p.x + s * 2.2, p.y);
+            ctx.lineTo(p.x, p.y + s * 0.3);
+            ctx.closePath();
+            ctx.fill();
+          } else {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size * 0.8, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.restore();
+        });
+
+        ctx.restore(); // Exit sphere clipping
+
+        // ─── 4. PHOTOREALISTIC SPECULAR GLASS OVERLAY & FRESNEL RIM GLOW ───
+        ctx.save();
+        if (imgSpec.complete && imgSpec.naturalWidth > 0) {
+          ctx.globalAlpha = 0.88;
+          ctx.drawImage(imgSpec, cx - sphereRadius * 1.05, cy - sphereRadius * 1.05, sphereRadius * 2.1, sphereRadius * 2.1);
+        }
+
+        // Curved Optical Specular Highlight
+        const hlX = cx - sphereRadius * 0.38;
+        const hlY = cy - sphereRadius * 0.38;
+        const hlGrad = ctx.createRadialGradient(hlX, hlY, 0, hlX, hlY, sphereRadius * 0.45);
+        hlGrad.addColorStop(0, 'rgba(255, 255, 255, 0.98)');
+        hlGrad.addColorStop(0.35, 'rgba(255, 255, 255, 0.65)');
+        hlGrad.addColorStop(0.7, 'rgba(163, 255, 248, 0.25)');
+        hlGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = hlGrad;
+        ctx.beginPath();
+        ctx.ellipse(hlX, hlY, sphereRadius * 0.36, sphereRadius * 0.22, -Math.PI / 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Secondary bottom specular reflection
+        const bhlX = cx + sphereRadius * 0.32;
+        const bhlY = cy + sphereRadius * 0.35;
+        const bhlGrad = ctx.createRadialGradient(bhlX, bhlY, 0, bhlX, bhlY, sphereRadius * 0.3);
+        bhlGrad.addColorStop(0, 'rgba(0, 255, 200, 0.55)');
+        bhlGrad.addColorStop(0.6, 'rgba(199, 125, 255, 0.25)');
+        bhlGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = bhlGrad;
+        ctx.beginPath();
+        ctx.ellipse(bhlX, bhlY, sphereRadius * 0.26, sphereRadius * 0.12, Math.PI / 6, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Fresnel Edge Rim Glow
+        const rimGrad = ctx.createRadialGradient(cx, cy, sphereRadius * 0.82, cx, cy, sphereRadius);
+        rimGrad.addColorStop(0, 'rgba(0, 229, 212, 0)');
+        rimGrad.addColorStop(0.7, 'rgba(0, 255, 200, 0.45)');
+        rimGrad.addColorStop(0.95, 'rgba(255, 255, 255, 0.95)');
+        rimGrad.addColorStop(1, 'rgba(0, 229, 212, 0.85)');
+        ctx.fillStyle = rimGrad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, sphereRadius, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.lineWidth = 2.0;
+        ctx.beginPath();
+        ctx.arc(cx, cy, sphereRadius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+
+        animId = requestAnimationFrame(renderCrystalBall);
+      }
+
+      animId = requestAnimationFrame(renderCrystalBall);
+    }
+
+    // Initialize 3D Rotating Crystal Ball
+    initOracleRotatingCrystalBall();
+
+    // ─── INTERACTIVE ORACLE CARD PULL WIDGET (Persistent Active Ball) ───
     const oracleCards = [
-      { icon: '🌙', title: 'The Sacred Glade', text: 'You are held in divine sanctuary. Surrender current worries to spirit; alignment and clarity are blossoming.' },
-      { icon: '⭐', title: 'Starlight Awakening', text: 'Your intuition is sharper than ever. Trust the quiet nudges and subtle synchronicities appearing in your path.' },
-      { icon: '🧚', title: 'Pixie Stardust (Joy)', text: 'Lighten your energetic field. Laughter, nature, and playful presence will dissolve heavy emotional blockages.' },
-      { icon: '✋', title: 'Usui Healing Touch', text: 'Universal life force energy is recalibrating your chakras. Allow yourself to rest and receive cellular renewal.' },
+      { icon: '✦', title: 'The Sacred Glade', text: 'You are held in divine sanctuary. Surrender current worries to spirit; alignment and clarity are blossoming.' },
+      { icon: '✧', title: 'Starlight Awakening', text: 'Your intuition is sharper than ever. Trust the quiet nudges and subtle synchronicities appearing in your path.' },
+      { icon: '❖', title: 'Pixie Stardust (Joy)', text: 'Lighten your energetic field. Laughter, nature, and playful presence will dissolve heavy emotional blockages.' },
+      { icon: '✪', title: 'Usui Healing Touch', text: 'Universal life force energy is recalibrating your chakras. Allow yourself to rest and receive cellular renewal.' },
       { icon: '🔮', title: 'Ancestral Confirmation', text: 'Loved ones in spirit are watching over you with unconditional love. A confirmation sign will arrive soon.' },
       { icon: '🌿', title: 'Somatic Release (EFT)', text: 'Breathe deeply. Release subconscious tension stored in your shoulders and chest. You are safe in this moment.' }
     ];
@@ -3494,22 +3798,29 @@
     const oracleContainer = document.getElementById('daily-oracle-card');
     let oracleFlipped = false;
 
-    oracleContainer?.addEventListener('click', () => {
+    function revealDailyOracleCard() {
+      const randomCard = oracleCards[Math.floor(Math.random() * oracleCards.length)];
+      const iconEl = document.getElementById('oracle-res-icon');
+      const titleEl = document.getElementById('oracle-res-title');
+      const textEl = document.getElementById('oracle-res-text');
+
+      if (iconEl) iconEl.textContent = randomCard.icon;
+      if (titleEl) titleEl.textContent = randomCard.title;
+      if (textEl) textEl.textContent = randomCard.text;
+
+      oracleContainer?.classList.add('revealed');
+      oracleFlipped = true;
+      showToast('✨ Daily Soul Message Channeled!');
+      if (window.celestialAudio && window.celestialAudio.enabled) window.celestialAudio.playGlissando();
+    }
+
+    oracleContainer?.addEventListener('click', (e) => {
       if (!oracleFlipped) {
-        const randomCard = oracleCards[Math.floor(Math.random() * oracleCards.length)];
-        const iconEl = document.getElementById('oracle-res-icon');
-        const titleEl = document.getElementById('oracle-res-title');
-        const textEl = document.getElementById('oracle-res-text');
-
-        if (iconEl) iconEl.textContent = randomCard.icon;
-        if (titleEl) titleEl.textContent = randomCard.title;
-        if (textEl) textEl.textContent = randomCard.text;
-
-        oracleContainer.classList.add('flipped');
-        oracleFlipped = true;
-        showToast('✨ Daily Soul Message Channeled!');
+        revealDailyOracleCard();
+      } else if (e.target.closest('.oracle-redraw-badge')) {
+        revealDailyOracleCard();
       } else {
-        oracleContainer.classList.remove('flipped');
+        oracleContainer.classList.remove('revealed');
         oracleFlipped = false;
       }
     });
@@ -3637,7 +3948,7 @@
       }
     }, { passive: true });
 
-    // ─── PERSISTENT aEYE SACRED GUIDE (Thought Bubble + Auto-Fade + Site Search) ───
+    // ─── PERSISTENT aEYE SACRED GUIDE (Photorealistic Purple Eye + Site Search) ───
     function initSacredAssistant() {
       const widget = document.getElementById('sacred-assistant-widget');
       const avatarBtn = document.getElementById('assistant-avatar-btn');
@@ -3651,6 +3962,81 @@
       const searchInput = document.getElementById('aeye-search-input');
 
       if (!widget) return;
+
+      // Draw Photorealistic Purple Eye on Avatar Canvas
+      if (avatarCanvas) {
+        const actx = avatarCanvas.getContext('2d');
+        const eyeImg = new Image();
+        eyeImg.src = 'images/photorealistic_purple_iris_orb.png';
+
+        let mouseX = 0.5, mouseY = 0.5;
+        window.addEventListener('mousemove', (e) => {
+          const rect = avatarCanvas.getBoundingClientRect();
+          mouseX = Math.max(-1, Math.min(1, (e.clientX - (rect.left + rect.width * 0.5)) / 200));
+          mouseY = Math.max(-1, Math.min(1, (e.clientY - (rect.top + rect.height * 0.5)) / 200));
+        }, { passive: true });
+
+        function renderAvatar(now) {
+          const aw = avatarCanvas.width;
+          const ah = avatarCanvas.height;
+          const acx = aw * 0.5;
+          const acy = ah * 0.5;
+          actx.clearRect(0, 0, aw, ah);
+
+          const pulse = 1.0 + Math.sin(now * 0.003) * 0.08;
+
+          // Outer glowing pulse ring
+          const ringGrad = actx.createRadialGradient(acx, acy, 22, acx, acy, 36 * pulse);
+          ringGrad.addColorStop(0, 'rgba(0, 229, 212, 0.6)');
+          ringGrad.addColorStop(0.5, 'rgba(157, 78, 221, 0.4)');
+          ringGrad.addColorStop(1, 'transparent');
+          actx.fillStyle = ringGrad;
+          actx.beginPath();
+          actx.arc(acx, acy, 36 * pulse, 0, Math.PI * 2);
+          actx.fill();
+
+          // Gold Border Ring
+          actx.strokeStyle = 'rgba(255, 215, 0, 0.85)';
+          actx.lineWidth = 2.0;
+          actx.beginPath();
+          actx.arc(acx, acy, 32, 0, Math.PI * 2);
+          actx.stroke();
+
+          // Circular Mask for Photorealistic Purple Iris
+          actx.save();
+          actx.beginPath();
+          actx.arc(acx, acy, 30, 0, Math.PI * 2);
+          actx.clip();
+
+          // Saccade tracking offset
+          const offsetX = mouseX * 4;
+          const offsetY = mouseY * 4;
+
+          if (eyeImg.complete && eyeImg.naturalWidth > 0) {
+            actx.drawImage(eyeImg, acx - 32 + offsetX, acy - 32 + offsetY, 64, 64);
+          } else {
+            // Purple gradient fallback
+            const irisGrad = actx.createRadialGradient(acx, acy, 0, acx, acy, 30);
+            irisGrad.addColorStop(0, '#000000');
+            irisGrad.addColorStop(0.4, '#5A189A');
+            irisGrad.addColorStop(0.8, '#9D4EDD');
+            irisGrad.addColorStop(1, '#00FFC8');
+            actx.fillStyle = irisGrad;
+            actx.fillRect(0, 0, aw, ah);
+          }
+
+          // Specular cornea glint
+          actx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+          actx.beginPath();
+          actx.arc(acx - 8, acy - 8, 3.5, 0, Math.PI * 2);
+          actx.fill();
+
+          actx.restore();
+
+          requestAnimationFrame(renderAvatar);
+        }
+        requestAnimationFrame(renderAvatar);
+      }
 
       // ─── aEye Thought Bubble Tips ───
       const tips = [
