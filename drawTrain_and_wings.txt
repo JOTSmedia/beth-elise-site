@@ -1,0 +1,65 @@
+ctx.moveTo(-10 * AV_K, -4 * AV_K);
+1740:         ctx.lineTo(12 * AV_K, -2 * AV_K);
+1741:         ctx.quadraticCurveTo(36 * AV_K, 10 * AV_K, 32 * AV_K, 19 * AV_K);
+1742:         ctx.lineTo(-9 * AV_K, 16 * AV_K);
+1743:         ctx.closePath();
+1744:         ctx.fill();
+1745: 
+1746:         // Stiletto heel with starlight glint
+1747:         ctx.strokeStyle = shoeFill;
+1748:         ctx.lineWidth = 4.5 * AV_K;
+1749:         ctx.beginPath();
+1750:         ctx.moveTo(-7 * AV_K, 14 * AV_K);
+1751:         ctx.lineTo(-13 * AV_K, 32 * AV_K);
+1752:         ctx.stroke();
+1753: 
+1754:         // Golden shoe buckle sparkle
+1755:         ctx.fillStyle = '#FFD700';
+1756:         ctx.beginPath();
+1757:         ctx.arc(10 * AV_K, 2 * AV_K, 2.2 * AV_K, 0, Math.PI * 2);
+1758:         ctx.fill();
+1759: 
+1760:         ctx.restore();
+1761:       }
+1762: 
+1763:       /**
+1764:        * Swing the dress train. It hangs off her hip on its own layer, and lags
+1765:        * behind the stride the way heavy fabric does — the peak of the swing
+1766:        * arrives after the hip that drove it. Left static it read as a tail.
+1767:        */
+1768:       function drawTrain(ctx, walkPhase, isWalking, drift) {
+1769:         if (!imgTrain.complete || !imgTrain.naturalWidth) return;
+1770:         const p = avLocal(PIV_TRAIN);
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.
+"}
+{"step_index":390,"source":"MODEL","type":"PLANNER_RESPONSE","status":"DONE","created_at":"2026-08-21T21:50:31Z","tool_calls":[{"name":"view_file","args":{"AbsolutePath":"/Users/bethrooney/Desktop/JOTS.MEDIA_AG/clients/bethElisePsychic_v37/js/main.js","EndLine":1800,"StartLine":1770,"toolAction":"View drawTrain in main.js","toolSummary":"main.js lines 1770-1800"}}]}
+{"step_index":391,"source":"MODEL","type":"GENERIC","status":"DONE","created_at":"2026-08-21T21:50:33Z","content":"Created At: 2026-08-21T17:50:33-04:00
+Completed At: 2026-08-21T17:50:33-04:00
+File Path: `file:///Users/bethrooney/Desktop/JOTS.MEDIA_AG/clients/bethElisePsychic_v37/js/main.js`
+Total Lines: 4988
+Total Bytes: 210823
+Showing lines 1770 to 1800
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+1770:         const p = avLocal(PIV_TRAIN);
+1771:         // fabric lags the hips by ~0.9rad; idles on a slow flutter when still
+1772:         const swing = isWalking
+1773:           ? -0.05 + 0.20 * Math.sin(walkPhase - 0.9)
+1774:           : 0.03 * Math.sin(drift * 0.6);
+1775:         // and billows very slightly as it swings out
+1776:         const billow = 1 + 0.05 * Math.abs(Math.sin(walkPhase - 0.9));
+1777: 
+1778:         ctx.save();
+1779:         ctx.translate(p.x, p.y);
+1780:         ctx.rotate(swing);
+1781:         ctx.scale(billow, 1);
+1782:         ctx.translate(-p.x, -p.y);
+1783:         ctx.drawImage(imgTrain, AV_OX, AV_OY, AV_DRAW, AV_DRAW);
+1784:         ctx.restore();
+1785:       }
+1786: 
+1787:       /**
+1788:        * Beat one wing with majestic angel wing scale, harmonic gossamer flutter,
+1789:        * and celestial feathered bioluminescent edge lighting.
+1790:        */
+1791:       function beatWing(ctx, img, pivotSrc, beat, mirrored) {
+1792:         if (!img.complete || !img.natural

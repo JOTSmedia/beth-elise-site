@@ -1,0 +1,158 @@
+Found in 00000007.jsonl (step 22)
+function drawHeroTinkerbellSprite(ctx, x, y, wingPhase, headAngle = 0, isPerched = false, sway = 0, isStrutting = false, strutPhase = 0, facingLeft = false, diveAngle = 0) {\n1746:         ctx.save();\n1747:         ctx.translate(x + sway, y);\n1748: \n1749:         if (facingLeft) ctx.scale(-1, 1);\n1750:         if (diveAngle !== 0) ctx.rotate(diveAngle);\n1751: \n1752:         const baseScale = AVATAR_SCALE;\n1753:         ctx.scale(baseScale, baseScale);\n1754: \n1755:         // Radiant Stardust Aura\n1756:         const pulse = 1.0 + Math.sin(wingPhase * 0.5) * 0.08;\n1757:         const aura = ctx.createRadialGradient(0, -60, 20, 0, -60, 260 * pulse);\n1758:         aura.addColorStop(0, 'rgba(255, 255, 255, 0.9)');\n1759:         aura.addColorStop(0.3, 'rgba(0, 255, 200, 0.5)');\n1760:         aura.addColorStop(0.7, 'rgba(157, 78, 221, 0.25)');\n1761:         aura.addColorStop(1, 'transparent');\n1762:         ctx.fillStyle = aura;\n1763:         ctx.beginPath();\n1764:         ctx.arc(0, -60, 260 * pulse, 0, Math.PI * 2);\n1765:         ctx.fill();\n1766: \n1767:         // ── WINGS (behind her, always beating) ──\n1768:         const beat = Math.sin(wingPhase);\n1769:     
+============================================================
+Found in 00000008.jsonl (step 0)
+function drawHeroTinkerbellSprite(ctx, x, y, wingPhase, headAngle = 0, isPerched = false, sway = 0, isStrutting = false, strutPhase = 0, facingLeft = false, diveAngle = 0) {\n1746:         ctx.save();\n1747:         ctx.translate(x + sway, y);\n1748: \n1749:         if (facingLeft) ctx.scale(-1, 1);\n1750:         if (diveAngle !== 0) ctx.rotate(diveAngle);\n1751: \n1752:         const baseScale = AVATAR_SCALE;\n1753:         ctx.scale(baseScale, baseScale);\n1754: \n1755:         // Radiant Stardust Aura\n1756:         const pulse = 1.0 + Math.sin(wingPhase * 0.5) * 0.08;\n1757:         const aura = ctx.createRadialGradient(0, -60, 20, 0, -60, 260 * pulse);\n1758:         aura.addColorStop(0, 'rgba(255, 255, 255, 0.9)');\n1759:         aura.addColorStop(0.3, 'rgba(0, 255, 200, 0.5)');\n1760:         aura.addColorStop(0.7, 'rgba(157, 78, 221, 0.25)');\n1761:         aura.addColorStop(1, 'transparent');\n1762:         ctx.fillStyle = aura;\n1763:         ctx.beginPath();\n1764:         ctx.arc(0, -60, 260 * pulse, 0, Math.PI * 2);\n1765:         ctx.fill();\n1766: \n1767:         // ── WINGS (behind her, always beating) ──\n1768:         const beat = Math.sin(wingPhase);\n1769:     
+============================================================
+Found in 00000009.jsonl (step 0)
+function drawHeroTinkerbellSprite(ctx, x, y, wingPhase, headAngle = 0, isPerched = false, sway = 0, isStrutting = false, strutPhase = 0, facingLeft = false, diveAngle = 0) {\n        ctx.save();\n        ctx.translate(x + sway, y);\n\n        if (facingLeft) ctx.scale(-1, 1);\n        if (diveAngle !== 0) ctx.rotate(diveAngle);\n\n        const baseScale = AVATAR_SCALE;\n        ctx.scale(baseScale, baseScale);\n\n        // Radiant Stardust Aura\n        const pulse = 1.0 + Math.sin(wingPhase * 0.5) * 0.08;\n        const aura = ctx.createRadialGradient(0, -60, 20, 0, -60, 260 * pulse);\n        aura.addColorStop(0, 'rgba(255, 255, 255, 0.9)');\n        aura.addColorStop(0.3, 'rgba(0, 255, 200, 0.5)');\n        aura.addColorStop(0.7, 'rgba(157, 78, 221, 0.25)');\n        aura.addColorStop(1, 'transparent');\n        ctx.fillStyle = aura;\n        ctx.beginPath();\n        ctx.arc(0, -60, 260 * pulse, 0, Math.PI * 2);\n        ctx.fill();\n\n        // ── WINGS (behind her, always beating) ──\n        const beat = Math.sin(wingPhase);\n        beatWing(ctx, imgWingL, PIV_WING_L, beat, true);\n        beatWing(ctx, imgWingR, PIV_WING_R, beat, false);\n\n        // ── WALK CYCLE ──\n
+============================================================
+Found in 00000010.jsonl (step 18)
+Found in 00000010.jsonl (step 26)
+Found in 00000011.jsonl (step 65)
+function drawHeroTinkerbellSprite(ctx, x, y, wingPhase, headAngle = 0, isPerched = false, sway = 0, isStrutting = false, strutPhase = 0, facingLeft = false, diveAngle = 0, isGreeting = false, now = 0) {\n1937:         ctx.save();\n1938:         ctx.translate(x + sway, y);\n1939: \n1940:         if (facingLeft) ctx.scale(-1, 1);\nThe above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.\n"}
+
+============================================================
+Found in 00000012.jsonl (step 28)
+Found in 00000013.jsonl (step 10)
+Found in 00000013.jsonl (step 11)
+Found in 00000013.jsonl (step 12)
+Found in 00000016.jsonl (step 2)
+Found in 00000016.jsonl (step 34)
+Found in 00000016.jsonl (step 36)
+Found in 00000022.jsonl (step 16)
+Found in 00000024.jsonl (step 3)
+Found in 00000024.jsonl (step 9)
+Found in 00000024.jsonl (step 11)
+function drawHeroTinkerbellSprite(ctx, x, y, wingPhase, headAngle = 0, isPerched = false, sway = 0, isStrutting = false, strutPhase = 0, facingLeft = false, diveAngle = 0, isGreeting = false, now = 0) {\n2053:         ctx.save();\n2054:         ctx.translate(x + sway, y);\n2055: \n2056:         if (facingLeft) ctx.scale(-1, 1);\n2057:         if (diveAngle !== 0) ctx.rotate(diveAngle);\n2058: \n2059:         const baseScale = AVATAR_SCALE;\n2060:         ctx.scale(baseScale, baseScale);\nThe above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.\n"}
+
+============================================================
+Found in 00000025.jsonl (step 33)
+Found in 00000025.jsonl (step 34)
+function drawHeroTinkerbellSprite(ctx, x, y, wingPhase, headAngle = 0, isPerched = false, sway = 0, isStrutting = false, strutPhase = 0, facingLeft = false, diveAngle = 0, isGreeting = false, now = 0) {\n2120:         ctx.save();\n2121:         ctx.translate(x + sway, y);\n2122: \n2123:         if (facingLeft) ctx.scale(-1, 1);\n2124:         if (diveAngle !== 0) ctx.rotate(diveAngle);\n2125: \n2126:         const baseScale = AVATAR_SCALE;\n2127:         ctx.scale(baseScale, baseScale);\n2128: \n2129:         // Breathing / Pranic pulse when greeting with speech bubble\n2130:         if (isGreeting) {\n2131:           const breath = 1.0 + Math.sin(now * 0.007) * 0.05;\n2132:           ctx.scale(breath, breath);\n2133: \n2134:           // Divine Multi-Layer Golden & Cyan Corona Aura\n2135:           const greetPulse = 1.0 + Math.sin(now * 0.008) * 0.18;\n2136:           const auraGrad = ctx.createRadialGradient(0, -60, 15, 0, -60, 360 * greetPulse);\n2137:           auraGrad.addColorStop(0, 'rgba(255, 255, 255, 0.98)');\n2138:           auraGrad.addColorStop(0.2, 'rgba(255, 215, 0, 0.8)');\n2139:           auraGrad.addColorStop(0.5, 'rgba(0, 255, 200, 0.6)');\n2140:           auraG
+============================================================
+Found in 00000031.jsonl (step 24)
+Found in 00000032.jsonl (step 8)
+Found in 00000032.jsonl (step 12)
+Found in 00000032.jsonl (step 14)
+Found in 00000032.jsonl (step 15)
+Found in 00000032.jsonl (step 24)
+function drawHeroTinkerbellSprite(ctx, x, y, wingPhase, headAngle = 0, isPerched = false, sway = 0, isStrutting = false, strutPhase = 0, facingLeft = false, diveAngle = 0, isGreeting = false, now = 0) {\n2266:         ctx.save();\n2267:         ctx.translate(x + sway, y);\n2268: \n2269:         if (facingLeft) ctx.scale(-1, 1);\n2270:         if (diveAngle !== 0) ctx.rotate(diveAngle);\n2271: \n2272:         const baseScale = AVATAR_SCALE;\n2273:         ctx.scale(baseScale, baseScale);\n2274: \n2275:         // Breathing / Pranic pulse when greeting with speech bubble\n2276:         if (isGreeting) {\n2277:           const breath = 1.0 + Math.sin(now * 0.007) * 0.05;\n2278:           ctx.scale(breath, breath);\n2279: \n2280:           // Divine Multi-Layer Golden & Cyan Corona Aura\n2281:           const greetPulse = 1.0 + Math.sin(now * 0.008) * 0.18;\n2282:           const auraGrad = ctx.createRadialGradient(0, -60, 15, 0, -60, 360 * greetPulse);\n2283:           auraGrad.addColorStop(0, 'rgba(255, 255, 255, 0.98)');\n2284:           auraGrad.addColorStop(0.2, 'rgba(255, 215, 0, 0.8)');\n2285:           auraGrad.addColorStop(0.5, 'rgba(0, 255, 200, 0.6)');\n2286:           auraG
+============================================================
+Found in 00000039.jsonl (step 6)
+Found in 00000043.jsonl (step 41)
+Found in 00000061.jsonl (step 31)
+Found in 00000061.jsonl (step 41)
+function drawHeroTinkerbellSprite(ctx, x, y, wingPhase, headAngle = 0, isPerched = false, sway = 0, isStrutting = false, strutPhase = 0, facingLeft = false, diveAngle = 0, isGreeting = false, now = 0) {\n2553:         ctx.save();\n2554:         ctx.translate(x + sway, y);\n2555: \n2556:         if (facingLeft) ctx.scale(-1, 1);\n2557:         if (diveAngle !== 0) ctx.rotate(diveAngle);\n2558: \n2559:         const baseScale = AVATAR_SCALE;\n2560:         ctx.scale(baseScale, baseScale);\n2561: \n2562:         // Breathing / Pranic pulse when greeting with speech bubble\n2563:         if (isGreeting) {\n2564:           const breath = 1.0 + Math.sin(now * 0.007) * 0.05;\n2565:           ctx.scale(breath, breath);\n2566: \n2567:           // Divine Multi-Layer Golden & Cyan Corona Aura\n2568:           const greetPulse = 1.0 + Math.sin(now * 0.008) * 0.18;\n2569:           const auraGrad = ctx.createRadialGradient(0, -60, 15, 0, -60, 360 * greetPulse);\n2570:           auraGrad.addColorStop(0, 'rgba(255, 255, 255, 0.98)');\n2571:           auraGrad.addColorStop(0.2, 'rgba(255, 215, 0, 0.8)');\n2572:           auraGrad.addColorStop(0.5, 'rgba(0, 255, 200, 0.6)');\n2573:           auraG
+============================================================
+Found in 00000063.jsonl (step 4)
+Found in 00000063.jsonl (step 8)
+Found in 00000065.jsonl (step 18)
+Found in 00000065.jsonl (step 35)
+Found in 00000066.jsonl (step 2)
+Found in 00000066.jsonl (step 11)
+Found in 00000067.jsonl (step 7)
+Found in 00000067.jsonl (step 8)
+function drawHeroTinkerbellSprite(ctx, x, y, wingPhase, headAngle = 0, isPerched = false, sway = 0, isStrutting = false, strutPhase = 0, facingLeft = false, diveAngle = 0, isGreeting = false, now = 0) {\"}"}
+
+============================================================
+Found in 00000068.jsonl (step 2)
+Found in 00000068.jsonl (step 6)
+Found in 00000068.jsonl (step 9)
+Found in 00000070.jsonl (step 14)
+Found in 00000070.jsonl (step 19)
+Found in 00000070.jsonl (step 30)
+function drawHeroTinkerbellSprite(ctx, x, y, wingPhase, headAngle = 0, isPerched = false, sway = 0, isStrutting = false, strutPhase = 0, facingLeft = false, diveAngle = 0, isGreeting = false, now = 0) {\"}"}
+
+============================================================
+Found in 00000071.jsonl (step 5)
+Found in 00000071.jsonl (step 7)
+Found in 00000072.jsonl (step 31)
+Found in 00000072.jsonl (step 34)
+Found in 00000072.jsonl (step 35)
+function drawHeroTinkerbellSprite(ctx, x, y, wingPhase, headAngle = 0, isPerched = false, sway = 0, isStrutting = false, strutPhase = 0, facingLeft = false, diveAngle = 0, isGreeting = false, now = 0) {\n3237:         ctx.save();\n3238:         ctx.translate(x + sway, y);\n3239: \n3240:         if (facingLeft) ctx.scale(-1, 1);\n3241:         if (diveAngle !== 0) ctx.rotate(diveAngle);\n3242: \n3243:         const baseScale = AVATAR_SCALE;\n3244:         ctx.scale(baseScale, baseScale);\n3245: \n3246:         // Breathing / Pranic pulse when greeting with speech bubble\n3247:         if (isGreeting) {\n3248:           const breath = 1.0 + Math.sin(now * 0.007) * 0.05;\n3249:           ctx.scale(breath, breath);\n3250: \n3251:           // Divine Multi-Layer Golden & Cyan Corona Aura\n3252:           const greetPulse = 1.0 + Math.sin(now * 0.008) * 0.18;\n3253:           const auraGrad = ctx.createRadialGradient(0, -60, 15, 0, -60, 360 * greetPulse);\n3254:           auraGrad.addColorStop(0, 'rgba(255, 255, 255, 0.98)');\n3255:           auraGrad.addColorStop(0.2, 'rgba(255, 215, 0, 0.8)');\n3256:           auraGrad.addColorStop(0.5, 'rgba(0, 255, 200, 0.6)');\n3257:           auraG
+============================================================
+Found in 00000073.jsonl (step 4)
+Found in 00000073.jsonl (step 15)
+Found in 00000073.jsonl (step 23)
+Found in 00000073.jsonl (step 24)
+Found in 00000073.jsonl (step 30)
+Found in 00000073.jsonl (step 31)
+Found in 00000074.jsonl (step 7)
+Found in 00000074.jsonl (step 11)
+Found in 00000074.jsonl (step 13)
+Found in 00000074.jsonl (step 17)
+Found in 00000074.jsonl (step 19)
+Found in 00000075.jsonl (step 10)
+Found in 00000075.jsonl (step 16)
+Found in 00000075.jsonl (step 18)
+Found in 00000075.jsonl (step 41)
+Found in 00000078.jsonl (step 16)
+Found in 00000080.jsonl (step 8)
+Found in 00000085.jsonl (step 14)
+Found in 00000085.jsonl (step 34)
+Found in 00000089.jsonl (step 13)
+Found in 00000089.jsonl (step 15)
+Found in 00000095.jsonl (step 8)
+Found in 00000095.jsonl (step 10)
+function drawHeroTinkerbellSprite(ctx, x, y, wingPhase, headAngle = 0, isPerched = false, sway = 0, isStrutting = false, strutPhase = 0, facingLeft = false, diveAngle = 0, isGreeting = false, now = 0) {\"}"}
+
+============================================================
+Found in 00000096.jsonl (step 34)
+Found in 00000099.jsonl (step 28)
+Found in 00000099.jsonl (step 39)
+function drawHeroTinkerbellSprite","SearchPath":"/Users/bethrooney/Desktop/JOTS.MEDIA_AG/clients/bethElisePsychic_v37/js/main.js","toolAction":"Search drawHeroTinkerbellSprite in main.js","toolSummary":"Search drawHeroTinkerbellSprite in main.js"}}]}
+
+============================================================
+Found in 00000100.jsonl (step 4)
+function drawHeroTinkerbellSprite(ctx, x, y, wingPhase, headAngle = 0, isPerched = false, sway = 0, isStrutting = false, strutPhase = 0, facingLeft = false, diveAngle = 0, isGreeting = false, now = 0) {\n        ctx.save();\n        ctx.translate(x + sway, y);\n\n        if (facingLeft) ctx.scale(-1, 1);\n        if (diveAngle !== 0) ctx.rotate(diveAngle);\n\n"}
+
+============================================================
+Found in 00000109.jsonl (step 54)
+Found in 00000110.jsonl (step 80)
+Found in 00000110.jsonl (step 84)
+Found in 00000111.jsonl (step 24)
+function drawHeroTinkerbellSprite(ctx, x, y, wingPhase, headAngle = 0, isPerched = false, sway = 0, isStrutting = false, strutPhase = 0, facingLeft = false, diveAngle = 0, isGreeting = false, now = 0) {\"}"}
+
+============================================================
+Found in 00000112.jsonl (step 45)
+Found in 00000112.jsonl (step 46)
+Found in 00000112.jsonl (step 52)
+function drawHeroTinkerbellSprite(ctx, x, y, wingPhase, headAngle = 0, isPerched = false, sway = 0, isStrutting = false, strutPhase = 0, facingLeft = false, diveAngle = 0, isGreeting = false, now = 0) {\n        ctx.save();\n        ctx.translate(x + sway, y);\n\n        if (facingLeft) ctx.scale(-1, 1);\n        if (diveAngle !== 0) ctx.rotate(diveAngle);\n\n        const baseScale = AVATAR_SCALE;\n        ctx.scale(baseScale, baseScale);\n\n        // Breathing / Pranic pulse when greeting with speech bubble\n        if (isGreeting) {\n          const breath = 1.0 + Math.sin(now * 0.007) * 0.04;\n          ctx.scale(breath, breath);\n\n          // Ethereal Multi-Layer Golden & Cyan Corona Aura behind sprite\n          const greetPulse = 1.0 + Math.sin(now * 0.008) * 0.12;\n          const auraGrad = ctx.createRadialGradient(0, -60, 10, 0, -60, 240 * greetPulse);\n          auraGrad.addColorStop(0, 'rgba(255, 255, 255, 0.65)');\n          auraGrad.addColorStop(0.3, 'rgba(255, 215, 0, 0.45)');\n          auraGrad.addColorStop(0.65, 'rgba(0, 255, 200, 0.25)');\n          auraGrad.addColorStop(1, 'transparent');\n\n          ctx.save();\n          ctx.fillStyle = auraGrad;\n        
+============================================================
+Found in 00000122.jsonl (step 26)
+Found in 00000123.jsonl (step 15)
+Found in 00000123.jsonl (step 52)
+function drawHeroTinkerbellSprite(ctx, x, y, wingPhase, headAngle\nL2432 depth=3->4: function drawPhotorealisticTinkerbell(ctx, p, now) {\nL2456 depth=4->5: function drawWingSide(flip) {\nL2554 depth=4->5: function fResize() {\nL2609 depth=4->5: function spawnFMeteor() {\nL2622 depth=4->5: function renderFooter(now) {\nL2744 depth=4->5: function rotateToMouse(e) {\nL2772 depth=4->5: function removeListener() {\nL3342 depth=3->4: function activateChakra(key, playAudio = true) {\nL3444 depth=3->4: function openLocationModal() {\nL3449 depth=3->4: function closeLocationModal() {\nL3472 depth=3->4: function setCelestialLocation(name, lat, lng, btnEl = null) {\nL3685 depth=3->4: function openCart() {\nL3691 depth=3->4: function closeCart() {\nL3712 depth=3->4: function updateCartUI() {\nL3940 depth=3->4: function initOracleRotatingCrystalBall() {\nL3978 depth=4->5: function renderCrystalBall(now) {\nL4167 depth=3->4: function revealDailyOracleCard() {\nL4255 depth=3->4: function showToast(msg) {\nL4288 depth=3->4: function updateActiveNav() {\nL4318 depth=3->4: function initSacredAssistant() {\nL4345 depth=5->6: function renderAvatar(now) {\nL4421 depth=4->5: function showThoughtBubble(
+============================================================
+Found in 00000125.jsonl (step 25)
+function drawHeroTinkerbellSprite(ctx, x, y, wingPhase, headAngle = 0, isPerched = false, sway = 0, isStrutting = false, strutPhase = 0, facingLeft = false, diveAngle = 0) {\n        ctx.save();\n        ctx.translate(x + sway, y);\n\n        if (facingLeft) ctx.scale(-1, 1);\n        if (diveAngle !== 0) ctx.rotate(diveAngle);\n\n        const baseScale = 0.12; // High-definition 3D character scale\n        ctx.scale(baseScale, baseScale);\n\n        // Radiant Stardust Aura\n        const pulse = 1.0 + Math.sin(wingPhase * 0.5) * 0.08;\n        const aura = ctx.createRadialGradient(0, -60, 20, 0, -60, 260 * pulse);\n        aura.addColorStop(0, 'rgba(255, 255, 255, 0.9)');\n        aura.addColorStop(0.3, 'rgba(0, 255, 200, 0.5)');\n        aura.addColorStop(0.7, 'rgba(157, 78, 221, 0.25)');\n        aura.addColorStop(1, 'transparent');\n        ctx.fillStyle = aura;\n        ctx.beginPath();\n        ctx.arc(0, -60, 260 * pulse, 0, Math.PI * 2);\n        ctx.fill();\n\n        // Render Photorealistic 3D Avatar Image\n        if (imgAvatar.complete && imgAvatar.naturalWidth > 0) {\n          ctx.save();\n          const avW = 440;\n          const avH = 440;\n          \n        
+============================================================
+Found in 00000126.jsonl (step 55)
+Found in 00000126.jsonl (step 58)
+Found in 00000126.jsonl (step 59)
+function drawHeroTinkerbellSprite' in line and 'drawWingSide' in line or 'avatar_wing_left' in line:\n                    obj = json.loads(line)\n                    tcs = obj.get('tool_calls', [])\n                    for tc in tcs:\n                        content = tc.get('args', {}).get('CodeContent') or tc.get('args', {}).get('ReplacementContent') or ''\n                        if 'function drawHeroTinkerbellSprite' in content and len(content) > 3000:\n                            print(f\"FOUND sprite in {fpath}, len {len(content)}\")\n                            with open('extracted_full_sprite_renderer.js', 'w', encoding='utf-8') as out:\n                                out.write(content)\n                            break\n    except:\n        pass\nEOF\npython3 get_full_sprite_fn.py\nrm get_full_sprite_fn.py\nls -lh extracted_full_sprite_renderer.js\n","Cwd":"/Users/bethrooney/Desktop/JOTS.MEDIA_AG/clients/bethElisePsychic_v37","WaitMsBeforeAsync":2000,"toolAction":"Search for full sprite renderer with flapping wings","toolSummary":"Search for full sprite renderer with flapping wings"}}]}
+
+============================================================
+Found in 00000127.jsonl (step 3)
+function drawHeroTinkerbellSprite(ctx, x, y, wingPhase, headAngle = 0, isPerched = false, sway = 0, isStrutting = false, strutPhase = 0, facingLeft = false, diveAngle = 0, isGreeting = false, now = performance.now()) {\n        ctx.save();\n        ctx.translate(x + sway, y);\n\n        if (facingLeft) ctx.scale(-1, 1);\n        if (diveAngle !== 0) ctx.rotate(diveAngle);\n\n        const baseScale = 0.18;\n        ctx.scale(baseScale, baseScale);\n\n        // 1. Radiant Stardust Aura & Solfeggio Halo\n        const pulse = 1.0 + Math.sin(wingPhase * 0.5) * 0.12;\n        const aura = ctx.createRadialGradient(0, -60, 20, 0, -60, 260 * pulse);\n        aura.addColorStop(0, 'rgba(255, 255, 255, 0.95)');\n        aura.addColorStop(0.25, 'rgba(0, 255, 200, 0.65)');\n        aura.addColorStop(0.65, 'rgba(157, 78, 221, 0.35)');\n        aura.addColorStop(1, 'transparent');\n        ctx.fillStyle = aura;\n        ctx.beginPath();\n        ctx.arc(0, -60, 260 * pulse, 0, Math.PI * 2);\n        ctx.fill();\n\n        const flap = Math.sin(wingPhase || 0);\n\n        // 2. Animated Flapping Gossamer Wings (Behind Body)\n        if (imgAvatarWingLeft.complete && imgAvatarWingLeft.naturalWidt
+============================================================
+Found in 00000128.jsonl (step 0)
+function drawHeroTinkerbellSprite(ctx, x, y, wingPhase, headAngle = 0, isPerched = false, sway = 0, isStrutting = false, strutPhase = 0, facingLeft = false, diveAngle = 0, isGreeting = false, now = performance.now()) {\n        ctx.save();\n        ctx.translate(x + sway, y);\n\n        if (facingLeft) ctx.scale(-1, 1);\n        if (diveAngle !== 0) ctx.rotate(diveAngle);\n\n        const baseScale = 0.18;\n        ctx.scale(baseScale, baseScale);\n\n        const pulse = 1.0 + Math.sin(wingPhase * 0.5) * 0.12;\n        const aura = ctx.createRadialGradient(0, -60, 20, 0, -60, 260 * pulse);\n        aura.addColorStop(0, 'rgba(255, 255, 255, 0.95)');\n        aura.addColorStop(0.25, 'rgba(0, 255, 200, 0.65)');\n        aura.addColorStop(0.65, 'rgba(157, 78, 221, 0.35)');\n        aura.addColorStop(1, 'transparent');\n        ctx.fillStyle = aura;\n        ctx.beginPath();\n        ctx.arc(0, -60, 260 * pulse, 0, Math.PI * 2);\n        ctx.fill();\n\n        const flap = Math.sin(wingPhase || 0);\n\n        if (imgAvatarWingLeft.complete && imgAvatarWingLeft.naturalWidth > 0 &&\n            imgAvatarWingRight.complete && imgAvatarWingRight.naturalWidth > 0) {\n          \n          c
+============================================================
+Found in 00000129.jsonl (step 0)
+function drawHeroTinkerbellSprite(ctx, x, y, wingPhase, headAngle = 0, isPerched = false, sway = 0, isStrutting = false, strutPhase = 0, facingLeft = false, diveAngle = 0, isGreeting = false, now = performance.now()) {\n        ctx.save();\n        ctx.translate(x + sway, y);\n\n        if (facingLeft) ctx.scale(-1, 1);\n        if (diveAngle !== 0) ctx.rotate(diveAngle);\n\n        const baseScale = 0.18;\n        ctx.scale(baseScale, baseScale);\n\n        const pulse = 1.0 + Math.sin(wingPhase * 0.5) * 0.12;\n        const aura = ctx.createRadialGradient(0, -60, 20, 0, -60, 260 * pulse);\n        aura.addColorStop(0, 'rgba(255, 255, 255, 0.95)');\n        aura.addColorStop(0.25, 'rgba(0, 255, 200, 0.65)');\n        aura.addColorStop(0.65, 'rgba(157, 78, 221, 0.35)');\n        aura.addColorStop(1, 'transparent');\n        ctx.fillStyle = aura;\n        ctx.beginPath();\n        ctx.arc(0, -60, 260 * pulse, 0, Math.PI * 2);\n        ctx.fill();\n\n        const flap = Math.sin(wingPhase || 0);\n\n        if (imgAvatarWingLeft.complete && imgAvatarWingLeft.naturalWidth > 0 &&\n            imgAvatarWingRight.complete && imgAvatarWingRight.naturalWidth > 0) {\n          \n          c
+============================================================
+Found in 00000131.jsonl (step 47)
+Found in 00000131.jsonl (step 48)
+Found in 00000131.jsonl (step 49)
+function drawHeroTinkerbellSprite')\ne_idx = js.find('function drawPhotorealisticTinkerbell')\n\nprint(js[s_idx:e_idx])\nEOF\npython3 inspect_sprite_renderer.py\nrm inspect_sprite_renderer.py\n","Cwd":"/Users/bethrooney/Desktop/JOTS.MEDIA_AG/clients/bethElisePsychic_v37","WaitMsBeforeAsync":2000,"toolAction":"Inspect drawHeroTinkerbellSprite implementation","toolSummary":"Inspect drawHeroTinkerbellSprite implementation"}}]}
+
+============================================================
+Found in 00000132.jsonl (step 2)
+function drawHeroTinkerbellSprite')\ne_idx = js.find('function drawPhotorealisticTinkerbell')\n\nexact_sprite = '''function drawHeroTinkerbellSprite(ctx, x, y, wingPhase, headAngle = 0, isPerched = false, sway = 0, isStrutting = false, strutPhase = 0, facingLeft = false, diveAngle = 0) {\n        ctx.save();\n        ctx.translate(x + sway, y);\n\n        if (facingLeft) ctx.scale(-1, 1);\n        if (diveAngle !== 0) ctx.rotate(diveAngle);\n\n        const baseScale = 0.12; // High-definition 3D character scale\n        ctx.scale(baseScale, baseScale);\n\n        // Radiant Stardust Aura\n        const pulse = 1.0 + Math.sin(wingPhase * 0.5) * 0.08;\n        const aura = ctx.createRadialGradient(0, -60, 20, 0, -60, 260 * pulse);\n        aura.addColorStop(0, 'rgba(255, 255, 255, 0.9)');\n        aura.addColorStop(0.3, 'rgba(0, 255, 200, 0.5)');\n        aura.addColorStop(0.7, 'rgba(157, 78, 221, 0.25)');\n        aura.addColorStop(1, 'transparent');\n        ctx.fillStyle = aura;\n        ctx.beginPath();\n        ctx.arc(0, -60, 260 * pulse, 0, Math.PI * 2);\n        ctx.fill();\n\n        // Render Photorealistic 3D Avatar Image\n        if (imgAvatar.complete && imgAvatar.natur
+============================================================
+Found in 00000133.jsonl (step 1)
+function drawHeroTinkerbellSprite')\n            if s != -1:\n                e = content.find('function updateAndRenderHeroTinkerbell', s)\n                if e == -1: e = s + 3500\n                print(f\"--- drawHeroTinkerbellSprite in chunk 43 (step {idx}) ---\")\n                print(content[s:e])\n                print(\"=\"*60)\nEOF\npython3 extract_complete_sprite_43.py\nrm extract_complete_sprite_43.py\n","Cwd":"/Users/bethrooney/Desktop/JOTS.MEDIA_AG/clients/bethElisePsychic_v37","WaitMsBeforeAsync":2000,"toolAction":"Extract sprite from chunk 43","toolSummary":"Extract sprite from chunk 43"}}]}
+
+============================================================

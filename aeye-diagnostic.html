@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head><title>aEye Diagnostic</title></head>
+<body style="background:#1a0033;color:#0f0;font-family:monospace;padding:20px;">
+<h2>aEye Home Base Diagnostic</h2>
+<div id="log" style="margin-bottom:20px;"></div>
+<script>
+function log(msg, color) {
+  const d = document.getElementById('log');
+  d.innerHTML += '<div style="color:'+(color||'#0f0')+'">' + msg + '</div>';
+  console.log(msg);
+}
+
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    log('=== STANDALONE aEYE CANVAS RENDERING TEST ===', '#FFD700');
+    log('');
+
+    const testCanvas = document.createElement('canvas');
+    testCanvas.width = 152;
+    testCanvas.height = 152;
+    testCanvas.style.cssText = 'width:152px;height:152px;border:2px solid #00FFC8;border-radius:50%;display:block;margin:20px 0;';
+    document.body.appendChild(testCanvas);
+
+    const ctx = testCanvas.getContext('2d');
+    if (!ctx) { log('❌ CANNOT GET 2D CONTEXT', 'red'); return; }
+    log('✅ Got 2D context');
+
+    const img = new Image();
+    img.onload = () => {
+      log('✅ Iris image loaded: ' + img.naturalWidth + 'x' + img.naturalHeight);
+
+      const cx = 76, cy = 76, r = 46;
+
+      // Almond eye aperture
+      ctx.save();
+      const aw = r * 1.60, ah = r * 0.98;
+      ctx.beginPath();
+      ctx.moveTo(cx - aw * 0.50, cy);
+      ctx.bezierCurveTo(cx - aw * 0.32, cy - ah * 0.60, cx + aw * 0.16, cy - ah * 0.54, cx + aw * 0.50, cy - ah * 0.04);
+      ctx.bezierCurveTo(cx + aw * 0.22, cy + ah * 0.52, cx - aw * 0.30, cy + ah * 0.44, cx - aw * 0.50, cy);
+      ctx.closePath();
+      ctx.clip();
+
+      // Sclera
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, 152, 152);
+
+      // Iris from image
+      const irisR = r * 0.42;
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, irisR, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.drawImage(img, cx - irisR, cy - irisR, irisR * 2, irisR * 2);
+      ctx.restore();
+
+      // Pupil
+      ctx.fillStyle = '#000';
+      ctx.beginPath();
+      ctx.arc(cx, cy, irisR * 0.28, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+
+      log('✅ Eye drawn! Can you see the eye above? ⬆️', '#00FFC8');
+      log('');
+      log('If YES → the rendering code works, problem is CSS/layers on main page.', '#FFD700');
+      log('If NO → your browser cannot render the iris image.', 'red');
+    };
+    img.onerror = () => {
+      log('❌ IRIS IMAGE FAILED TO LOAD!', 'red');
+      log('Path: images/photorealistic_purple_iris_orb.png', 'red');
+      log('This would explain why the eye appears blank.', 'red');
+    };
+    img.src = 'images/photorealistic_purple_iris_orb.png';
+
+  }, 300);
+});
+</script>
+</body>
+</html>
