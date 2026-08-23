@@ -1734,10 +1734,18 @@
         let portalScale = 1.0;
 
         if (isMobile) {
-          // On mobile phones: place portal in the upper-left forest clearing with high visibility
-          targetCenterX = Math.max(68, Math.min(w * 0.22, 92));
-          targetCenterY = Math.max(180, Math.min(h * 0.30, 255));
-          portalScale = 0.70; // Gracefully scaled to fit phone screen
+          // On mobile phones: place portal on top of the logo, right in the center!
+          targetCenterX = (w || window.innerWidth) * 0.5;
+          const heroLogo = document.querySelector('.hero__logo-img');
+          let logoTopY = (h || window.innerHeight) * 0.22;
+          if (heroLogo) {
+            const rect = heroLogo.getBoundingClientRect();
+            if (rect.width > 0) {
+              logoTopY = rect.top + (rect.height * 0.04);
+            }
+          }
+          targetCenterY = Math.max(115, logoTopY - 22);
+          portalScale = 0.68; // Gracefully scaled to fit mobile center
         } else if (isTablet) {
           // On portrait tablets: ensure comfortable padding from the left edge
           targetCenterX = Math.max(115, Math.min(rawAvgX, w * 0.26));
