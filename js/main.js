@@ -199,6 +199,38 @@
         }
       });
 
+      // Touch Support for Tree Portal Mobile Tap
+      window.addEventListener('touchend', (e) => {
+        if (!e.changedTouches || e.changedTouches.length === 0) return;
+        const t = e.changedTouches[0];
+        if (treePortal && treePortal.state === 'OPEN') {
+          const pdx = t.clientX - treePortal.x;
+          const pdy = t.clientY - treePortal.y;
+          if (Math.hypot(pdx, pdy) <= treePortal.r * 1.35) {
+            const item = portalHighlights[treePortal.highlightIdx];
+            if (item && item.href) {
+              if (window.celestialAudio) window.celestialAudio.playChime(963, 1.5);
+              emitPixieDust(treePortal.x, treePortal.y, 60, ['#FFD700', '#FF9E00', '#00FFC8', '#FFFFFF']);
+
+              if (item.href === '#sound-sanctuary') {
+                const soundBtn = document.getElementById('open-sound-modal-btn') || document.getElementById('open-sound-modal-mobile-btn');
+                if (soundBtn) soundBtn.click();
+              } else if (item.href === '#aura-scanner' || item.href === '#interactive-aura') {
+                const aSec = document.getElementById('aura-scanner');
+                if (aSec) aSec.scrollIntoView({ behavior: 'smooth' });
+              } else {
+                const targetEl = document.querySelector(item.href);
+                if (targetEl) {
+                  targetEl.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                  window.location.hash = item.href;
+                }
+              }
+            }
+          }
+        }
+      }, { passive: true });
+
       window.addEventListener('mouseleave', () => {
         mouse.x = -1000;
         mouse.y = -1000;
@@ -1673,15 +1705,57 @@
       function updateAndRenderTreePortal(ctx, bgOffsetX, bgOffsetY, bgS, now, dt) {
         if (treePortal.state === 'HOLD_FOR_ASSISTANT') return;
 
-        // Calculate world coordinates for all 64 organic tree contour nodes
+        // Calculate raw world coordinates for all 64 organic tree contour nodes
         const numNodes = TREE_CONTOUR.length;
-        const pts = [];
-        let avgX = 0, avgY = 0;
+        let rawAvgX = 0, rawAvgY = 0;
+        const rawPts = [];
 
         for (let i = 0; i < numNodes; i++) {
           const node = TREE_CONTOUR[i];
           const nx = bgOffsetX + node.u * 1920 * bgS;
           const ny = bgOffsetY + node.v * 1080 * bgS;
+          rawPts.push({ x: nx, y: ny });
+          rawAvgX += nx;
+          rawAvgY += ny;
+        }
+        rawAvgX /= numNodes;
+        rawAvgY /= numNodes;
+
+        // Dynamic On-Screen Viewport Adapter:
+        // On widescreen desktop, rawAvgX naturally sits on the left tree arch (~25-30% of screen).
+        // On mobile phones & portrait tablets, background-size: cover crops the left/right edges of the 16:9 image,
+        // causing rawAvgX to be pushed off-screen (rawAvgX < 0).
+        // Adaptively ensure the portal is ALWAYS 100% visible inside the hero glade across every device!
+        const isMobile = (w || window.innerWidth) < 600;
+        const isTablet = (w || window.innerWidth) >= 600 && (w || window.innerWidth) < 1024;
+
+        let targetCenterX = rawAvgX;
+        let targetCenterY = rawAvgY;
+        let portalScale = 1.0;
+
+        if (isMobile) {
+          // On mobile phones: place portal in the upper-left forest clearing with high visibility
+          targetCenterX = Math.max(68, Math.min(w * 0.22, 92));
+          targetCenterY = Math.max(180, Math.min(h * 0.30, 255));
+          portalScale = 0.70; // Gracefully scaled to fit phone screen
+        } else if (isTablet) {
+          // On portrait tablets: ensure comfortable padding from the left edge
+          targetCenterX = Math.max(115, Math.min(rawAvgX, w * 0.26));
+          targetCenterY = Math.max(180, Math.min(rawAvgY, h * 0.35));
+          portalScale = 0.85;
+        } else {
+          // Desktop: ensure at least 75px margin from screen edges
+          targetCenterX = Math.max(85, Math.min(rawAvgX, w - 85));
+          targetCenterY = Math.max(100, Math.min(rawAvgY, h - 100));
+          portalScale = 1.0;
+        }
+
+        const pts = [];
+        let avgX = 0, avgY = 0;
+        for (let i = 0; i < numNodes; i++) {
+          const raw = rawPts[i];
+          const nx = targetCenterX + (raw.x - rawAvgX) * portalScale;
+          const ny = targetCenterY + (raw.y - rawAvgY) * portalScale;
           pts.push({ x: nx, y: ny });
           avgX += nx;
           avgY += ny;
@@ -2030,32 +2104,42 @@
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
 
+            const isMobile = (w || window.innerWidth) < 600;
+
             // Tag Pill (Small Caps, Luminous Cyan/Gold)
-            ctx.font = '800 10px "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+            ctx.font = isMobile 
+              ? '800 7.5px "Plus Jakarta Sans", sans-serif'
+              : '800 10px "Plus Jakarta Sans", sans-serif';
             ctx.fillStyle = item.color || '#00FFC8';
             ctx.shadowColor = item.color || '#00FFC8';
-            ctx.shadowBlur = 10;
+            ctx.shadowBlur = 8;
             ctx.fillText(item.tag.toUpperCase(), avgX, avgY - boundR * 0.40);
 
             // Title (Bold Plus Jakarta Sans, Clean Celestial Glow)
-            ctx.font = '800 14.5px "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+            ctx.font = isMobile 
+              ? '800 10.5px "Plus Jakarta Sans", sans-serif'
+              : '800 14.5px "Plus Jakarta Sans", sans-serif';
             ctx.fillStyle = '#FFFFFF';
             ctx.shadowColor = '#FFFFFF';
-            ctx.shadowBlur = 12;
+            ctx.shadowBlur = 10;
             ctx.fillText(item.title.toUpperCase(), avgX, avgY - boundR * 0.10);
 
             // Subtitle
-            ctx.font = '600 11px "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+            ctx.font = isMobile 
+              ? '600 8.0px "Plus Jakarta Sans", sans-serif'
+              : '600 11px "Plus Jakarta Sans", sans-serif';
             ctx.fillStyle = '#E2FCF7';
             ctx.shadowColor = 'rgba(0,0,0,0.85)';
             ctx.shadowBlur = 6;
             ctx.fillText(item.subtitle, avgX, avgY + boundR * 0.16);
 
             // Action prompt / CTA button in portal
-            ctx.font = '800 11px "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+            ctx.font = isMobile 
+              ? '800 8.0px "Plus Jakarta Sans", sans-serif'
+              : '800 11px "Plus Jakarta Sans", sans-serif';
             ctx.fillStyle = treePortal.isHovered ? '#FFD700' : '#00FFC8';
             ctx.shadowColor = treePortal.isHovered ? '#FFD700' : '#00FFC8';
-            ctx.shadowBlur = treePortal.isHovered ? 20 : 8;
+            ctx.shadowBlur = treePortal.isHovered ? 18 : 8;
             ctx.fillText(treePortal.isHovered ? '✦ CLICK TO ENTER ✦' : item.action.toUpperCase(), avgX, avgY + boundR * 0.40);
 
             ctx.restore();
@@ -3191,7 +3275,22 @@
             heroAeyeMenu.alpha = 0;
             heroAeyeMenu.x = targetAeyeX;
             heroAeyeMenu.y = targetAeyeY;
-            emitPixieDust(targetAeyeX, targetAeyeY, 20, ['#00FFC8', '#FFD700', '#FFFFFF']);
+            emitPixieDust(targetAeyeX, targetAeyeY, 40, ['#00FFC8', '#FFD700', '#FFFFFF', '#C77DFF']);
+
+            const widget = document.getElementById('sacred-assistant-widget');
+            if (widget) {
+              widget.classList.remove('aeye-in-flight');
+              widget.classList.remove('aeye-splash-active');
+              void widget.offsetWidth;
+              widget.classList.add('aeye-splash-active');
+            }
+            if (aeyeWidget) {
+              aeyeWidget.style.opacity = '1';
+              aeyeWidget.style.pointerEvents = 'auto';
+              aeyeWidget.classList.remove('aeye-splash-active');
+              void aeyeWidget.offsetWidth;
+              aeyeWidget.classList.add('aeye-splash-active');
+            }
           }
         }
 
@@ -3587,6 +3686,13 @@
             heroTinkerbell.splashTime = 0;
             emitPixieDust(targetAeyeX, targetAeyeY, 50, ['#00FFC8', '#FFD700', '#FFFFFF', '#C77DFF', '#9D4EDD']);
 
+            const widget = document.getElementById('sacred-assistant-widget');
+            if (widget) {
+              widget.classList.remove('aeye-in-flight');
+              widget.classList.remove('aeye-splash-active');
+              void widget.offsetWidth;
+              widget.classList.add('aeye-splash-active');
+            }
             if (aeyeWidget) {
               aeyeWidget.style.opacity = '1';
               aeyeWidget.style.pointerEvents = 'auto';
@@ -3706,7 +3812,7 @@
             ctx.translate(heroTinkerbell.x, heroTinkerbell.y);
             ctx.globalAlpha = heroTinkerbell.alpha || 1;
 
-            // Outer Glow Halo
+            // 1. Radiant Outer Glow Halo
             const outerGlow = ctx.createRadialGradient(0, 0, eyeRad * 0.5, 0, 0, eyeRad * 1.35);
             outerGlow.addColorStop(0, 'rgba(0, 229, 212, 0.55)');
             outerGlow.addColorStop(0.55, 'rgba(157, 78, 221, 0.40)');
@@ -3716,7 +3822,17 @@
             ctx.arc(0, 0, eyeRad * 1.35, 0, Math.PI * 2);
             ctx.fill();
 
-            // Golden Sacred Geometry Outer Frame
+            // 2. Cosmic Dark Amethyst Orb Body Background (Full Solid Widget Orb)
+            const bodyGrad = ctx.createRadialGradient(-eyeRad * 0.25, -eyeRad * 0.25, 2, 0, 0, eyeRad * 1.08);
+            bodyGrad.addColorStop(0, 'rgba(65, 20, 140, 0.98)');
+            bodyGrad.addColorStop(0.7, 'rgba(25, 4, 55, 0.98)');
+            bodyGrad.addColorStop(1, 'rgba(14, 2, 32, 1.0)');
+            ctx.fillStyle = bodyGrad;
+            ctx.beginPath();
+            ctx.arc(0, 0, eyeRad * 1.08, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 3. Golden Sacred Geometry Outer Frame
             ctx.strokeStyle = '#FFD700';
             ctx.lineWidth = Math.max(1.8, eyeRad * 0.06);
             ctx.shadowColor = '#00FFC8';
@@ -3726,7 +3842,7 @@
             ctx.stroke();
             ctx.shadowBlur = 0;
 
-            // Filigree Ring Dots
+            // 4. Filigree Ring Dots
             const dotCount = 8;
             for (let i = 0; i < dotCount; i++) {
               const angle = (i / dotCount) * Math.PI * 2 + now * 0.001;
@@ -3738,7 +3854,7 @@
               ctx.fill();
             }
 
-            // Draw Unified Living aEYE with active dynamic gaze & rapid blink support
+            // 5. Draw Unified Living aEYE with active dynamic gaze & rapid blink support
             drawOrganicEye(
               ctx,
               0,
@@ -3752,6 +3868,16 @@
               now,
               false
             );
+
+            // 6. Specular Spherical Glass Highlight on Top
+            const glassGrad = ctx.createLinearGradient(0, -eyeRad * 1.08, 0, 0);
+            glassGrad.addColorStop(0, 'rgba(255, 255, 255, 0.40)');
+            glassGrad.addColorStop(0.6, 'rgba(255, 255, 255, 0.08)');
+            glassGrad.addColorStop(1, 'transparent');
+            ctx.fillStyle = glassGrad;
+            ctx.beginPath();
+            ctx.arc(0, 0, eyeRad * 1.0, Math.PI, 0);
+            ctx.fill();
 
             // ─── TARGET LOCKED-IN INDICATION HUD RETICLE ───
             if (heroTinkerbell.state === 'AURA_LOCKED') {
@@ -3898,16 +4024,73 @@
         }
       }
       // ─── UNIFIED aEYE DRAW HELPER ───
-      // Wraps drawOrganicEye for the flying aEYE companion used in menu,
-      // aura scanner takeoff, and home base rendering.
+      // Renders the ENTIRE living sacred aEYE orb companion (cosmic housing, radiant rim, filigree dots, living eye & specular glass)
       function drawUnifiedAEye(ctx, x, y, radius, gazeX, gazeY, blinkPhase, now, opts) {
         const alpha = (opts && opts.alpha !== undefined) ? opts.alpha : 1;
         if (alpha < 0.01) return;
         ctx.save();
+        ctx.translate(x, y);
         ctx.globalAlpha = alpha;
+
+        const orbR = radius * 1.18;
+
+        // 1. Radiant Outer Glow Halo
+        const auraGrad = ctx.createRadialGradient(0, 0, orbR * 0.4, 0, 0, orbR * 1.5);
+        auraGrad.addColorStop(0, 'rgba(0, 229, 212, 0.55)');
+        auraGrad.addColorStop(0.55, 'rgba(157, 78, 221, 0.40)');
+        auraGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = auraGrad;
+        ctx.beginPath();
+        ctx.arc(0, 0, orbR * 1.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 2. Cosmic Dark Amethyst Orb Body Background (Full Solid Widget Orb)
+        const bodyGrad = ctx.createRadialGradient(-orbR * 0.25, -orbR * 0.25, 2, 0, 0, orbR);
+        bodyGrad.addColorStop(0, 'rgba(65, 20, 140, 0.98)');
+        bodyGrad.addColorStop(0.7, 'rgba(25, 4, 55, 0.98)');
+        bodyGrad.addColorStop(1, 'rgba(14, 2, 32, 1.0)');
+        ctx.fillStyle = bodyGrad;
+        ctx.beginPath();
+        ctx.arc(0, 0, orbR, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 3. Sacred Golden & Tiffany Outer Rim
+        ctx.strokeStyle = '#00FFC8';
+        ctx.lineWidth = Math.max(2.0, orbR * 0.065);
+        ctx.shadowColor = '#00E5D4';
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.arc(0, 0, orbR, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        // 4. Filigree Ring Starlight Dots
+        const dotCount = 8;
+        for (let i = 0; i < dotCount; i++) {
+          const angle = (i / dotCount) * Math.PI * 2 + now * 0.001;
+          const dx = Math.cos(angle) * (orbR * 0.95);
+          const dy = Math.sin(angle) * (orbR * 0.95);
+          ctx.fillStyle = i % 2 === 0 ? '#00FFC8' : '#FFD700';
+          ctx.beginPath();
+          ctx.arc(dx, dy, Math.max(1.6, orbR * 0.045), 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // 5. Living Almond Eye inside the orb
         const pupilR = radius * 0.32;
         const colors = ['#7B2CBF', '#9D4EDD', '#00FFC8'];
-        drawOrganicEye(ctx, x, y, radius, gazeX, gazeY, blinkPhase, pupilR, colors, now);
+        drawOrganicEye(ctx, 0, 0, radius * 0.88, gazeX, gazeY, blinkPhase, pupilR, colors, now);
+
+        // 6. Specular Spherical Glass Highlight on Top
+        const glassGrad = ctx.createLinearGradient(0, -orbR, 0, 0);
+        glassGrad.addColorStop(0, 'rgba(255, 255, 255, 0.45)');
+        glassGrad.addColorStop(0.6, 'rgba(255, 255, 255, 0.08)');
+        glassGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = glassGrad;
+        ctx.beginPath();
+        ctx.arc(0, 0, orbR * 0.92, Math.PI, 0);
+        ctx.fill();
+
         ctx.restore();
       }
 
@@ -4391,6 +4574,9 @@
       window.triggerFairyMenuTakeoff = function() {
         if (!heroAvatarCanvas) return;
         const aeyeWidget = document.getElementById('assistant-avatar-btn');
+        const widget = document.getElementById('sacred-assistant-widget');
+        if (widget) widget.classList.add('aeye-in-flight');
+
         let curAeyeX = Math.max(40, window.innerWidth - 60);
         let curAeyeY = Math.max(40, window.innerHeight - 60);
         if (aeyeWidget) {
@@ -4399,6 +4585,8 @@
             curAeyeX = aeRect.left + aeRect.width * 0.5;
             curAeyeY = aeRect.top + aeRect.height * 0.5;
           }
+          aeyeWidget.style.opacity = '0';
+          aeyeWidget.style.pointerEvents = 'none';
         }
 
         // 1. Target for Avatar Beth: Top-right corner of menu card
@@ -4499,6 +4687,9 @@
       window.triggerAuraEyeTakeoff = function(targetX, targetY) {
         if (!heroAvatarCanvas) return;
         const aeyeWidget = document.getElementById('assistant-avatar-btn');
+        const widget = document.getElementById('sacred-assistant-widget');
+        if (widget) widget.classList.add('aeye-in-flight');
+
         let curAeyeX = Math.max(40, window.innerWidth - 60);
         let curAeyeY = Math.max(40, window.innerHeight - 60);
         if (aeyeWidget) {

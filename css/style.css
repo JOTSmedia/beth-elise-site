@@ -6420,6 +6420,13 @@ p {
   pointer-events: auto;
 }
 
+.sacred-assistant.aeye-in-flight {
+  opacity: 0 !important;
+  transform: scale(0.35) !important;
+  pointer-events: none !important;
+  transition: opacity 0.22s ease-out, transform 0.22s ease-out !important;
+}
+
 .assistant-bubble {
   pointer-events: auto;
   position: relative;
