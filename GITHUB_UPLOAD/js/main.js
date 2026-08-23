@@ -2561,13 +2561,18 @@
             const CATWALK_TEXT = "WITH LOVE AND LIGHT";
             const letters = CATWALK_TEXT.split('');
             const numLetters = letters.length; // 19
-            const usableWidth = Math.max(300, (badgeRightX - badgeLeftX) - 24);
-            const letterSpacing = Math.min(19.0, Math.max(15.0, usableWidth / (numLetters - 1)));
+            const isMobile = (w || window.innerWidth) < 600;
+            const usableWidth = (badgeRightX - badgeLeftX) > 0 
+              ? (badgeRightX - badgeLeftX) - (isMobile ? 16 : 24)
+              : (isMobile ? 260 : 320);
+            const letterSpacing = isMobile
+              ? Math.min(13.5, Math.max(9.5, usableWidth / (numLetters - 1)))
+              : Math.min(19.0, Math.max(14.0, usableWidth / (numLetters - 1)));
             const totalSpan = letterSpacing * (numLetters - 1);
             const letterSpanStart = badgeCenterX - totalSpan * 0.5;
             const letterSpanEnd = badgeCenterX + totalSpan * 0.5;
 
-            heroTinkerbell.x = letterSpanStart - 14;
+            heroTinkerbell.x = letterSpanStart - (isMobile ? 10 : 14);
             heroTinkerbell.y = badgeTopY;
             heroTinkerbell.progress = 0;
             heroTinkerbell.strutPhase = 0;
@@ -2584,7 +2589,7 @@
               revealed: false, 
               revealTime: 0,
               x: badgeCenterX + (i - (numLetters - 1) * 0.5) * letterSpacing,
-              y: badgeTopY - 24
+              y: badgeTopY - (isMobile ? 20 : 24)
             }));
           }
         }
@@ -2599,11 +2604,16 @@
 
           const CATWALK_TEXT = "WITH LOVE AND LIGHT";
           const numLetters = CATWALK_TEXT.length;
-          const usableWidth = Math.max(300, (badgeRightX - badgeLeftX) - 24);
-          const letterSpacing = Math.min(19.0, Math.max(15.0, usableWidth / (numLetters - 1)));
+          const isMobile = (w || window.innerWidth) < 600;
+          const usableWidth = (badgeRightX - badgeLeftX) > 0 
+            ? (badgeRightX - badgeLeftX) - (isMobile ? 16 : 24)
+            : (isMobile ? 260 : 320);
+          const letterSpacing = isMobile
+            ? Math.min(13.5, Math.max(9.5, usableWidth / (numLetters - 1)))
+            : Math.min(19.0, Math.max(14.0, usableWidth / (numLetters - 1)));
           const totalSpan = letterSpacing * (numLetters - 1);
-          const walkStartX = badgeCenterX - totalSpan * 0.5 - 14;
-          const walkEndX = badgeCenterX + totalSpan * 0.5 + 16;
+          const walkStartX = badgeCenterX - totalSpan * 0.5 - (isMobile ? 10 : 14);
+          const walkEndX = badgeCenterX + totalSpan * 0.5 + (isMobile ? 12 : 16);
 
           heroTinkerbell.x = walkStartX + p * (walkEndX - walkStartX);
           heroTinkerbell.y = badgeTopY - Math.abs(Math.sin(st * 6.5)) * 3.2; // High-fashion strut bounce
@@ -3951,7 +3961,11 @@
         ctx.save();
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.font = '900 12px "Outfit", -apple-system, sans-serif';
+
+        const isMobile = (w || window.innerWidth) < 600;
+        ctx.font = isMobile 
+          ? '900 9.5px "Outfit", -apple-system, sans-serif' 
+          : '900 12px "Outfit", -apple-system, sans-serif';
 
         const isVanna = (heroTinkerbell.state === 'PAUSE_ON_BADGE_EDGE');
         const vannaTime = heroTinkerbell.edgePauseTime || 0;
@@ -3984,8 +3998,9 @@
           ctx.globalAlpha = fadeAlpha * Math.min(1, age * 4.0);
 
           // 1. Frosted Crystal Jeopardy Tile Background (Official Brand Palette)
-          const tileW = 14.5;
-          const tileH = 19.5;
+          const tileW = isMobile ? 11.0 : 14.5;
+          const tileH = isMobile ? 15.5 : 19.5;
+          const tileRadius = isMobile ? 2.5 : 3.5;
           const tileGrad = ctx.createLinearGradient(0, -tileH * 0.5, 0, tileH * 0.5);
           if (shimmerGlow > 0) {
             // Brand Shimmer: Indigo-soft (#7040B5) to Tiffany (#4DBFB6)
@@ -4008,7 +4023,7 @@
           // Draw rounded crystal tile
           ctx.beginPath();
           if (ctx.roundRect) {
-            ctx.roundRect(-tileW * 0.5, -tileH * 0.5, tileW, tileH, 3.5);
+            ctx.roundRect(-tileW * 0.5, -tileH * 0.5, tileW, tileH, tileRadius);
           } else {
             ctx.rect(-tileW * 0.5, -tileH * 0.5, tileW, tileH);
           }

@@ -1975,7 +1975,7 @@ p {
   padding: 2rem;
   flex-direction: column;
   gap: 1.25rem;
-  z-index: 999;
+  z-index: 2000005;
   border-bottom: 2px solid var(--tiffany);
   animation: slideDown 0.3s ease;
 }
@@ -6167,6 +6167,7 @@ p {
   .footer__bottom-bar { flex-direction: column; text-align: center; gap: 0.75rem; }
   .section__header { margin-bottom: 2rem; }
   .section__title { font-size: clamp(2.4rem, 7vw, 3.2rem) !important; }
+  .back-to-top-btn { bottom: 16px !important; left: 16px !important; right: auto !important; width: 42px !important; height: 42px !important; font-size: 1.1rem !important; }
 }
 
 @media (max-width: 480px) {
@@ -6240,7 +6241,7 @@ p {
   .footer__nav-strip { justify-content: center; gap: 0.85rem; font-size: 0.8rem; }
   .footer__social-row { justify-content: center; }
   .sound-dock { left: 0.5rem; bottom: 0.5rem; padding: 0.35rem 0.75rem 0.35rem 0.5rem; font-size: 0.78rem; }
-  .back-to-top-btn { bottom: 6rem; right: 0.5rem; width: 38px; height: 38px; font-size: 1rem; }
+  .back-to-top-btn { bottom: 14px !important; left: 14px !important; right: auto !important; width: 38px !important; height: 38px !important; font-size: 1rem !important; }
   .hero__credentials { gap: 0.6rem; }
   .credential-item { font-size: 0.78rem; padding: 0.25rem 0.6rem; }
 }
