@@ -22,7 +22,7 @@
   const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
   const reduceMotion = () => motionQuery.matches;
 
-  document.addEventListener('DOMContentLoaded', () => {
+  function initMainApp() {
 
     // Preloader is handled directly by inline script in index.html (flying orb to homebase)
 
@@ -75,6 +75,97 @@
       let lastBolideTime = performance.now();
       let lastMouseMoveTime = 0;
 
+      // ─── HIGH-PERFORMANCE CACHED TARGET COORDINATES (Zero 60FPS Layout Thrashing) ───
+      const cachedHeroTargets = {
+        logoMoonX: 0,
+        logoMoonY: 0,
+        badgeRightX: 0,
+        badgeLeftX: 0,
+        badgeCenterX: 0,
+        badgeTopY: 0,
+        bookBtnX: 0,
+        bookBtnY: 0,
+        aeyeX: 0,
+        aeyeY: 0,
+        lastUpdate: 0
+      };
+
+      function updateHeroLayoutTargets(force = false) {
+        const n = performance.now();
+        if (!force && (n - cachedHeroTargets.lastUpdate < 300)) return;
+        cachedHeroTargets.lastUpdate = n;
+
+        const cw = w || window.innerWidth;
+        const ch = h || window.innerHeight;
+
+        let logoMoonX = cw * 0.5;
+        let logoMoonY = ch * 0.33;
+        let badgeRightX = cw * 0.70;
+        let badgeLeftX = cw * 0.30;
+        let badgeCenterX = cw * 0.50;
+        let badgeTopY = Math.max(50, ch * 0.16);
+        let bookBtnX = cw * 0.5;
+        let bookBtnY = ch * 0.72;
+        let aeyeX = Math.max(40, cw - 60);
+        let aeyeY = Math.max(40, ch - 60);
+
+        if (heroAvatarCanvas) {
+          const cRect = heroAvatarCanvas.getBoundingClientRect();
+          
+          const heroLogo = document.querySelector('.hero__logo-img');
+          if (heroLogo) {
+            const rect = heroLogo.getBoundingClientRect();
+            if (rect.width > 0) {
+              logoMoonX = rect.left + rect.width * 0.5 - cRect.left;
+              logoMoonY = rect.top - cRect.top + (rect.height * 0.095);
+            }
+          }
+
+          const pillBadge = document.querySelector('.hero__tagline-pill');
+          if (pillBadge) {
+            const bRect = pillBadge.getBoundingClientRect();
+            if (bRect.width > 0 && bRect.height > 0) {
+              badgeCenterX = bRect.left + bRect.width * 0.5 - cRect.left;
+              const marginPad = Math.min(24, bRect.width * 0.12);
+              badgeRightX = bRect.left + bRect.width - marginPad - cRect.left;
+              badgeLeftX = bRect.left + marginPad - cRect.left;
+              badgeTopY = bRect.top - cRect.top - 10;
+            }
+          }
+
+          const bookBtn = document.querySelector('.hero__cta-group .btn-primary');
+          if (bookBtn) {
+            const bbRect = bookBtn.getBoundingClientRect();
+            if (bbRect.width > 0) {
+              bookBtnX = bbRect.left + bbRect.width * 0.5 - cRect.left;
+              bookBtnY = bbRect.top - cRect.top - 8;
+            }
+          }
+
+          const aeyeWidget = document.getElementById('assistant-avatar-btn');
+          if (aeyeWidget) {
+            const aeRect = aeyeWidget.getBoundingClientRect();
+            if (aeRect.width > 0) {
+              const rawAeX = aeRect.left + aeRect.width * 0.5 - cRect.left;
+              const rawAeY = aeRect.top + aeRect.height * 0.5 - cRect.top;
+              aeyeX = Math.max(36, Math.min(cw - 36, rawAeX));
+              aeyeY = Math.max(36, Math.min(ch - 36, rawAeY));
+            }
+          }
+        }
+
+        cachedHeroTargets.logoMoonX = logoMoonX;
+        cachedHeroTargets.logoMoonY = logoMoonY;
+        cachedHeroTargets.badgeRightX = badgeRightX;
+        cachedHeroTargets.badgeLeftX = badgeLeftX;
+        cachedHeroTargets.badgeCenterX = badgeCenterX;
+        cachedHeroTargets.badgeTopY = badgeTopY;
+        cachedHeroTargets.bookBtnX = bookBtnX;
+        cachedHeroTargets.bookBtnY = bookBtnY;
+        cachedHeroTargets.aeyeX = aeyeX;
+        cachedHeroTargets.aeyeY = aeyeY;
+      }
+
       function resize() {
         const heroSection = document.querySelector('.hero');
         const heroW = (heroSection && heroSection.offsetWidth) || heroBgCanvas.offsetWidth || window.innerWidth;
@@ -85,9 +176,7 @@
         w = heroAvatarCanvas.width = window.innerWidth;
         h = heroAvatarCanvas.height = window.innerHeight;
 
-        if (typeof updateHeroLayoutTargets === 'function') {
-          updateHeroLayoutTargets(true);
-        }
+        updateHeroLayoutTargets(true);
       }
       resize();
       window.addEventListener('resize', resize, { passive: true });
@@ -2315,97 +2404,6 @@
 
         ctx.restore(); // end additive blending
         ctx.restore(); // end portal graphics
-      }
-
-      // ─── HIGH-PERFORMANCE CACHED TARGET COORDINATES (Zero 60FPS Layout Thrashing) ───
-      const cachedHeroTargets = {
-        logoMoonX: 0,
-        logoMoonY: 0,
-        badgeRightX: 0,
-        badgeLeftX: 0,
-        badgeCenterX: 0,
-        badgeTopY: 0,
-        bookBtnX: 0,
-        bookBtnY: 0,
-        aeyeX: 0,
-        aeyeY: 0,
-        lastUpdate: 0
-      };
-
-      function updateHeroLayoutTargets(force = false) {
-        const n = performance.now();
-        if (!force && (n - cachedHeroTargets.lastUpdate < 300)) return;
-        cachedHeroTargets.lastUpdate = n;
-
-        const cw = w || window.innerWidth;
-        const ch = h || window.innerHeight;
-
-        let logoMoonX = cw * 0.5;
-        let logoMoonY = ch * 0.33;
-        let badgeRightX = cw * 0.70;
-        let badgeLeftX = cw * 0.30;
-        let badgeCenterX = cw * 0.50;
-        let badgeTopY = Math.max(50, ch * 0.16);
-        let bookBtnX = cw * 0.5;
-        let bookBtnY = ch * 0.72;
-        let aeyeX = Math.max(40, cw - 60);
-        let aeyeY = Math.max(40, ch - 60);
-
-        if (heroAvatarCanvas) {
-          const cRect = heroAvatarCanvas.getBoundingClientRect();
-          
-          const heroLogo = document.querySelector('.hero__logo-img');
-          if (heroLogo) {
-            const rect = heroLogo.getBoundingClientRect();
-            if (rect.width > 0) {
-              logoMoonX = rect.left + rect.width * 0.5 - cRect.left;
-              logoMoonY = rect.top - cRect.top + (rect.height * 0.095);
-            }
-          }
-
-          const pillBadge = document.querySelector('.hero__tagline-pill');
-          if (pillBadge) {
-            const bRect = pillBadge.getBoundingClientRect();
-            if (bRect.width > 0 && bRect.height > 0) {
-              badgeCenterX = bRect.left + bRect.width * 0.5 - cRect.left;
-              const marginPad = Math.min(24, bRect.width * 0.12);
-              badgeRightX = bRect.left + bRect.width - marginPad - cRect.left;
-              badgeLeftX = bRect.left + marginPad - cRect.left;
-              badgeTopY = bRect.top - cRect.top - 10;
-            }
-          }
-
-          const bookBtn = document.querySelector('.hero__cta-group .btn-primary');
-          if (bookBtn) {
-            const bbRect = bookBtn.getBoundingClientRect();
-            if (bbRect.width > 0) {
-              bookBtnX = bbRect.left + bbRect.width * 0.5 - cRect.left;
-              bookBtnY = bbRect.top - cRect.top - 8;
-            }
-          }
-
-          const aeyeWidget = document.getElementById('assistant-avatar-btn');
-          if (aeyeWidget) {
-            const aeRect = aeyeWidget.getBoundingClientRect();
-            if (aeRect.width > 0) {
-              const rawAeX = aeRect.left + aeRect.width * 0.5 - cRect.left;
-              const rawAeY = aeRect.top + aeRect.height * 0.5 - cRect.top;
-              aeyeX = Math.max(36, Math.min(cw - 36, rawAeX));
-              aeyeY = Math.max(36, Math.min(ch - 36, rawAeY));
-            }
-          }
-        }
-
-        cachedHeroTargets.logoMoonX = logoMoonX;
-        cachedHeroTargets.logoMoonY = logoMoonY;
-        cachedHeroTargets.badgeRightX = badgeRightX;
-        cachedHeroTargets.badgeLeftX = badgeLeftX;
-        cachedHeroTargets.badgeCenterX = badgeCenterX;
-        cachedHeroTargets.badgeTopY = badgeTopY;
-        cachedHeroTargets.bookBtnX = bookBtnX;
-        cachedHeroTargets.bookBtnY = bookBtnY;
-        cachedHeroTargets.aeyeX = aeyeX;
-        cachedHeroTargets.aeyeY = aeyeY;
       }
 
       function updateAndRenderHeroTinkerbell(ctx, now, dt = 0.016) {
@@ -8570,6 +8568,12 @@
     // Initial check
     updateActiveNav();
 
-  });
+  } // end initMainApp
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initMainApp);
+  } else {
+    initMainApp();
+  }
 
 })();
