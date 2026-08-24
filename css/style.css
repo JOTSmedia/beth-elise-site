@@ -6053,48 +6053,62 @@ p {
   
   /* Hero section on tablet */
   .hero { 
+    min-height: 100dvh !important;
+    min-height: 100vh !important;
     display: flex !important;
-    align-items: flex-start !important;
-    justify-content: center !important;
-    padding: calc(var(--nav-height) + 0.65rem) 1.25rem 2.5rem !important; 
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    padding-top: calc(var(--nav-height) + clamp(0.4rem, 1.8vh, 1.25rem)) !important; 
+    padding-bottom: clamp(1.5rem, 4vh, 3rem) !important;
+    padding-left: clamp(0.75rem, 3vw, 1.5rem) !important;
+    padding-right: clamp(0.75rem, 3vw, 1.5rem) !important;
   }
   .hero__content {
     padding: 0 !important;
     margin: 0 auto !important;
+    width: 100% !important;
+    max-width: 680px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
   }
-  .hero__title { font-size: clamp(2.4rem, 6.5vw, 3.4rem); margin: 0 0 0.5rem !important; }
+  .hero__title { 
+    font-size: clamp(2.2rem, 6.5vw, 3.4rem) !important; 
+    margin: 0 0 clamp(0.2rem, 0.6vh, 0.5rem) !important; 
+  }
   .hero__logo-img {
-    max-width: 380px !important;
+    max-width: clamp(280px, 78vw, 420px) !important;
     width: 88vw !important;
-    margin: 0.25rem auto 0.75rem !important;
+    margin: clamp(0.15rem, 0.5vh, 0.4rem) auto clamp(0.35rem, 1.0vh, 0.85rem) !important;
   }
   .hero__tagline-pill {
-    font-size: 0.78rem !important;
-    padding: 0.35rem 1.1rem !important;
-    margin-bottom: 0.65rem !important;
-    max-width: 92vw !important;
-    letter-spacing: 0.14em !important;
+    font-size: clamp(0.70rem, 2.2vw, 0.82rem) !important;
+    padding: clamp(0.28rem, 0.7vh, 0.42rem) clamp(0.75rem, 2.5vw, 1.25rem) !important;
+    margin-bottom: clamp(0.35rem, 1.0vh, 0.75rem) !important;
+    max-width: 94vw !important;
+    letter-spacing: clamp(0.08em, 0.3vw, 0.15em) !important;
   }
   .hero__lead {
-    font-size: 0.96rem !important;
-    line-height: 1.5 !important;
-    max-width: 90vw !important;
-    margin: 0 auto 1.2rem !important;
+    font-size: clamp(0.85rem, 2.4vw, 1.05rem) !important;
+    line-height: clamp(1.42, 3.8vw, 1.62) !important;
+    max-width: min(90vw, 560px) !important;
+    margin: 0 auto clamp(0.65rem, 1.8vh, 1.35rem) !important;
   }
   .hero__cta-group {
     flex-direction: column !important;
     align-items: center !important;
     width: 100% !important;
-    gap: 0.70rem !important;
-    margin-bottom: 1.15rem !important;
+    gap: clamp(0.50rem, 1.2vh, 0.80rem) !important;
+    margin-bottom: clamp(0.75rem, 1.8vh, 1.25rem) !important;
   }
   .hero__cta-group .btn-primary,
   .hero__cta-group .btn-secondary {
     width: 100% !important;
-    max-width: 290px !important;
-    padding: 0.75rem 1.25rem !important;
-    font-size: 0.86rem !important;
-    min-height: 48px !important;
+    max-width: min(290px, 88vw) !important;
+    padding: clamp(0.60rem, 1.2vh, 0.80rem) 1.25rem !important;
+    font-size: clamp(0.80rem, 2.2vw, 0.88rem) !important;
+    min-height: clamp(44px, 5.5vh, 50px) !important;
     text-align: center !important;
     justify-content: center !important;
   }
@@ -6186,32 +6200,36 @@ p {
   .nav { padding: 0 0.85rem; }
   .nav__logo img { height: 34px; max-width: 140px; }
   .hero { 
-    display: flex !important;
-    align-items: flex-start !important;
-    justify-content: center !important;
-    padding: calc(var(--nav-height) + 0.35rem) 0.85rem 2rem !important; 
+    padding-top: calc(var(--nav-height) + clamp(0.30rem, 1.5vh, 0.85rem)) !important; 
+    padding-bottom: clamp(1.25rem, 3vh, 2.5rem) !important;
   }
-  .hero__content { padding: 0 !important; margin: 0 auto !important; }
-  .hero__title { margin: 0 0 0.35rem !important; }
+  .hero__title { margin: 0 0 clamp(0.15rem, 0.4vh, 0.35rem) !important; }
   .hero__logo-img {
-    max-width: 290px !important;
+    max-width: clamp(250px, 84vw, 320px) !important;
     width: 86vw !important;
-    margin: 0.2rem auto 0.55rem !important;
+    margin: clamp(0.10rem, 0.4vh, 0.3rem) auto clamp(0.25rem, 0.8vh, 0.65rem) !important;
   }
   .hero__tagline-pill {
-    font-size: 0.70rem !important;
-    padding: 0.30rem 0.85rem !important;
-    letter-spacing: 0.10em !important;
-    margin-bottom: 0.50rem !important;
+    font-size: clamp(0.66rem, 2.1vw, 0.74rem) !important;
+    padding: clamp(0.25rem, 0.6vh, 0.35rem) clamp(0.65rem, 2.2vw, 0.95rem) !important;
+    letter-spacing: clamp(0.06em, 0.25vw, 0.12em) !important;
+    margin-bottom: clamp(0.25rem, 0.8vh, 0.55rem) !important;
   }
   .hero__lead {
-    font-size: 0.86rem !important;
-    line-height: 1.48 !important;
-    margin-bottom: 0.95rem !important;
+    font-size: clamp(0.82rem, 2.3vw, 0.90rem) !important;
+    line-height: clamp(1.40, 3.6vw, 1.52) !important;
+    margin-bottom: clamp(0.55rem, 1.5vh, 1.05rem) !important;
   }
   .hero__cta-group {
-    gap: 0.55rem !important;
-    margin-bottom: 0.85rem !important;
+    gap: clamp(0.45rem, 1.0vh, 0.65rem) !important;
+    margin-bottom: clamp(0.55rem, 1.5vh, 0.95rem) !important;
+  }
+  .hero__cta-group .btn-primary,
+  .hero__cta-group .btn-secondary {
+    max-width: min(260px, 86vw) !important;
+    min-height: clamp(42px, 5.0vh, 46px) !important;
+    padding: clamp(0.50rem, 1.0vh, 0.70rem) 1rem !important;
+    font-size: clamp(0.78rem, 2.1vw, 0.84rem) !important;
   }
   .hero__cta-group .btn-primary,
   .hero__cta-group .btn-secondary {

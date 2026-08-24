@@ -84,9 +84,16 @@
 
         w = heroAvatarCanvas.width = window.innerWidth;
         h = heroAvatarCanvas.height = window.innerHeight;
+
+        if (typeof updateHeroLayoutTargets === 'function') {
+          updateHeroLayoutTargets(true);
+        }
       }
       resize();
       window.addEventListener('resize', resize, { passive: true });
+      window.addEventListener('orientationchange', () => {
+        setTimeout(resize, 120);
+      }, { passive: true });
 
       // ─── INTERRUPTED CHOREOGRAPHY HANDLER ───
       window.triggerFairyInterrupted = function() {
