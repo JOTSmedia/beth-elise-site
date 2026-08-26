@@ -835,10 +835,6 @@
           <div class="about__image-frame">
             <img src="images/portrait.webp" alt="Beth Elise Psychic Medium and Energy Healer"  loading="lazy" decoding="async" width="793" height="800">
           </div>
-          <div class="about__badge">
-            <span class="about__badge-num">10+</span>
-            <span class="about__badge-text">Years of<br/>Practice</span>
-          </div>
         </div>
 
         <div class="about__content fade-in fade-in-delay-1">
@@ -877,27 +873,31 @@
       <h2 class="section__title">Daily Soul Guidance</h2>
       <p class="section__desc">Touch the glowing crystal sphere below to draw your channeled affirmation and energetic message for today.</p>
 
-      <div class="oracle-card-container fade-in" id="daily-oracle-card" title="Click to draw your daily card">
-        <div class="oracle-sphere-stage">
-          <!-- 3D Large Earth-Rotating Crystal Ball (Fills containing circle, no stand) -->
-          <div class="crystal-ball-wrapper">
-            <div class="crystal-ball-ambient-glow"></div>
-            <div class="crystal-ball-orbital-ring crystal-ball-orbital-ring--outer"></div>
-            <div class="crystal-ball-orbital-ring crystal-ball-orbital-ring--inner"></div>
-            <canvas id="oracle-crystal-ball-canvas" width="480" height="480"></canvas>
-            <div class="crystal-ball-sparkle star-1"><span class="pico pico--sparkle" aria-hidden="true"></span></div>
-            <div class="crystal-ball-sparkle star-2"><span class="pico pico--comet" aria-hidden="true"></span></div>
-            <div class="crystal-ball-sparkle star-3"><span class="pico pico--star" aria-hidden="true"></span></div>
-          </div>
+      <div class="oracle-card-container fade-in" id="daily-oracle-card" title="Click to draw your daily card" role="region" aria-label="Daily Soul Guidance Crystal Ball">
+        <!-- 3D Large Earth-Rotating Crystal Ball (Always 100% visible, centered at top, never covered!) -->
+        <div class="crystal-ball-wrapper" id="crystal-ball-interactive-trigger">
+          <div class="crystal-ball-ambient-glow"></div>
+          <div class="crystal-ball-orbital-ring crystal-ball-orbital-ring--outer"></div>
+          <div class="crystal-ball-orbital-ring crystal-ball-orbital-ring--inner"></div>
+          <canvas id="oracle-crystal-ball-canvas" width="480" height="480"></canvas>
+          <div class="crystal-ball-sparkle star-1"><span class="pico pico--sparkle" aria-hidden="true"></span></div>
+          <div class="crystal-ball-sparkle star-2"><span class="pico pico--comet" aria-hidden="true"></span></div>
+          <div class="crystal-ball-sparkle star-3"><span class="pico pico--star" aria-hidden="true"></span></div>
+        </div>
 
-          <!-- Front State Prompt -->
+        <!-- Interactive Content Area (Directly beneath Crystal Ball) -->
+        <div class="oracle-message-stage">
+          <!-- 1. Initial State: Touch to Reveal Button Prompt -->
           <div class="oracle-overlay-front" id="oracle-overlay-front">
             <h3 class="oracle-front-title">Touch to Reveal</h3>
             <p class="oracle-front-subtitle">Your Sacred Soul Message Awaits</p>
+            <button type="button" class="oracle-reveal-action-btn" id="oracle-reveal-btn">
+              <span class="pico pico--sparkle" aria-hidden="true"></span> Touch to Reveal Message
+            </button>
           </div>
 
-          <!-- Channeled Result Overlay (Animated Photorealistic Ball pulses & remains fully visible!) -->
-          <div class="oracle-overlay-result" id="oracle-overlay-result">
+          <!-- 2. Revealed State: Channeled Result Card (Appears beneath crystal ball, replacing Touch to Reveal) -->
+          <div class="oracle-overlay-result" id="oracle-overlay-result" aria-live="polite">
             <div class="oracle-result-glass-card">
               <div class="oracle-result-icon-wrap" id="oracle-res-icon-wrap">
                 <span class="oracle-result-lum-icon" id="oracle-res-icon"><span class="pico pico--sparkle" aria-hidden="true"></span></span>
@@ -906,9 +906,9 @@
               <p class="oracle-result-text" id="oracle-res-text">
                 You are held in divine sanctuary. Surrender current worries to spirit; alignment and clarity are blossoming.
               </p>
-              <div class="oracle-redraw-badge">
-                <span class="pico pico--refresh" aria-hidden="true"></span> Click to Draw Again
-              </div>
+              <button type="button" class="oracle-redraw-badge" id="oracle-redraw-btn" aria-label="Draw another daily message">
+                <span class="pico pico--refresh" aria-hidden="true"></span> Draw Another Message
+              </button>
             </div>
           </div>
         </div>
@@ -931,7 +931,6 @@
       <div class="services__grid">
 
         <article class="service-card fade-in" id="service-psychic">
-          <div class="watermark-num">01</div>
           <span class="service-card__icon"><span class="pico pico--orb" aria-hidden="true"></span></span>
           <h3 class="service-card__title">Psychic Readings</h3>
           <p class="service-card__desc">
@@ -942,7 +941,6 @@
         </article>
 
         <article class="service-card fade-in fade-in-delay-1" id="service-reiki">
-          <div class="watermark-num">02</div>
           <span class="service-card__icon"><span class="pico pico--hand" aria-hidden="true"></span></span>
           <h3 class="service-card__title">Reiki Healing</h3>
           <p class="service-card__desc">
@@ -953,7 +951,6 @@
         </article>
 
         <article class="service-card fade-in fade-in-delay-2" id="service-tapping">
-          <div class="watermark-num">03</div>
           <span class="service-card__icon"><span class="pico pico--leaf" aria-hidden="true"></span></span>
           <h3 class="service-card__title">The Tapping Solution</h3>
           <p class="service-card__desc">
@@ -966,7 +963,7 @@
       </div>
 
       <div class="text-center mt-2 fade-in">
-        <a href="pages/services.html" class="btn-secondary">
+        <a href="services.html" class="btn-secondary">
           <span><span class="pico pico--orb" aria-hidden="true"></span></span> View Full Offerings & Modalities
         </a>
       </div>
@@ -1002,7 +999,7 @@
           <div class="chakra-interactive-map" id="chakra-interactive-map" role="region" aria-label="Interactive Yogi Energy Centers">
             
             <!-- 1. CROWN (963 Hz) -->
-            <div class="chakra-hotspot-item" data-chakra="crown" style="--chakra-y: 20%; --chakra-color:#D884F8; --chakra-glow:rgba(216,132,248,0.9);">
+            <div class="chakra-hotspot-item" data-chakra="crown" style="--chakra-y: 19%; --chakra-color:#D884F8; --chakra-glow:rgba(216,132,248,0.9);">
               <div class="chakra-hotspot-label chakra-hotspot-label--left">
                 <span class="chakra-node-title">CROWN</span>
                 <span class="chakra-node-sanskrit">Sahasrara</span>
@@ -1019,7 +1016,7 @@
             </div>
 
             <!-- 2. THIRD EYE (852 Hz) -->
-            <div class="chakra-hotspot-item active" data-chakra="thirdeye" style="--chakra-y: 29%; --chakra-color:#7289DA; --chakra-glow:rgba(114,137,218,0.9);">
+            <div class="chakra-hotspot-item active" data-chakra="thirdeye" style="--chakra-y: 28%; --chakra-color:#7289DA; --chakra-glow:rgba(114,137,218,0.9);">
               <div class="chakra-hotspot-label chakra-hotspot-label--left">
                 <span class="chakra-node-title">THIRD EYE</span>
                 <span class="chakra-node-sanskrit">Ajna</span>
@@ -1036,7 +1033,7 @@
             </div>
 
             <!-- 3. THROAT (741 Hz) -->
-            <div class="chakra-hotspot-item" data-chakra="throat" style="--chakra-y: 41%; --chakra-color:#00E5D4; --chakra-glow:rgba(0,229,212,0.9);">
+            <div class="chakra-hotspot-item" data-chakra="throat" style="--chakra-y: 39%; --chakra-color:#00E5D4; --chakra-glow:rgba(0,229,212,0.9);">
               <div class="chakra-hotspot-label chakra-hotspot-label--left">
                 <span class="chakra-node-title">THROAT</span>
                 <span class="chakra-node-sanskrit">Vishuddha</span>
@@ -1053,7 +1050,7 @@
             </div>
 
             <!-- 4. HEART (639 Hz) -->
-            <div class="chakra-hotspot-item" data-chakra="heart" style="--chakra-y: 50%; --chakra-color:#00FFC8; --chakra-glow:rgba(0,255,200,0.9);">
+            <div class="chakra-hotspot-item" data-chakra="heart" style="--chakra-y: 49%; --chakra-color:#00FFC8; --chakra-glow:rgba(0,255,200,0.9);">
               <div class="chakra-hotspot-label chakra-hotspot-label--left">
                 <span class="chakra-node-title">HEART</span>
                 <span class="chakra-node-sanskrit">Anahata</span>
@@ -1070,7 +1067,7 @@
             </div>
 
             <!-- 5. SOLAR PLEXUS (528 Hz) -->
-            <div class="chakra-hotspot-item" data-chakra="solar" style="--chakra-y: 57%; --chakra-color:#FFD700; --chakra-glow:rgba(255,215,0,0.9);">
+            <div class="chakra-hotspot-item" data-chakra="solar" style="--chakra-y: 58%; --chakra-color:#FFD700; --chakra-glow:rgba(255,215,0,0.9);">
               <div class="chakra-hotspot-label chakra-hotspot-label--left">
                 <span class="chakra-node-title">SOLAR PLEXUS</span>
                 <span class="chakra-node-sanskrit">Manipura</span>
@@ -1087,7 +1084,7 @@
             </div>
 
             <!-- 6. SACRAL (417 Hz) -->
-            <div class="chakra-hotspot-item" data-chakra="sacral" style="--chakra-y: 64%; --chakra-color:#FF7B00; --chakra-glow:rgba(255,123,0,0.9);">
+            <div class="chakra-hotspot-item" data-chakra="sacral" style="--chakra-y: 66.5%; --chakra-color:#FF7B00; --chakra-glow:rgba(255,123,0,0.9);">
               <div class="chakra-hotspot-label chakra-hotspot-label--left">
                 <span class="chakra-node-title">SACRAL</span>
                 <span class="chakra-node-sanskrit">Svadhisthana</span>
@@ -1104,7 +1101,7 @@
             </div>
 
             <!-- 7. ROOT (396 Hz) -->
-            <div class="chakra-hotspot-item" data-chakra="root" style="--chakra-y: 73%; --chakra-color:#FF4D6D; --chakra-glow:rgba(255,77,109,0.9);">
+            <div class="chakra-hotspot-item" data-chakra="root" style="--chakra-y: 75.5%; --chakra-color:#FF4D6D; --chakra-glow:rgba(255,77,109,0.9);">
               <div class="chakra-hotspot-label chakra-hotspot-label--left">
                 <span class="chakra-node-title">ROOT</span>
                 <span class="chakra-node-sanskrit">Muladhara</span>
@@ -2190,9 +2187,12 @@
     </div>
   </div>
 
-  <!-- ✦ CELESTIAL BACK-TO-TOP BUTTON ✦ -->
-  <button type="button" class="back-to-top-btn" id="back-to-top-btn" aria-label="Scroll back to top of page">
-    <span>↑</span>
+  <!-- ✦ CELESTIAL BACK-TO-TOP BUTTON (Centered Directly Above aEYE) ✦ -->
+  <button type="button" class="back-to-top-btn" id="back-to-top-btn" aria-label="Scroll back to top of page" title="Scroll back to top">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <line x1="12" y1="19" x2="12" y2="5"></line>
+      <polyline points="5 12 12 5 19 12"></polyline>
+    </svg>
   </button>
 
   <!-- ✦ BETH'S LANDING GREETING ✦
@@ -2322,6 +2322,6 @@
   <!-- Placed at body level to escape .hero overflow:hidden clipping -->
   <canvas id="hero-avatar-canvas" aria-hidden="true"></canvas>
 
-  <script src="js/main.js?v=34.0"></script>
+  <script src="js/main.js?v=40.0"></script>
 </body>
 </html>

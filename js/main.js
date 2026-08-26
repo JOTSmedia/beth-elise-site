@@ -2780,12 +2780,6 @@
             heroLogo.classList.add('fairy-moon-glow');
           }
 
-          // Show speech bubble during Vanna White presentation
-          if (!heroTinkerbell.vannaBubbleShown) {
-            heroTinkerbell.vannaBubbleShown = true;
-            showBethSpeechBubble("WITH LOVE AND LIGHT!", heroTinkerbell.x, heroTinkerbell.y, 'top');
-          }
-
           // Phase 1 (0 to 2.7s): Facing left towards the revealed board in Vanna White presentation pose
           if (pt < 2.7) {
             heroTinkerbell.facingLeft = true;
@@ -2794,11 +2788,8 @@
             heroTinkerbell.jumpSquash = 1.0;
             heroTinkerbell.catwalkLettersFade = 1.0;
           }
-          // Phase 2 (2.7 to 3.4s): Turn forward to camera, speech bubble hides, prep spring crouch!
+          // Phase 2 (2.7 to 3.4s): Turn forward to camera, prep spring crouch!
           else {
-            if (heroTinkerbell.vannaBubbleShown) {
-              hideBethSpeechBubble();
-            }
             heroTinkerbell.facingLeft = false;
             heroTinkerbell.headAngle = 0;
             const prepP = (pt - 2.7) / 0.7;
@@ -5353,78 +5344,145 @@
     class CelestialAudioEngine {
       constructor() {
         this.ctx = null;
+        this.masterGain = null;
         this.enabled = false; // OFF by default
         this.currentFreq = 528;
+        this.activeOscillators = new Set();
       }
+
       init() {
         if (!this.ctx) {
           const AudioContext = window.AudioContext || window.webkitAudioContext;
-          if (AudioContext) this.ctx = new AudioContext();
+          if (AudioContext) {
+            this.ctx = new AudioContext();
+            this.masterGain = this.ctx.createGain();
+            this.masterGain.gain.setValueAtTime(this.enabled ? 1.0 : 0.0001, this.ctx.currentTime);
+            this.masterGain.connect(this.ctx.destination);
+          }
         }
         if (this.ctx && this.ctx.state === 'suspended') {
           this.ctx.resume();
         }
       }
-      playChime(freq = this.currentFreq, duration = 2.4, force = false) {
-        // Only play if enabled or explicitly forced by user action
+
+      setEnabled(val) {
+        this.enabled = !!val;
+        this.init();
+        if (this.masterGain && this.ctx) {
+          const now = this.ctx.currentTime;
+          if (this.enabled) {
+            this.masterGain.gain.cancelScheduledValues(now);
+            this.masterGain.gain.setValueAtTime(this.masterGain.gain.value, now);
+            this.masterGain.gain.linearRampToValueAtTime(1.0, now + 0.04);
+          } else {
+            this.stopAll();
+          }
+        }
+        if (typeof updateAudioUIState === 'function') updateAudioUIState();
+      }
+
+      stopAll() {
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        if (this.masterGain) {
+          this.masterGain.gain.cancelScheduledValues(now);
+          this.masterGain.gain.setValueAtTime(this.masterGain.gain.value, now);
+          this.masterGain.gain.linearRampToValueAtTime(0.00001, now + 0.03);
+        }
+        this.activeOscillators.forEach(osc => {
+          try {
+            osc.stop(now + 0.04);
+            setTimeout(() => {
+              try { osc.disconnect(); } catch(e) {}
+            }, 60);
+          } catch(e) {}
+        });
+        this.activeOscillators.clear();
+      }
+
+      playChime(freq = this.currentFreq, duration = 2.2, force = false) {
         if (!this.enabled && !force) return;
         try {
           this.init();
-          if (!this.ctx) return;
+          if (!this.ctx || !this.masterGain) return;
           if (this.ctx.state === 'suspended') {
             this.ctx.resume();
           }
+          if (force && this.masterGain.gain.value < 0.1) {
+            this.masterGain.gain.setValueAtTime(1.0, this.ctx.currentTime);
+          }
           const now = this.ctx.currentTime;
 
-          // Fundamental Solfeggio Tone
+          // 1. Fundamental Solfeggio Tone
           const osc1 = this.ctx.createOscillator();
           const gain1 = this.ctx.createGain();
           osc1.type = 'sine';
           osc1.frequency.setValueAtTime(freq, now);
-          gain1.gain.setValueAtTime(0.14, now);
-          gain1.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+          gain1.gain.setValueAtTime(0.12, now);
+          gain1.gain.linearRampToValueAtTime(0.0001, now + duration);
           osc1.connect(gain1);
-          gain1.connect(this.ctx.destination);
-          osc1.onended = () => { osc1.disconnect(); gain1.disconnect(); };
+          gain1.connect(this.masterGain);
+
+          this.activeOscillators.add(osc1);
+          osc1.onended = () => {
+            this.activeOscillators.delete(osc1);
+            try { osc1.disconnect(); gain1.disconnect(); } catch(e) {}
+          };
           osc1.start(now);
           osc1.stop(now + duration);
 
-          // Ethereal Crystal Harmonic Overtone (Octave + 5th)
+          // 2. Harmonic Overtone (Octave + 5th)
           const osc2 = this.ctx.createOscillator();
           const gain2 = this.ctx.createGain();
           osc2.type = 'sine';
           osc2.frequency.setValueAtTime(freq * 1.5, now);
-          gain2.gain.setValueAtTime(0.045, now);
-          gain2.gain.exponentialRampToValueAtTime(0.0001, now + duration * 0.75);
+          gain2.gain.setValueAtTime(0.035, now);
+          gain2.gain.linearRampToValueAtTime(0.0001, now + duration * 0.75);
           osc2.connect(gain2);
-          gain2.connect(this.ctx.destination);
-          osc2.onended = () => { osc2.disconnect(); gain2.disconnect(); };
+          gain2.connect(this.masterGain);
+
+          this.activeOscillators.add(osc2);
+          osc2.onended = () => {
+            this.activeOscillators.delete(osc2);
+            try { osc2.disconnect(); gain2.disconnect(); } catch(e) {}
+          };
           osc2.start(now);
           osc2.stop(now + duration * 0.75);
 
-          // Luminous Shimmer Overtone (Double Octave)
+          // 3. Shimmer Overtone (Double Octave)
           const osc3 = this.ctx.createOscillator();
           const gain3 = this.ctx.createGain();
           osc3.type = 'sine';
           osc3.frequency.setValueAtTime(freq * 2.0, now);
-          gain3.gain.setValueAtTime(0.03, now);
-          gain3.gain.exponentialRampToValueAtTime(0.0001, now + duration * 0.6);
+          gain3.gain.setValueAtTime(0.02, now);
+          gain3.gain.linearRampToValueAtTime(0.0001, now + duration * 0.6);
           osc3.connect(gain3);
-          gain3.connect(this.ctx.destination);
-          osc3.onended = () => { osc3.disconnect(); gain3.disconnect(); };
+          gain3.connect(this.masterGain);
+
+          this.activeOscillators.add(osc3);
+          osc3.onended = () => {
+            this.activeOscillators.delete(osc3);
+            try { osc3.disconnect(); gain3.disconnect(); } catch(e) {}
+          };
           osc3.start(now);
           osc3.stop(now + duration * 0.6);
         } catch(e) {}
       }
-      playTibetanBowl(freq = this.currentFreq, duration = 4.0, force = false) {
+
+      playTibetanBowl(freq = this.currentFreq, duration = 3.6, force = false) {
         if (!this.enabled && !force) return;
         try {
           this.init();
-          if (!this.ctx) return;
+          if (!this.ctx || !this.masterGain) return;
+          if (this.ctx.state === 'suspended') {
+            this.ctx.resume();
+          }
+          if (force && this.masterGain.gain.value < 0.1) {
+            this.masterGain.gain.setValueAtTime(1.0, this.ctx.currentTime);
+          }
           const now = this.ctx.currentTime;
-          // Tibetan Singing Bowl Harmonic Series (Fundamental + Detuned Warmth + High Rim Ring)
           const freqs = [freq, freq * 1.004, freq * 2.76, freq * 5.4];
-          const gains = [0.18, 0.12, 0.05, 0.02];
+          const gains = [0.15, 0.09, 0.04, 0.015];
           const decays = [duration, duration * 0.9, duration * 0.6, duration * 0.4];
 
           freqs.forEach((f, i) => {
@@ -5433,36 +5491,37 @@
             osc.type = 'sine';
             osc.frequency.setValueAtTime(f, now);
             gain.gain.setValueAtTime(gains[i], now);
-            gain.gain.exponentialRampToValueAtTime(0.0001, now + decays[i]);
+            gain.gain.linearRampToValueAtTime(0.0001, now + decays[i]);
             osc.connect(gain);
-            gain.connect(this.ctx.destination);
-            osc.onended = () => { osc.disconnect(); gain.disconnect(); };
+            gain.connect(this.masterGain);
+
+            this.activeOscillators.add(osc);
+            osc.onended = () => {
+              this.activeOscillators.delete(osc);
+              try { osc.disconnect(); gain.disconnect(); } catch(e) {}
+            };
             osc.start(now);
             osc.stop(now + decays[i]);
           });
         } catch(e) {}
       }
-      playAngelChimes() {
-        if (!this.enabled) return;
+
+      playAngelChimes(force = false) {
+        if (!this.enabled && !force) return;
         const notes = [528, 639, 741, 852, 963, 1056];
         notes.forEach((f, idx) => {
-          setTimeout(() => this.playChime(f, 1.8, true), idx * 80);
+          setTimeout(() => {
+            if (this.enabled || force) this.playChime(f, 1.6, force);
+          }, idx * 75);
         });
       }
-      playGlissando() {
-        this.playAngelChimes();
+
+      playGlissando(force = false) {
+        this.playAngelChimes(force);
       }
     }
 
     window.celestialAudio = new CelestialAudioEngine();
-
-    // ─── GLOBAL INTERACTIVE CLICK CHIME LISTENER ──────
-    document.addEventListener('click', (e) => {
-      const interactive = e.target.closest('button, a, .merch-card, .service-card, .quiz-btn, .color-dot, .size-pill, .faq-question, .chakra-btn, .sound-modal-freq-card');
-      if (interactive && window.celestialAudio.enabled) {
-        window.celestialAudio.playChime();
-      }
-    });
 
     // ─── CELESTIAL SOUND FREQUENCY SELECTOR POPUP MODAL ─────
     const soundModal = document.getElementById('sound-modal');
@@ -5480,14 +5539,18 @@
       const muteText = document.getElementById('sound-mute-text');
       if (window.celestialAudio.enabled) {
         if (muteIcon) setPico(muteIcon, 'bell');
-        if (muteText) muteText.textContent = 'Chimes Active';
+        if (muteText) muteText.textContent = 'Sound Active (Click to Mute)';
         if (navFreqLabel) navFreqLabel.textContent = `${window.celestialAudio.currentFreq} Hz`;
         if (navFreqMobileLabel) navFreqMobileLabel.textContent = `${window.celestialAudio.currentFreq} Hz`;
+        openSoundModalBtn?.classList.add('audio-active');
+        openSoundModalMobileBtn?.classList.add('audio-active');
       } else {
         if (muteIcon) setPico(muteIcon, 'bell-off');
-        if (muteText) muteText.textContent = 'Chimes Off (Click to Enable)';
+        if (muteText) muteText.textContent = 'Sound Muted (Click to Enable)';
         if (navFreqLabel) navFreqLabel.textContent = 'Sound';
         if (navFreqMobileLabel) navFreqMobileLabel.textContent = 'Sound (Off)';
+        openSoundModalBtn?.classList.remove('audio-active');
+        openSoundModalMobileBtn?.classList.remove('audio-active');
       }
     };
     updateAudioUIState();
@@ -5504,14 +5567,25 @@
     };
     window.closeSoundModal = closeSoundModal;
 
+    // Direct toggle on navbar button: If active, single click mutes instantly. If muted, opens frequency modal.
     openSoundModalBtn?.addEventListener('click', (e) => {
       e.stopPropagation();
-      openSoundModal();
+      if (window.celestialAudio.enabled) {
+        window.celestialAudio.setEnabled(false);
+        showToast('Celestial Sound Muted', 'bell-off');
+      } else {
+        openSoundModal();
+      }
     });
 
     openSoundModalMobileBtn?.addEventListener('click', (e) => {
       e.stopPropagation();
-      openSoundModal();
+      if (window.celestialAudio.enabled) {
+        window.celestialAudio.setEnabled(false);
+        showToast('Celestial Sound Muted', 'bell-off');
+      } else {
+        openSoundModal();
+      }
     });
 
     closeSoundModalBtn?.addEventListener('click', closeSoundModal);
@@ -5520,37 +5594,38 @@
       if (e.target === soundModal) closeSoundModal();
     });
 
-    // Frequency Card Selection (Auto-enables chime)
+    // Frequency Card Selection
     soundModalGrid?.querySelectorAll('.sound-modal-freq-card').forEach(card => {
       card.addEventListener('click', () => {
         soundModalGrid.querySelectorAll('.sound-modal-freq-card').forEach(c => c.classList.remove('active'));
         card.classList.add('active');
         const freq = parseInt(card.getAttribute('data-freq') || '528', 10);
         window.celestialAudio.currentFreq = freq;
-        window.celestialAudio.enabled = true;
-        updateAudioUIState();
-        window.celestialAudio.playChime(freq);
-        showToast(`Solfeggio Tuned to ${freq}Hz (Chimes Active)`, 'sparkle');
+        window.celestialAudio.setEnabled(true);
+        window.celestialAudio.playChime(freq, 2.0, true);
+        showToast(`Solfeggio Tuned to ${freq}Hz`, 'sparkle');
       });
     });
 
-    // Mute / Unmute Toggle
+    // Mute / Unmute Toggle Button inside Modal
     soundMuteToggleBtn?.addEventListener('click', () => {
-      window.celestialAudio.enabled = !window.celestialAudio.enabled;
-      updateAudioUIState();
-      if (window.celestialAudio.enabled) {
-        window.celestialAudio.playChime();
-        showToast('Chimes Activated', 'bell');
+      const nextState = !window.celestialAudio.enabled;
+      window.celestialAudio.setEnabled(nextState);
+      if (nextState) {
+        window.celestialAudio.playChime(window.celestialAudio.currentFreq, 2.0, true);
+        showToast('Sound Activated', 'bell');
       } else {
-        showToast('Chimes Muted', 'bell-off');
+        showToast('Sound Muted', 'bell-off');
       }
     });
 
-    // Test Chime Button (Auto-enables chime)
+    // Test Chime Button (Preview chime with force=true)
     testChimeBtn?.addEventListener('click', () => {
-      window.celestialAudio.enabled = true;
-      updateAudioUIState();
-      window.celestialAudio.playGlissando();
+      window.celestialAudio.init();
+      if (window.celestialAudio.masterGain && window.celestialAudio.ctx) {
+        window.celestialAudio.masterGain.gain.setValueAtTime(1.0, window.celestialAudio.ctx.currentTime);
+      }
+      window.celestialAudio.playGlissando(true);
       showToast(`Harmonizing at ${window.celestialAudio.currentFreq}Hz`, 'sparkle');
     });
 
@@ -5705,7 +5780,9 @@
 
       backToTopBtn.addEventListener('click', () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        window.celestialAudio.playChime(963, 'sine', 1.5);
+        if (window.celestialAudio && typeof window.celestialAudio.playChime === 'function') {
+          window.celestialAudio.playChime(963, 1.2);
+        }
       });
     }
 
@@ -5861,14 +5938,8 @@
       }
 
       if (playAudio && window.celestialAudio) {
-        window.celestialAudio.enabled = true;
         window.celestialAudio.currentFreq = data.freq;
-        window.celestialAudio.init();
-        if (window.celestialAudio.ctx && window.celestialAudio.ctx.state === 'suspended') {
-          window.celestialAudio.ctx.resume();
-        }
-        window.celestialAudio.playTibetanBowl(data.freq, 3.8, true);
-        if (typeof updateAudioUIState === 'function') updateAudioUIState();
+        window.celestialAudio.playTibetanBowl(data.freq, 3.6, true);
         showToast(`${data.name} Activated · ${data.freq} Hz Tone Playing`, 'sparkle');
       }
     }
@@ -6745,6 +6816,13 @@
       const iconEl = document.getElementById('oracle-res-icon');
       const titleEl = document.getElementById('oracle-res-title');
       const textEl = document.getElementById('oracle-res-text');
+      const resultCard = document.getElementById('oracle-overlay-result');
+
+      if (oracleFlipped && resultCard) {
+        resultCard.style.animation = 'none';
+        void resultCard.offsetWidth;
+        resultCard.style.animation = 'resultSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards';
+      }
 
       if (iconEl) {
         setPico(iconEl, randomCard.pico || 'sparkle');
@@ -6758,16 +6836,14 @@
       if (window.celestialAudio && window.celestialAudio.enabled) window.celestialAudio.playGlissando();
     }
 
-    oracleContainer?.addEventListener('click', (e) => {
-      if (!oracleFlipped) {
-        revealDailyOracleCard();
-      } else if (e.target.closest('.oracle-redraw-badge')) {
-        revealDailyOracleCard();
-      } else {
-        oracleContainer.classList.remove('revealed');
-        oracleFlipped = false;
-      }
-    });
+    if (oracleContainer) {
+      oracleContainer.addEventListener('click', (e) => {
+        // Redraw button, crystal ball click, or initial reveal prompt
+        if (e.target.closest('#oracle-redraw-btn') || e.target.closest('.oracle-redraw-badge') || e.target.closest('.crystal-ball-wrapper') || e.target.closest('#oracle-reveal-btn') || !oracleFlipped) {
+          revealDailyOracleCard();
+        }
+      });
+    }
 
     // Shared Photorealistic Iris Asset
     const imgPhotorealisticIris = new Image();
