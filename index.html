@@ -2,6 +2,12 @@
 <html lang="en">
 <head>
   <script>document.documentElement.classList.add('js');</script>  <!-- reveal-on-scroll is opt-in; without JS nothing is hidden -->
+  <script>
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+    window.scrollTo(0, 0);
+  </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Beth Elise — Psychic Medium, Reiki Healer & Certified Tapping Solution Practitioner. Book a reading, healing session, or connect with the spirit world. Located in New Jersey & available worldwide." />
@@ -963,7 +969,7 @@
       </div>
 
       <div class="text-center mt-2 fade-in">
-        <a href="services.html" class="btn-secondary">
+        <a href="pages/services.html" class="btn-secondary">
           <span><span class="pico pico--orb" aria-hidden="true"></span></span> View Full Offerings & Modalities
         </a>
       </div>

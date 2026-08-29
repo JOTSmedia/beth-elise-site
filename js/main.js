@@ -23,6 +23,10 @@
   const reduceMotion = () => motionQuery.matches;
 
   function initMainApp() {
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+    window.scrollTo(0, 0);
 
     // Preloader is handled directly by inline script in index.html (flying orb to homebase)
 
@@ -1830,17 +1834,17 @@
         let portalScale = 1.0;
 
         if (isMobile) {
-          // On mobile phones: place portal on top of the logo, right in the center!
+          // On mobile phones: place portal on top of the logo, exactly in the center!
           targetCenterX = (w || window.innerWidth) * 0.5;
+          targetCenterY = (h || window.innerHeight) * 0.22;
           const heroLogo = document.querySelector('.hero__logo-img');
-          let logoTopY = (h || window.innerHeight) * 0.22;
           if (heroLogo) {
             const rect = heroLogo.getBoundingClientRect();
-            if (rect.width > 0) {
-              logoTopY = rect.top + (rect.height * 0.04);
+            if (rect.width > 0 && rect.height > 0) {
+              targetCenterX = rect.left + (rect.width * 0.5);
+              targetCenterY = rect.top + (rect.height * 0.5);
             }
           }
-          targetCenterY = Math.max(115, logoTopY - 22);
           portalScale = 0.68; // Gracefully scaled to fit mobile center
         } else if (isTablet) {
           // On portrait tablets: ensure comfortable padding from the left edge
