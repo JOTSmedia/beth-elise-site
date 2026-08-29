@@ -1090,7 +1090,9 @@
 
         // 4. Doctor Strange Sling-Ring Dimensional Tree Portal (Left Arch Tree Circle)
         if (isHeroVisible) {
-          updateAndRenderTreePortal(bgCtx, bgOffsetX, bgOffsetY, bgS, now, dt);
+          const isMobile = (w || window.innerWidth) < 600;
+          const targetCtx = isMobile ? aCtx : bgCtx;
+          updateAndRenderTreePortal(targetCtx, bgOffsetX, bgOffsetY, bgS, now, dt);
         } else {
           updateTreePortalLogicOnly(now, dt);
         }
