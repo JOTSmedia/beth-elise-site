@@ -328,18 +328,18 @@
 
         if (preloaderIrisImg.complete && preloaderIrisImg.naturalWidth > 0) {
           ctx.save();
-          ctx.beginPath();
-          ctx.arc(0, 0, irisR, 0, Math.PI * 2);
-          ctx.clip();
+          // REMOVED nested clip to fix Safari rendering dropout
           ctx.drawImage(preloaderIrisImg, -irisR, -irisR, irisR * 2, irisR * 2);
 
           var irisGlowGrad = ctx.createRadialGradient(0, 0, irisR * 0.1, 0, 0, irisR);
           irisGlowGrad.addColorStop(0, 'rgba(224, 170, 255, 0.60)');
           irisGlowGrad.addColorStop(0.35, 'rgba(199, 125, 255, 0.45)');
           irisGlowGrad.addColorStop(0.70, 'rgba(157, 78, 221, 0.40)');
-          irisGlowGrad.addColorStop(1, 'rgba(45, 0, 80, 0.65)');
+          irisGlowGrad.addColorStop(1, 'transparent');
           ctx.fillStyle = irisGlowGrad;
-          ctx.fillRect(-irisR, -irisR, irisR * 2, irisR * 2);
+          ctx.beginPath();
+          ctx.arc(0, 0, irisR, 0, Math.PI * 2);
+          ctx.fill();
           ctx.restore();
         } else {
           var irisGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, irisR);
@@ -514,6 +514,10 @@
           orb.style.top = orbRect.top + 'px';
           orb.style.margin = '0';
           orb.style.zIndex = '1000001';
+          
+          // Force layout reflow so the browser registers the initial position before transitioning
+          orb.offsetHeight; 
+          
           orb.style.transition = 'all 0.65s cubic-bezier(0.25, 1, 0.5, 1)';
 
           requestAnimationFrame(function() {
@@ -558,8 +562,11 @@
           p.classList.add('fade-out');
           p.style.display = 'none';
           window.preloaderDone = true;
+          if (typeof window.startHeroBethAvatarIntro === 'function') {
+            window.startHeroBethAvatarIntro();
+          }
         }
-      }, 4500);
+      }, 5500);
 
       p.addEventListener('click', dismissPreloader);
     })();

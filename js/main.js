@@ -94,6 +94,12 @@
         lastUpdate: 0
       };
 
+      const cachedDOM = {
+        heroLogo: document.querySelector('.hero__logo-img'),
+        heroBookBtn: document.querySelector('.hero__cta-group .btn-primary'),
+        aeyeWidget: document.getElementById('assistant-avatar-btn')
+      };
+
       function updateHeroLayoutTargets(force = false) {
         const n = performance.now();
         if (!force && (n - cachedHeroTargets.lastUpdate < 300)) return;
@@ -116,7 +122,7 @@
         if (heroAvatarCanvas) {
           const cRect = heroAvatarCanvas.getBoundingClientRect();
           
-          const heroLogo = document.querySelector('.hero__logo-img');
+          const heroLogo = cachedDOM.heroLogo;
           if (heroLogo) {
             const rect = heroLogo.getBoundingClientRect();
             if (rect.width > 0) {
@@ -137,7 +143,7 @@
             }
           }
 
-          const bookBtn = document.querySelector('.hero__cta-group .btn-primary');
+          const bookBtn = cachedDOM.heroBookBtn;
           if (bookBtn) {
             const bbRect = bookBtn.getBoundingClientRect();
             if (bbRect.width > 0) {
@@ -146,7 +152,7 @@
             }
           }
 
-          const aeyeWidget = document.getElementById('assistant-avatar-btn');
+          const aeyeWidget = cachedDOM.aeyeWidget;
           if (aeyeWidget) {
             const aeRect = aeyeWidget.getBoundingClientRect();
             if (aeRect.width > 0) {
@@ -170,6 +176,7 @@
         cachedHeroTargets.aeyeY = aeyeY;
       }
 
+      let cachedNavBottom = 75;
       function resize() {
         const heroSection = document.querySelector('.hero');
         const heroW = (heroSection && heroSection.offsetWidth) || heroBgCanvas.offsetWidth || window.innerWidth;
@@ -179,6 +186,9 @@
 
         w = heroAvatarCanvas.width = window.innerWidth;
         h = heroAvatarCanvas.height = window.innerHeight;
+
+        const navEl = document.querySelector('.nav');
+        if (navEl) cachedNavBottom = navEl.getBoundingClientRect().bottom;
 
         updateHeroLayoutTargets(true);
       }
@@ -213,9 +223,9 @@
           if (gEl) { gEl.classList.remove('is-visible'); setTimeout(() => { gEl.hidden = true; }, 300); }
           if (typeof activeSpeechBubble !== 'undefined') activeSpeechBubble.visible = false;
           // Remove logo and CTA button glow
-          const heroLogo = document.querySelector('.hero__logo-img');
+          const heroLogo = cachedDOM.heroLogo;
           if (heroLogo) heroLogo.classList.remove('fairy-moon-glow');
-          const heroBookBtn = document.querySelector('.hero__cta-group .btn-primary');
+          const heroBookBtn = cachedDOM.heroBookBtn;
           if (heroBookBtn) heroBookBtn.classList.remove('fairy-moon-glow');
         }
       };
@@ -1001,92 +1011,90 @@
         // PHOTOREALISTIC POLARIS — TRUE NORTH STAR (Deep Space Astrophotography)
         // Authentic astronomical Airy disc, delicate Rayleigh corona & razor-thin optical diffraction rays
         // ═══════════════════════════════════════════════
-        (function drawPolarisOnBg() {
-          const polarisX = heroBgCanvas.width * 0.5;
-          const polarisY = Math.max(90, heroBgCanvas.height * 0.095);
-          const isDescending = heroTinkerbell && (heroTinkerbell.state === 'SPAWNING' || heroTinkerbell.state === 'ORB_FLOATING' || heroTinkerbell.state === 'FLYING_TO_LOGO');
-          
-          // Organic high-frequency astronomical scintillation (twinkle)
-          const twinkle = 0.92 + 0.08 * Math.sin(now * 0.009) + 0.04 * Math.cos(now * 0.017);
-          const slowBreathe = 1.0 + Math.sin(now * 0.002) * 0.08;
-          const flareBoost = 1.0 + globalStarSparkle * 0.9;
-          const starScale = (isDescending ? 1.25 : 1.0) * slowBreathe * flareBoost;
+        const polarisX = heroBgCanvas.width * 0.5;
+        const polarisY = Math.max(90, heroBgCanvas.height * 0.095);
+        const isDescending = heroTinkerbell && (heroTinkerbell.state === 'SPAWNING' || heroTinkerbell.state === 'ORB_FLOATING' || heroTinkerbell.state === 'FLYING_TO_LOGO');
+        
+        // Organic high-frequency astronomical scintillation (twinkle)
+        const twinkle = 0.92 + 0.08 * Math.sin(now * 0.009) + 0.04 * Math.cos(now * 0.017);
+        const slowBreathe = 1.0 + Math.sin(now * 0.002) * 0.08;
+        const flareBoost = 1.0 + globalStarSparkle * 0.9;
+        const starScale = (isDescending ? 1.25 : 1.0) * slowBreathe * flareBoost;
 
-          bgCtx.save();
-          bgCtx.translate(polarisX, polarisY);
+        bgCtx.save();
+        bgCtx.translate(polarisX, polarisY);
 
-          // 1. Deep Space Cosmic Corona / Gaussian Starlight Haze (Zero Cartoon Rings)
-          const coronaR = 48 * starScale;
-          const corona = bgCtx.createRadialGradient(0, 0, 0, 0, 0, coronaR);
-          corona.addColorStop(0, `rgba(255, 255, 255, ${0.95 * twinkle})`);
-          corona.addColorStop(0.12, `rgba(235, 245, 255, ${0.60 * twinkle})`);
-          corona.addColorStop(0.35, `rgba(180, 220, 255, ${0.22 * twinkle})`);
-          corona.addColorStop(0.65, `rgba(140, 180, 255, ${0.06 * twinkle})`);
-          corona.addColorStop(1, 'transparent');
-          bgCtx.fillStyle = corona;
-          bgCtx.beginPath();
-          bgCtx.arc(0, 0, coronaR, 0, Math.PI * 2);
-          bgCtx.fill();
+        // 1. Deep Space Cosmic Corona / Gaussian Starlight Haze (Zero Cartoon Rings)
+        const coronaR = 48 * starScale;
+        const corona = bgCtx.createRadialGradient(0, 0, 0, 0, 0, coronaR);
+        corona.addColorStop(0, `rgba(255, 255, 255, ${0.95 * twinkle})`);
+        corona.addColorStop(0.12, `rgba(235, 245, 255, ${0.60 * twinkle})`);
+        corona.addColorStop(0.35, `rgba(180, 220, 255, ${0.22 * twinkle})`);
+        corona.addColorStop(0.65, `rgba(140, 180, 255, ${0.06 * twinkle})`);
+        corona.addColorStop(1, 'transparent');
+        bgCtx.fillStyle = corona;
+        bgCtx.beginPath();
+        bgCtx.arc(0, 0, coronaR, 0, Math.PI * 2);
+        bgCtx.fill();
 
-          // 2. Telescopic Hairline Optical Diffraction Spikes (Razor-Thin, Pure Photorealistic Astrophotography)
-          const spikeLen = 54 * starScale * twinkle;
-          const diagLen = 28 * starScale * twinkle;
+        // 2. Telescopic Hairline Optical Diffraction Spikes (Razor-Thin, Pure Photorealistic Astrophotography)
+        const spikeLen = 54 * starScale * twinkle;
+        const diagLen = 28 * starScale * twinkle;
 
-          // Vertical Diffraction Ray
-          const vGrad = bgCtx.createLinearGradient(0, -spikeLen, 0, spikeLen);
-          vGrad.addColorStop(0, 'transparent');
-          vGrad.addColorStop(0.25, `rgba(220, 240, 255, ${0.35 * twinkle})`);
-          vGrad.addColorStop(0.5, '#FFFFFF');
-          vGrad.addColorStop(0.75, `rgba(220, 240, 255, ${0.35 * twinkle})`);
-          vGrad.addColorStop(1, 'transparent');
-          bgCtx.strokeStyle = vGrad;
-          bgCtx.lineWidth = 0.85;
-          bgCtx.beginPath();
-          bgCtx.moveTo(0, -spikeLen);
-          bgCtx.lineTo(0, spikeLen);
-          bgCtx.stroke();
+        // Vertical Diffraction Ray
+        const vGrad = bgCtx.createLinearGradient(0, -spikeLen, 0, spikeLen);
+        vGrad.addColorStop(0, 'transparent');
+        vGrad.addColorStop(0.25, `rgba(220, 240, 255, ${0.35 * twinkle})`);
+        vGrad.addColorStop(0.5, '#FFFFFF');
+        vGrad.addColorStop(0.75, `rgba(220, 240, 255, ${0.35 * twinkle})`);
+        vGrad.addColorStop(1, 'transparent');
+        bgCtx.strokeStyle = vGrad;
+        bgCtx.lineWidth = 0.85;
+        bgCtx.beginPath();
+        bgCtx.moveTo(0, -spikeLen);
+        bgCtx.lineTo(0, spikeLen);
+        bgCtx.stroke();
 
-          // Horizontal Diffraction Ray
-          const hGrad = bgCtx.createLinearGradient(-spikeLen, 0, spikeLen, 0);
-          hGrad.addColorStop(0, 'transparent');
-          hGrad.addColorStop(0.25, `rgba(220, 240, 255, ${0.35 * twinkle})`);
-          hGrad.addColorStop(0.5, '#FFFFFF');
-          hGrad.addColorStop(0.75, `rgba(220, 240, 255, ${0.35 * twinkle})`);
-          hGrad.addColorStop(1, 'transparent');
-          bgCtx.strokeStyle = hGrad;
-          bgCtx.lineWidth = 0.85;
-          bgCtx.beginPath();
-          bgCtx.moveTo(-spikeLen, 0);
-          bgCtx.lineTo(spikeLen, 0);
-          bgCtx.stroke();
+        // Horizontal Diffraction Ray
+        const hGrad = bgCtx.createLinearGradient(-spikeLen, 0, spikeLen, 0);
+        hGrad.addColorStop(0, 'transparent');
+        hGrad.addColorStop(0.25, `rgba(220, 240, 255, ${0.35 * twinkle})`);
+        hGrad.addColorStop(0.5, '#FFFFFF');
+        hGrad.addColorStop(0.75, `rgba(220, 240, 255, ${0.35 * twinkle})`);
+        hGrad.addColorStop(1, 'transparent');
+        bgCtx.strokeStyle = hGrad;
+        bgCtx.lineWidth = 0.85;
+        bgCtx.beginPath();
+        bgCtx.moveTo(-spikeLen, 0);
+        bgCtx.lineTo(spikeLen, 0);
+        bgCtx.stroke();
 
-          // 45° Diagonal Secondary Diffraction Rays (Fainter, delicate)
-          bgCtx.save();
-          bgCtx.rotate(Math.PI * 0.25);
-          const dGrad = bgCtx.createLinearGradient(-diagLen, 0, diagLen, 0);
-          dGrad.addColorStop(0, 'transparent');
-          dGrad.addColorStop(0.5, `rgba(240, 250, 255, ${0.55 * twinkle})`);
-          dGrad.addColorStop(1, 'transparent');
-          bgCtx.strokeStyle = dGrad;
-          bgCtx.lineWidth = 0.65;
-          bgCtx.beginPath();
-          bgCtx.moveTo(-diagLen, 0);
-          bgCtx.lineTo(diagLen, 0);
-          bgCtx.moveTo(0, -diagLen);
-          bgCtx.lineTo(0, diagLen);
-          bgCtx.stroke();
-          bgCtx.restore();
+        // 45° Diagonal Secondary Diffraction Rays (Fainter, delicate)
+        bgCtx.save();
+        bgCtx.rotate(Math.PI * 0.25);
+        const dGrad = bgCtx.createLinearGradient(-diagLen, 0, diagLen, 0);
+        dGrad.addColorStop(0, 'transparent');
+        dGrad.addColorStop(0.5, `rgba(240, 250, 255, ${0.55 * twinkle})`);
+        dGrad.addColorStop(1, 'transparent');
+        bgCtx.strokeStyle = dGrad;
+        bgCtx.lineWidth = 0.65;
+        bgCtx.beginPath();
+        bgCtx.moveTo(-diagLen, 0);
+        bgCtx.lineTo(diagLen, 0);
+        bgCtx.moveTo(0, -diagLen);
+        bgCtx.lineTo(0, diagLen);
+        bgCtx.stroke();
+        bgCtx.restore();
 
-          // 3. Piercing White-Hot Stellar Core Singularity (Pinprick Airy Disc)
-          bgCtx.fillStyle = '#FFFFFF';
-          bgCtx.shadowColor = '#FFFFFF';
-          bgCtx.shadowBlur = 10 * starScale;
-          bgCtx.beginPath();
-          bgCtx.arc(0, 0, 2.2 * starScale, 0, Math.PI * 2);
-          bgCtx.fill();
+        // 3. Piercing White-Hot Stellar Core Singularity (Pinprick Airy Disc)
+        bgCtx.fillStyle = '#FFFFFF';
+        bgCtx.shadowColor = '#FFFFFF';
+        bgCtx.shadowBlur = 10 * starScale;
+        bgCtx.beginPath();
+        bgCtx.arc(0, 0, 2.2 * starScale, 0, Math.PI * 2);
+        bgCtx.fill();
 
-          bgCtx.restore();
-        })();
+        bgCtx.restore();
 
         // 4. Doctor Strange Sling-Ring Dimensional Tree Portal (Left Arch Tree Circle)
         if (isHeroVisible) {
@@ -1095,10 +1103,8 @@
           
           targetCtx.save();
           if (isMobile) {
-            const navEl = document.querySelector('.nav');
-            const navBottom = navEl ? navEl.getBoundingClientRect().bottom : 75;
             targetCtx.beginPath();
-            targetCtx.rect(0, navBottom, w || window.innerWidth, (h || window.innerHeight) - navBottom);
+            targetCtx.rect(0, cachedNavBottom, w || window.innerWidth, (h || window.innerHeight) - cachedNavBottom);
             targetCtx.clip();
           }
           
@@ -1679,6 +1685,7 @@
       }
 
       window.triggerHeroDescent = function() {
+        if (heroTinkerbell.state !== 'IDLE' && heroTinkerbell.state !== 'NONE') return;
         heroTinkerbell.state = 'SPAWNING';
         heroTinkerbell.progress = 0;
         heroTinkerbell.wormTime = 0;
@@ -1703,7 +1710,7 @@
       };
 
       // Clicking logo also triggers routine
-      document.querySelector('.hero__logo-img')?.addEventListener('click', () => {
+      cachedDOM.heroLogo?.addEventListener('click', () => {
         window.triggerHeroDescent();
         if (window.celestialAudio) window.celestialAudio.playChime(963, 1.8);
       });
@@ -1815,13 +1822,40 @@
         }
       }
 
+      
+      const treePortalCache = { rawPts: [], pts: [] };
       function updateAndRenderTreePortal(ctx, bgOffsetX, bgOffsetY, bgS, now, dt) {
+              function getContourSample(t, offset = 0, scale = 1.0) {
+          const clampedT = ((t % 1.0) + 1.0) % 1.0;
+          const rawIdx = clampedT * numNodes;
+          const idx0 = Math.floor(rawIdx);
+          const frac = rawIdx - idx0;
+          const p0 = pts[idx0 % numNodes];
+          const p1 = pts[(idx0 + 1) % numNodes];
+
+          const bx = p0.x + (p1.x - p0.x) * frac;
+          const by = p0.y + (p1.y - p0.y) * frac;
+
+          const tx = p1.x - p0.x;
+          const ty = p1.y - p0.y;
+          const tLen = Math.hypot(tx, ty) || 1;
+          const tangX = tx / tLen;
+          const tangY = ty / tLen;
+          const normX = -tangY; // outward normal
+          const normY = tangX;
+
+          const px = avgX + (bx - avgX) * scale + normX * offset;
+          const py = avgY + (by - avgY) * scale + normY * offset;
+
+          return { x: px, y: py, tangX, tangY, normX, normY };
+        }
+
         if (treePortal.state === 'HOLD_FOR_ASSISTANT') return;
 
         // Calculate raw world coordinates for all 64 organic tree contour nodes
         const numNodes = TREE_CONTOUR.length;
         let rawAvgX = 0, rawAvgY = 0;
-        const rawPts = [];
+        treePortalCache.rawPts.length = 0; const rawPts = treePortalCache.rawPts;
 
         for (let i = 0; i < numNodes; i++) {
           const node = TREE_CONTOUR[i];
@@ -1850,7 +1884,7 @@
           // On mobile phones: place portal on top of the logo, exactly in the center!
           targetCenterX = (w || window.innerWidth) * 0.5;
           targetCenterY = (h || window.innerHeight) * 0.22;
-          const heroLogo = document.querySelector('.hero__logo-img');
+          const heroLogo = cachedDOM.heroLogo;
           if (heroLogo) {
             const rect = heroLogo.getBoundingClientRect();
             if (rect.width > 0 && rect.height > 0) {
@@ -1871,7 +1905,7 @@
           portalScale = 1.0;
         }
 
-        const pts = [];
+        treePortalCache.pts.length = 0; const pts = treePortalCache.pts;
         let avgX = 0, avgY = 0;
         for (let i = 0; i < numNodes; i++) {
           const raw = rawPts[i];
@@ -1892,30 +1926,7 @@
         treePortal.r = Math.hypot(dx0, dy0) * 1.05;
 
         // Helper: High-precision continuous contour sampling (Unreal Niagara Curve Sampler)
-        function getContourSample(t, offset = 0, scale = 1.0) {
-          const clampedT = ((t % 1.0) + 1.0) % 1.0;
-          const rawIdx = clampedT * numNodes;
-          const idx0 = Math.floor(rawIdx);
-          const frac = rawIdx - idx0;
-          const p0 = pts[idx0 % numNodes];
-          const p1 = pts[(idx0 + 1) % numNodes];
 
-          const bx = p0.x + (p1.x - p0.x) * frac;
-          const by = p0.y + (p1.y - p0.y) * frac;
-
-          const tx = p1.x - p0.x;
-          const ty = p1.y - p0.y;
-          const tLen = Math.hypot(tx, ty) || 1;
-          const tangX = tx / tLen;
-          const tangY = ty / tLen;
-          const normX = -tangY; // outward normal
-          const normY = tangX;
-
-          const px = avgX + (bx - avgX) * scale + normX * offset;
-          const py = avgY + (by - avgY) * scale + normY * offset;
-
-          return { x: px, y: py, tangX, tangY, normX, normY };
-        }
 
         // Initialize Niagara Orbit Particle Swarm (180 circulating sparkler particles)
         if (!treePortal.orbitParticles || treePortal.orbitParticles.length === 0) {
@@ -2428,11 +2439,6 @@
         const starX = w * 0.5;
         const starY = Math.max(90, h * 0.095);
 
-        // Safely query DOM elements for class animations
-        const heroLogo = document.querySelector('.hero__logo-img');
-        const heroBookBtn = document.querySelector('.hero__cta-group .btn-primary');
-        const aeyeWidget = document.getElementById('assistant-avatar-btn');
-
         // Update layout targets (efficiently cached every 300ms)
         updateHeroLayoutTargets(false);
         const {
@@ -2441,6 +2447,10 @@
           bookBtnX, bookBtnY,
           aeyeX, aeyeY
         } = cachedHeroTargets;
+
+        const heroLogo = cachedDOM.heroLogo;
+        const heroBookBtn = cachedDOM.heroBookBtn;
+        const aeyeWidget = cachedDOM.aeyeWidget;
 
         // Target 3: Celestial Moon Background Portal Disc
         const portalX = w * 0.5;
@@ -2610,7 +2620,7 @@
             heroTinkerbell.perchedTime = 0;
             heroTinkerbell.facingLeft = false;
             heroTinkerbell.bookBubbleShown = true;
-            const heroBookBtn = document.querySelector('.hero__cta-group .btn-primary');
+            const heroBookBtn = cachedDOM.heroBookBtn;
             if (heroBookBtn) heroBookBtn.classList.add('fairy-moon-glow');
             emitPixieDust(heroTinkerbell.x, heroTinkerbell.y + 12, 20, ['#00FFC8', '#FFD700', '#FFFFFF']);
 
@@ -2627,7 +2637,7 @@
           heroTinkerbell.x = bookBtnX;
           heroTinkerbell.y = bookBtnY;
 
-          const heroBookBtn = document.querySelector('.hero__cta-group .btn-primary');
+          const heroBookBtn = cachedDOM.heroBookBtn;
           if (heroBookBtn && !heroBookBtn.classList.contains('fairy-moon-glow')) {
             heroBookBtn.classList.add('fairy-moon-glow');
           }
@@ -3007,7 +3017,7 @@
               }
 
               // Turn OFF logo warm glowing when she dives into the aEYE
-              const heroLogoImg = document.querySelector('.hero__logo-img');
+              const heroLogoImg = cachedDOM.heroLogo;
               if (heroLogoImg) {
                 heroLogoImg.classList.remove('fairy-moon-glow');
               }
@@ -4594,7 +4604,7 @@
       // Expose interactive menu fairy flight triggers
       window.triggerFairyMenuTakeoff = function() {
         if (!heroAvatarCanvas) return;
-        const aeyeWidget = document.getElementById('assistant-avatar-btn');
+        const aeyeWidget = cachedDOM.aeyeWidget;
         const widget = document.getElementById('sacred-assistant-widget');
         if (widget) widget.classList.add('aeye-in-flight');
 
@@ -4707,7 +4717,7 @@
 
       window.triggerAuraEyeTakeoff = function(targetX, targetY) {
         if (!heroAvatarCanvas) return;
-        const aeyeWidget = document.getElementById('assistant-avatar-btn');
+        const aeyeWidget = cachedDOM.aeyeWidget;
         const widget = document.getElementById('sacred-assistant-widget');
         if (widget) widget.classList.add('aeye-in-flight');
 
@@ -5435,8 +5445,8 @@
           const gain1 = this.ctx.createGain();
           osc1.type = 'sine';
           osc1.frequency.setValueAtTime(freq, now);
-          gain1.gain.setValueAtTime(0.12, now);
-          gain1.gain.linearRampToValueAtTime(0.0001, now + duration);
+          gain1.gain.setValueAtTime(0.08, now);
+          gain1.gain.exponentialRampToValueAtTime(0.0001, now + duration);
           osc1.connect(gain1);
           gain1.connect(this.masterGain);
 
@@ -5454,7 +5464,7 @@
           osc2.type = 'sine';
           osc2.frequency.setValueAtTime(freq * 1.5, now);
           gain2.gain.setValueAtTime(0.035, now);
-          gain2.gain.linearRampToValueAtTime(0.0001, now + duration * 0.75);
+          gain2.gain.exponentialRampToValueAtTime(0.0001, now + duration * 0.75);
           osc2.connect(gain2);
           gain2.connect(this.masterGain);
 
@@ -6876,16 +6886,7 @@
       const aw = r * 1.58;
       const ah = r * 0.96;
 
-      // 1. Asymmetric Natural Almond Eye Outline Clip
-      ctx.save();
-      ctx.beginPath();
-      ctx.moveTo(-aw * 0.50, 0);
-      ctx.bezierCurveTo(-aw * 0.32, -ah * 0.60, aw * 0.16, -ah * 0.54, aw * 0.50, -ah * 0.04);
-      ctx.bezierCurveTo(aw * 0.22, ah * 0.52, -aw * 0.30, ah * 0.44, -aw * 0.50, 0);
-      ctx.closePath();
-      ctx.clip();
-
-      // 2. Sclera with soft 3D Spherical Volumetric Gradients
+      // 1. Sclera with soft 3D Spherical Volumetric Gradients
       const scleraGrad = ctx.createRadialGradient(-r * 0.15, -r * 0.15, 2, 0, 0, r);
       scleraGrad.addColorStop(0, '#FFFFFF');
       scleraGrad.addColorStop(0.55, '#FAF6FE');
@@ -6921,9 +6922,7 @@
       // 3b. High-Res Iris Core + Luminous Screen Blend
       if (imgPhotorealisticIris.complete && imgPhotorealisticIris.naturalWidth > 0) {
         ctx.save();
-        ctx.beginPath();
-        ctx.arc(0, 0, irisR, 0, Math.PI * 2);
-        ctx.clip();
+        // REMOVED NESTED CLIP that crashes Safari WebKit rendering engine
         ctx.drawImage(imgPhotorealisticIris, -irisR, -irisR, irisR * 2, irisR * 2);
 
         // Vibrant Purple Luminescence Enhancer: intensifies rich saturated purple & violet depth
@@ -6931,9 +6930,11 @@
         irisGlowGrad.addColorStop(0, 'rgba(224, 170, 255, 0.60)');
         irisGlowGrad.addColorStop(0.35, 'rgba(199, 125, 255, 0.45)');
         irisGlowGrad.addColorStop(0.70, 'rgba(157, 78, 221, 0.40)');
-        irisGlowGrad.addColorStop(1, 'rgba(45, 0, 80, 0.65)');
+        irisGlowGrad.addColorStop(1, 'transparent'); // Fade to transparent at edge to avoid square bounds
         ctx.fillStyle = irisGlowGrad;
-        ctx.fillRect(-irisR, -irisR, irisR * 2, irisR * 2);
+        ctx.beginPath();
+        ctx.arc(0, 0, irisR, 0, Math.PI * 2);
+        ctx.fill();
         ctx.restore();
       } else {
         const irisGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, irisR);
@@ -6968,6 +6969,8 @@
         ctx.lineTo(cosA * fLen2 + (-sinA * wave), sinA * fLen2 + (cosA * wave));
         ctx.stroke();
       }
+
+      
 
       // 3d. Luminous Purple Limbal Ring with Pulsing Glow
       ctx.strokeStyle = 'rgba(199, 125, 255, 0.90)';
@@ -7045,7 +7048,16 @@
         ctx.fill();
       }
 
-      ctx.restore(); // end almond clip
+      // Apply Asymmetric Natural Almond Mask using compositing (Bypasses Safari hardware clip bug)
+      ctx.globalCompositeOperation = 'destination-in';
+      ctx.beginPath();
+      ctx.moveTo(-aw * 0.50, 0);
+      ctx.bezierCurveTo(-aw * 0.32, -ah * 0.60, aw * 0.16, -ah * 0.54, aw * 0.50, -ah * 0.04);
+      ctx.bezierCurveTo(aw * 0.22, ah * 0.52, -aw * 0.30, ah * 0.44, -aw * 0.50, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.globalCompositeOperation = 'source-over';
+      // Removed ctx.restore() because we removed the matching ctx.save() earlier.
 
       // 7. Gold Almond Eyelid Rim Border
       ctx.strokeStyle = 'rgba(255, 215, 0, 0.88)';
@@ -8160,7 +8172,7 @@
     // ─── PERSISTENT aEYE SACRED GUIDE (Photorealistic Purple Eye + Site Search) ───
     function initSacredAssistant() {
       const widget = document.getElementById('sacred-assistant-widget');
-      const avatarBtn = document.getElementById('assistant-avatar-btn');
+      const avatarBtn = cachedDOM.aeyeWidget;
       const avatarCanvas = document.getElementById('assistant-avatar-canvas');
       const bubble = document.getElementById('assistant-speech-bubble');
       const bubbleText = document.getElementById('assistant-bubble-text');
@@ -8171,22 +8183,6 @@
       const searchInput = document.getElementById('aeye-search-input');
 
       if (!widget) return;
-
-      // Draw Photorealistic Purple Eye on Avatar Canvas
-      if (avatarCanvas) {
-        const actx = avatarCanvas.getContext('2d');
-        const eyeImg = new Image();
-        eyeImg.src = 'images/photorealistic_purple_iris_orb.webp';
-
-        let mouseX = 0.5, mouseY = 0.5;
-        window.addEventListener('mousemove', (e) => {
-          const rect = avatarCanvas.getBoundingClientRect();
-          mouseX = Math.max(-1, Math.min(1, (e.clientX - (rect.left + rect.width * 0.5)) / 200));
-          mouseY = Math.max(-1, Math.min(1, (e.clientY - (rect.top + rect.height * 0.5)) / 200));
-        }, { passive: true });
-
-        // renderAvatar loop REMOVED — replaced by updateAndRenderSacredEye (living organic eye)
-      }
 
       // ─── aEye Thought Bubble Tips ───
       const tips = [
@@ -8248,6 +8244,7 @@
 
       // Open Modal on Avatar Click with fairy flight takeoff
       avatarBtn?.addEventListener('click', () => {
+        console.log('[DEBUG] aEye Avatar Button Clicked!');
         if (!modal) return;
         if (typeof window.triggerFairyInterrupted === 'function') {
           window.triggerFairyInterrupted();
@@ -8424,17 +8421,14 @@
           const acx = aw * 0.5;
           const acy = ah * 0.5;
 
-          eyeCtx.clearRect(0, 0, aw, ah);
-
           // Hide home base eye when the living aEYE is in flight elsewhere
           const tinkState = (window.heroTinkerbell && window.heroTinkerbell.state) || '';
           const menuState = (window.heroAeyeMenu && window.heroAeyeMenu.state) || 'IDLE';
-          if (menuState !== 'IDLE' || tinkState.startsWith('MENU_') || tinkState.startsWith('AURA_')) {
-            if (!reduceMotion()) requestAnimationFrame(updateAndRenderSacredEye);
-            return;
-          }
-
-          // 1. Mouse Tracking vs Autonomous Look-Around Saccades
+          const isHiddenState = (menuState !== 'IDLE' || tinkState.startsWith('MENU_') || tinkState.startsWith('AURA_'));
+          
+          if (!isHiddenState) {
+            eyeCtx.clearRect(0, 0, aw, ah);
+            // 1. Mouse Tracking vs Autonomous Look-Around Saccades
           const rect = avatarCanvas.getBoundingClientRect();
           const canvasScreenCenterX = rect.left + rect.width * 0.5;
           const canvasScreenCenterY = rect.top + rect.height * 0.5;
@@ -8495,6 +8489,7 @@
           const eyeRadius = 31.0;
           const colors = ['#7B2CBF', '#9D4EDD', '#00FFC8'];
           drawOrganicEye(eyeCtx, acx, acy, eyeRadius, normGazeX, normGazeY, blinkProgress, 8.5, colors, now);
+          } // End if (!isHiddenState)
 
           if (!reduceMotion()) requestAnimationFrame(updateAndRenderSacredEye);
         }
