@@ -1,0 +1,141 @@
+=== Found in 00000008 ===
+function drawHeroTinkerbellSprite(ctx, x, y, wingPhase, headAngle = 0, isPerched = false, sway = 0, isStrutting = false, strutPhase = 0, facingLeft = false, diveAngle = 0) {
+1746:         ctx.save();
+1747:         ctx.translate(x + sway, y);
+1748: 
+1749:         if (facingLeft) ctx.scale(-1, 1);
+1750:         if (diveAngle !== 0) ctx.rotate(diveAngle);
+1751: 
+1752:         const baseScale = AVATAR_SCALE;
+1753:         ctx.scale(baseScale, baseScale);
+1754: 
+1755:         // Radiant Stardust Aura
+1756:         const pulse = 1.0 + Math.sin(wingPhase * 0.5) * 0.08;
+1757:         const aura = ctx.createRadialGradient(0, -60, 20, 0, -60, 260 * pulse);
+1758:         aura.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+1759:         aura.addColorStop(0.3, 'rgba(0, 255, 200, 0.5)');
+1760:         aura.addColorStop(0.7, 'rgba(157, 78, 221, 0.25)');
+1761:         aura.addColorStop(1, 'transparent');
+1762:         ctx.fillStyle = aura;
+1763:         ctx.beginPath();
+1764:         ctx.arc(0, -60, 260 * pulse, 0, Math.PI * 2);
+1765:         ctx.fill();
+1766: 
+1767:         // ── WINGS (behind her, always beating) ──
+1768:         const beat = Math.sin(wingPhase);
+1769:         beatWing(ctx, imgWingL, PIV_WING_L, beat, true);
+1770:         beatWing(ctx, imgWingR, PIV_WING_R, beat, false);
+1771: 
+1772:         // ── WALK CYCLE ──
+1773:         // strutPhase advances two steps per cycle (one per |cos| peak). The
+1774:         // torso rises and falls with each stride, leans into it, counter-rotates
+1775:         // against the hips and settles on the footfall. Previously the whole PNG
+1776:         // just slid sideways with a flat 0.06rad wobble, which is what read as a
+1777:         // static image being dragged across the screen.
+1778:         let lean = 0, bob = 0, squash = 1, drift = 0;
+1779:         if (isStrutting) {
+1780:           const s = Math.sin(strutPhase);
+1781:           const fall = Math.abs(Math.cos(strutPhase));   // 1 at each footfall
+1782:           bob = -fall * 10;                              // rise between steps
+1783:           lean = s * 0.055;                              // shoulders answer hips
+1784:           squash = 1 + fall * 0.022;                     // weight settling
+1785:           drift = s * 3.0;                               // weight shifts side to side
+1786:         }
+1787: 
+1788:         ctx.save();
+1789:         ctx.translate(drift, bob);
+1790:         ctx.rotate(lean);
+1791:         ctx.scale(1 / squash, squash);
+1792: 
+1793:         // Legs go behind the body so the skirt overlaps the thighs and the front
+1794:         // leg reads through the slit, exactly as it did in the original render.
+1795:         // When she is not walking they rest in a relaxed stance rather than
+1796:         // snapping to a mid-stride pose.
+1797:         const legPhase = isStrutting ? strutPhase : Math.PI * 0.5;
+1798:         const legSpread = isStrutting ? 0 : 0.10;
+1799:         drawLeg(ctx, HIP_BACK, legPhase + Math.PI - legSpread, LEG_TONE_BACK, SHOE_BACK);
+1800:         drawLeg(ctx, HIP_FRONT, legPhase + legSpread, LEG_TONE_FRONT, SHOE_FRONT);
+1801: 
+1802:         // train sits over the legs but under the skirt front, as in the render
+1803:         drawTrain(ctx, legPhase, isStrutting, wingPhase);
+1804: 
+1805:         drawAvatarLayer(ctx, imgAvatar, null, 0);
+1806:         ctx.restore();
+1807: 
+1808:         // Shimmering Golden Footstep / Boot Sparkles — brighte
+============================================================
+=== Found in 00000009 ===
+function drawHeroTinkerbellSprite(ctx, x, y, wingPhase, headAngle = 0, isPerched = false, sway = 0, isStrutting = false, strutPhase = 0, facingLeft = false, diveAngle = 0) {
+        ctx.save();
+        ctx.translate(x + sway, y);
+
+        if (facingLeft) ctx.scale(-1, 1);
+        if (diveAngle !== 0) ctx.rotate(diveAngle);
+
+        const baseScale = AVATAR_SCALE;
+        ctx.scale(baseScale, baseScale);
+
+        // Radiant Stardust Aura
+        const pulse = 1.0 + Math.sin(wingPhase * 0.5) * 0.08;
+        const aura = ctx.createRadialGradient(0, -60, 20, 0, -60, 260 * pulse);
+        aura.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+        aura.addColorStop(0.3, 'rgba(0, 255, 200, 0.5)');
+        aura.addColorStop(0.7, 'rgba(157, 78, 221, 0.25)');
+        aura.addColorStop(1, 'transparent');
+        ctx.fillStyle = aura;
+        ctx.beginPath();
+        ctx.arc(0, -60, 260 * pulse, 0, Math.PI * 2);
+        ctx.fill();
+
+        // ── WINGS (behind her, always beating) ──
+        const beat = Math.sin(wingPhase);
+        beatWing(ctx, imgWingL, PIV_WING_L, beat, true);
+        beatWing(ctx, imgWingR, PIV_WING_R, beat, false);
+
+        // ── WALK CYCLE ──
+        // strutPhase advances two steps per cycle (one per |cos| peak). The
+        // torso rises and falls with each stride, leans into it, counter-rotates
+        // against the hips and settles on the footfall. Previously the whole PNG
+        // just slid sideways with a flat 0.06rad wobble, which is what read as a
+        // static image being dragged across the screen.
+        let lean = 0, bob = 0, squash = 1, drift = 0;
+        if (isStrutting) {
+          const s = Math.sin(strutPhase);
+          const fall = Math.abs(Math.cos(strutPhase));   // 1 at each footfall
+          bob = -fall * 10;                              // rise between steps
+          lean = s * 0.055;                              // shoulders answer hips
+          squash = 1 + fall * 0.022;                     // weight settling
+          drift = s * 3.0;                               // weight shifts side to side
+        }
+
+        ctx.save();
+        ctx.translate(drift, bob);
+        ctx.rotate(lean);
+        ctx.scale(1 / squash, squash);
+
+        // Legs go behind the body so the skirt overlaps the thighs and the front
+        // leg reads through the slit, exactly as it did in the original render.
+        // When she is not walking they rest in a relaxed stance rather than
+        // snapping to a mid-stride pose.
+        const legPhase = isStrutting ? strutPhase : Math.PI * 0.5;
+        const legSpread = isStrutting ? 0 : 0.10;
+        drawLeg(ctx, HIP_BACK, legPhase + Math.PI - legSpread, LEG_TONE_BACK, SHOE_BACK);
+        drawLeg(ctx, HIP_FRONT, legPhase + legSpread, LEG_TONE_FRONT, SHOE_FRONT);
+
+        // train sits over the legs but under the skirt front, as in the render
+        drawTrain(ctx, legPhase, isStrutting, wingPhase);
+
+        drawAvatarLayer(ctx, imgAvatar, null, 0);
+        ctx.restore();
+
+        // Shimmering Golden Footstep / Boot Sparkles — brighten on footfall
+        const fall = isStrutting ? Math.abs(Math.cos(strutPhase)) : 0.5;
+        ctx.fillStyle = 'rgba(255, 215, 0, ' + (0.45 + 0.55 * fall) + ')';
+        ctx.beginPath();
+        ctx.arc(-14, 0, 3.5 + 2.5 * fall, 0, Math.PI * 2);
+        ctx.arc(14, 0, 3.5 + 2.5 * fall, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+      }","TargetFile"
+============================================================

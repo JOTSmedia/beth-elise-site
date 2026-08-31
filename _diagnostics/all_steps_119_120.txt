@@ -1,0 +1,2308 @@
+Chunk 119 step 8:
+cat > inspect_full_hero_bg.py << 'EOF'
+import struct, zlib
+
+def analyze_full():
+    with open('/tmp/hero-bg.png', 'rb') as f:
+        data = f.read()
+    pos = 8
+    idat = b''
+    w, h = 0, 0
+    while pos < len(data):
+        length = struct.unpack('>I', data[pos:pos+4])[0]
+        chunk_type = data[pos+4:pos+8]
+        chunk_data = data[pos+8:pos+8+length]
+        pos += 8 + length + 4
+        if chunk_type == b'IHDR':
+            w, h, bitd, colort, compm, filterm, interm = struct.unpack('>IIBBBBB', chunk_data)
+        elif chunk_type == b'IDAT':
+            idat += chunk_data
+    decomp = zlib.decompress(idat)
+    bpp = 3 if colort == 2 else 4
+    stride = 1 + w * bpp
+    print(f"Full background size: {w}x{h}")
+    
+    # In hero-bg.webp:
+    # Let's find where the fairy lights arch on the left is:
+    # In the screenshot media_1787383099168.jpg, we see:
+    # 1. The arch has yellow glowing fairy lights all around the top and left.
+    # 2. Inside the arch, in the middle, there is a prominent vertical tree trunk.
+    # 3. Floating in the middle is a yellow glowing butterfly and blue/cyan butterflies.
+    # 4. At the bottom right is the path and text 'STEP INTO THE SACRED GLAD...'
+    # Let's find the exact pixel bounds of this fairy light arch in 1376x768:
+    
+    # Let's search for the yellow fairy light dots (high r, high g, lower b: e.g. r>200, g>180, b<150)
+    yellow_lights = []
+    for y in range(50, 600, 4):
+        for x in range(50, 600, 4):
+            off = y * stride + 1 + x * bpp
+            r, g, b = decomp[off], decomp[off+1], decomp[off+2]
+            if r > 210 and g > 190 and b < 160:
+                yellow_lights.append((x, y))
+    
+    print(f"Found {len(yellow_lights)} yellow fairy light points on the left arch!")
+    if yellow_lights:
+        min_x = min(p[0] for p in yellow_lights)
+        max_x = max(p[0] for p in yellow_lights)
+        min_y = min(p[1] for p in yellow_lights)
+        max_y = max(p[1] for p in yellow_lights)
+        print(f"Fairy light arch bounds in 1376x768: X=[{min_x}, {max_x}] (u=[{min_x/w:.3f}, {max_x/w:.3f}]), Y=[{min_y}, {max_y}] (v=[{min_y/h:.3f}, {max_y/h:.3f}])")
+        center_x = (min_x + max_x) / 2
+        center_y = (min_y + max_y) / 2
+        print(f"Center: x={center_x:.1f} (u={center_x/w:.3f}), y={center_y:.1f} (v={center_y/h:.3f})")
+        print(f"Radius: rx={(max_x - min_x)/2}px (rx_norm={(max_x - min_x)/(2*w):.3f}), ry={(max_y - min_y)/2}px (ry_norm={(max_y - min_y)/(2*h):.3f})")
+
+analyze_full()
+EOF
+python3 inspect_full_hero_bg.py
+rm inspect_full_hero_bg.py
+
+============================================================
+
+Chunk 119 step 14:
+cat > apply_perfect_portal_and_links.py << 'EOF'
+import json, math
+
+# Calibrated contour fitting the entire tree arch (center u=0.235, v=0.415, rx=0.145, ry=0.220)
+center_u = 0.235
+center_v = 0.415
+rx = 0.145
+ry = 0.220
+
+contour = []
+num_nodes = 64
+
+for i in range(num_nodes):
+    angle = -math.pi * 0.5 + (i / num_nodes) * math.pi * 2
+    is_top = math.sin(angle) < 0
+    if is_top:
+        warp_x = 1.0 + 0.03 * math.cos(angle * 2.0)
+        warp_y = 1.0 + 0.02 * math.sin(angle * 2.0)
+    else:
+        warp_x = 0.96 + 0.04 * math.cos(angle)
+        warp_y = 0.94 - 0.03 * math.sin(angle)
+    u = center_u + math.cos(angle) * rx * warp_x
+    v = center_v + math.sin(angle) * ry * warp_y
+    contour.append({
+        'u': round(u, 4),
+        'v': round(v, 4)
+    })
+
+contour_js = json.dumps(contour)
+
+with open('js/main.js', 'r', encoding='utf-8') as f:
+    js = f.read()
+
+# Replace portalHighlights and TREE_CONTOUR
+old_highlights_start = js.find('      const portalHighlights = [')
+portal_render_fn_end = js.find('      // ─── TINKERBELL MULTI-PERCH, THE WORM & MOONWALK STATE MACHINE ───')
+
+new_portal_section = f'''      const portalHighlights = [
+        {{
+          tag: 'SACRED MERCHANDISE',
+          title: 'EYE BELIEVE HOODIE',
+          subtitle: '$78 · 100% Organic Celestial Wear',
+          action: 'Tap to Shop Hoodie',
+          href: '#merch',
+          imgSrc: 'images/merch-eye-believe-hoodie-lavender.webp',
+          color: '#C77DFF'
+        }},
+        {{
+          tag: 'INTERACTIVE SCANNER',
+          title: '3D AURA SCANNER',
+          subtitle: 'Live LiDAR Biofield Frequency Scan',
+          action: 'Tap to Scan Biofield',
+          href: '#interactive-aura',
+          imgSrc: 'images/aura-silhouette-glow.webp',
+          color: '#00E5D4'
+        }},
+        {{
+          tag: 'EXCLUSIVE LIVE EVENT',
+          title: 'GHOST KEY WEST 2026',
+          subtitle: 'Historic Gallery Evidential Gathering',
+          action: 'Tap to View Gathering',
+          href: '#events',
+          imgSrc: 'images/notes-by-beth.webp',
+          color: '#FFD700'
+        }},
+        {{
+          tag: '1-ON-1 SESSIONS',
+          title: 'EVIDENTIAL MEDIUMSHIP',
+          subtitle: 'Private Spirit Connection Session',
+          action: 'Tap to Book Session',
+          href: '#contact',
+          imgSrc: 'images/portrait.webp',
+          color: '#FFE57F'
+        }},
+        {{
+          tag: 'ENERGY HEALING',
+          title: 'CHAKRA BALANCING',
+          subtitle: '7-Vortex Harmonic Alignment',
+          action: 'Tap to Balance Chakras',
+          href: '#services',
+          imgSrc: 'images/chakra-watercolor-transparent.webp',
+          color: '#00FFC8'
+        }},
+        {{
+          tag: 'SACRED MERCHANDISE',
+          title: 'EMBROIDERED CAP',
+          subtitle: '$38 · Sacred Streetwear Collection',
+          action: 'Tap to Shop Headwear',
+          href: '#merch',
+          imgSrc: 'images/merch-eye-believe-hat-black.webp',
+          color: '#FF80DF'
+        }},
+        {{
+          tag: 'SOUND FREQUENCIES',
+          title: '528Hz SOUND SANCTUARY',
+          subtitle: 'DNA Repair & Miracle Tone Baths',
+          action: 'Tap to Open Frequencies',
+          href: '#sound-sanctuary',
+          imgSrc: 'images/crystal_nebula_panorama.webp',
+          color: '#9D4EDD'
+        }}
+      ];
+
+      // Preload all highlight snapshots for crisp zero-latency presentation
+      const portalImgs = portalHighlights.map(item => {{
+        const img = new Image();
+        img.src = item.imgSrc;
+        return img;
+      }});
+
+      // 64 High-Precision Organic Contour Nodes fitted precisely inside the full tree arch
+      const TREE_CONTOUR = {contour_js};
+
+      const treePortal = {{
+        state: 'HOLD_FOR_ASSISTANT', // Held until Avatar Beth dives in & aEYE introduces itself
+        timer: 0,
+        sputter1Duration: 1.2,
+        sputter2Duration: 1.4,
+        drawDuration: 2.4,
+        openDuration: 11.5,
+        closeDuration: 0.85,
+        nextTrigger: Infinity,
+        ringProgress: 0,
+        highlightIdx: 0,
+        isHovered: false,
+        x: 0,
+        y: 0,
+        r: 0,
+        sparks: []
+      }};
+
+      window.startTreePortalSequence = function() {{
+        if (treePortal.state === 'HOLD_FOR_ASSISTANT') {{
+          treePortal.state = 'IDLE';
+          treePortal.nextTrigger = performance.now() + 1800;
+        }}
+      }};
+
+      // Interactive Portal Mouse Hover & Direct Click Navigation
+      window.addEventListener('mousemove', (e) => {{
+        if (treePortal.state !== 'OPEN' && treePortal.state !== 'DRAWING_RING') {{
+          treePortal.isHovered = false;
+          return;
+        }}
+        const dx = e.clientX - treePortal.x;
+        const dy = e.clientY - treePortal.y;
+        const dist = Math.hypot(dx, dy);
+        treePortal.isHovered = (dist <= treePortal.r * 1.15);
+      }}, {{ passive: true }});
+
+      window.addEventListener('click', (e) => {{
+        if (treePortal.state === 'OPEN') {{
+          const dx = e.clientX - treePortal.x;
+          const dy = e.clientY - treePortal.y;
+          const dist = Math.hypot(dx, dy);
+          if (dist <= treePortal.r * 1.15) {{
+            const item = portalHighlights[treePortal.highlightIdx];
+            if (item && item.href) {{
+              if (window.celestialAudio) window.celestialAudio.playChime(963, 1.8);
+              emitPixieDust(treePortal.x, treePortal.y, 60, ['#00FFC8', '#FFD700', '#FFFFFF', '#C77DFF']);
+              
+              if (item.href === '#sound-sanctuary') {{
+                const openSoundBtn = document.getElementById('open-sound-modal-btn');
+                if (openSoundBtn) openSoundBtn.click();
+              }} else if (item.href === '#interactive-aura') {{
+                const startAuraBtn = document.getElementById('aura-start-scan-btn');
+                const auraSec = document.getElementById('interactive-aura');
+                if (auraSec) auraSec.scrollIntoView({{ behavior: 'smooth' }});
+                if (startAuraBtn) setTimeout(() => startAuraBtn.click(), 600);
+              }} else {{
+                const targetEl = document.querySelector(item.href);
+                if (targetEl) targetEl.scrollIntoView({{ behavior: 'smooth' }});
+              }}
+            }}
+          }}
+        }}
+      }});
+
+      function updateTreePortalLogicOnly(now, dt) {{
+        if (treePortal.state === 'HOLD_FOR_ASSISTANT') return;
+
+        if (treePortal.state === 'IDLE') {{
+          if (now >= treePortal.nextTrigger) {{
+            treePortal.state = 'SPUTTER_1';
+            treePortal.timer = 0;
+            treePortal.ringProgress = 0;
+            treePortal.highlightIdx = Math.floor(Math.random() * portalHighlights.length);
+          }}
+        }} else if (treePortal.state === 'SPUTTER_1') {{
+          treePortal.timer += dt;
+          if (treePortal.timer >= treePortal.sputter1Duration) {{
+            treePortal.state = 'SPUTTER_2';
+            treePortal.timer = 0;
+          }}
+        }} else if (treePortal.state === 'SPUTTER_2') {{
+          treePortal.timer += dt;
+          if (treePortal.timer >= treePortal.sputter2Duration) {{
+            treePortal.state = 'DRAWING_RING';
+            treePortal.timer = 0;
+            treePortal.ringProgress = 0;
+          }}
+        }} else if (treePortal.state === 'DRAWING_RING') {{
+          treePortal.timer += dt;
+          treePortal.ringProgress = Math.min(1, treePortal.timer / treePortal.drawDuration);
+          if (treePortal.ringProgress >= 1) {{
+            treePortal.state = 'OPEN';
+            treePortal.timer = 0;
+          }}
+        }} else if (treePortal.state === 'OPEN') {{
+          treePortal.timer += dt;
+          if (treePortal.timer >= treePortal.openDuration) {{
+            treePortal.state = 'CLOSING';
+            treePortal.timer = 0;
+          }}
+        }} else if (treePortal.state === 'CLOSING') {{
+          treePortal.timer += dt;
+          const closeP = Math.min(1, treePortal.timer / treePortal.closeDuration);
+          if (closeP >= 1) {{
+            treePortal.state = 'IDLE';
+            treePortal.timer = 0;
+            treePortal.nextTrigger = now + 14000 + Math.random() * 9000;
+          }}
+        }}
+      }}
+
+      // ─── CINEMATIC DOCTOR STRANGE ELECTRIC SPARKLER PORTAL ENGINE ───
+      function updateAndRenderTreePortal(ctx, bgOffsetX, bgOffsetY, bgS, now, dt) {{
+        if (treePortal.state === 'HOLD_FOR_ASSISTANT') return;
+
+        // Calculate world coordinates for calibrated tree arch contour
+        const numNodes = TREE_CONTOUR.length;
+        const pts = [];
+        let avgX = 0, avgY = 0;
+
+        for (let i = 0; i < numNodes; i++) {{
+          const node = TREE_CONTOUR[i];
+          const nx = bgOffsetX + node.u * 1920 * bgS;
+          const ny = bgOffsetY + node.v * 1080 * bgS;
+          pts.push({{ x: nx, y: ny }});
+          avgX += nx;
+          avgY += ny;
+        }}
+        avgX /= numNodes;
+        avgY /= numNodes;
+        treePortal.x = avgX;
+        treePortal.y = avgY;
+
+        const dx0 = pts[0].x - avgX;
+        const dy0 = pts[0].y - avgY;
+        treePortal.r = Math.hypot(dx0, dy0) * 1.05;
+
+        // ─── STATE MACHINE ───
+        if (treePortal.state === 'IDLE') {{
+          if (now >= treePortal.nextTrigger) {{
+            treePortal.state = 'SPUTTER_1';
+            treePortal.timer = 0;
+            treePortal.ringProgress = 0;
+            treePortal.highlightIdx = Math.floor(Math.random() * portalHighlights.length);
+            if (window.celestialAudio) window.celestialAudio.playGlissando();
+          }}
+        }}
+        // ── STAGE 1: Sputter 1 (Struggles to 35%, throws chaotic sparkler sparks) ──
+        else if (treePortal.state === 'SPUTTER_1') {{
+          treePortal.timer += dt;
+          const p1 = treePortal.timer / treePortal.sputter1Duration;
+          treePortal.ringProgress = Math.min(0.35, p1 * 0.42);
+
+          const curIdx = Math.floor(treePortal.ringProgress * (numNodes - 1));
+          const pt = pts[curIdx];
+          const nextPt = pts[(curIdx + 1) % numNodes];
+          const tangAng = Math.atan2(nextPt.y - pt.y, nextPt.x - pt.x);
+
+          for (let s = 0; s < 6; s++) {{
+            const spd = 40 + Math.random() * 110;
+            const sprkAng = tangAng + (Math.random() - 0.5) * 1.2;
+            treePortal.sparks.push({{
+              x: pt.x + (Math.random() - 0.5) * 4,
+              y: pt.y + (Math.random() - 0.5) * 4,
+              vx: Math.cos(sprkAng) * spd,
+              vy: Math.sin(sprkAng) * spd + 18,
+              life: 1.0,
+              decay: 0.035 + Math.random() * 0.045,
+              size: 2.0 + Math.random() * 2.8,
+              color: ['#FFFFFF', '#FFE600', '#FF7700', '#FF3700'][Math.floor(Math.random() * 4)]
+            }});
+          }}
+
+          if (treePortal.timer >= treePortal.sputter1Duration) {{
+            treePortal.state = 'SPUTTER_2';
+            treePortal.timer = 0;
+            emitPixieDust(pt.x, pt.y, 18, ['#FF7700', '#FFE600', '#FFF']);
+          }}
+        }}
+        // ── STAGE 2: Sputter 2 (Reignites clockwise to 72%, crackles violently) ──
+        else if (treePortal.state === 'SPUTTER_2') {{
+          treePortal.timer += dt;
+          const p2 = treePortal.timer / treePortal.sputter2Duration;
+          treePortal.ringProgress = Math.min(0.72, p2 * 0.85);
+
+          const curIdx = Math.floor(treePortal.ringProgress * (numNodes - 1));
+          const pt = pts[curIdx];
+          const nextPt = pts[(curIdx + 1) % numNodes];
+          const tangAng = Math.atan2(nextPt.y - pt.y, nextPt.x - pt.x);
+
+          for (let s = 0; s < 8; s++) {{
+            const spd = 50 + Math.random() * 130;
+            const sprkAng = tangAng + (Math.random() - 0.5) * 1.0;
+            treePortal.sparks.push({{
+              x: pt.x + (Math.random() - 0.5) * 5,
+              y: pt.y + (Math.random() - 0.5) * 5,
+              vx: Math.cos(sprkAng) * spd,
+              vy: Math.sin(sprkAng) * spd + 20,
+              life: 1.0,
+              decay: 0.03 + Math.random() * 0.04,
+              size: 2.2 + Math.random() * 3.2,
+              color: ['#FFFFFF', '#FFE600', '#FF8800', '#FF3700', '#00FFC8'][Math.floor(Math.random() * 5)]
+            }});
+          }}
+
+          if (treePortal.timer >= treePortal.sputter2Duration) {{
+            treePortal.state = 'DRAWING_RING';
+            treePortal.timer = 0;
+            treePortal.ringProgress = 0;
+            if (window.celestialAudio) window.celestialAudio.playGlissando();
+          }}
+        }}
+        // ── STAGE 3: Final Masterful Sweep (Completes full 360° circle with blinding sparkler torrent) ──
+        else if (treePortal.state === 'DRAWING_RING') {{
+          treePortal.timer += dt;
+          treePortal.ringProgress = Math.min(1, treePortal.timer / treePortal.drawDuration);
+
+          const curIdx = Math.floor(treePortal.ringProgress * (numNodes - 1));
+          const pt = pts[curIdx];
+          const nextPt = pts[(curIdx + 1) % numNodes];
+          const tangAng = Math.atan2(nextPt.y - pt.y, nextPt.x - pt.x);
+
+          for (let s = 0; s < 10; s++) {{
+            const spd = 65 + Math.random() * 150;
+            const sprkAng = tangAng + (Math.random() - 0.5) * 0.8;
+            treePortal.sparks.push({{
+              x: pt.x + (Math.random() - 0.5) * 6,
+              y: pt.y + (Math.random() - 0.5) * 6,
+              vx: Math.cos(sprkAng) * spd,
+              vy: Math.sin(sprkAng) * spd + 24,
+              life: 1.0,
+              decay: 0.022 + Math.random() * 0.035,
+              size: 2.5 + Math.random() * 3.6,
+              color: ['#FFFFFF', '#FFE600', '#FF8800', '#FF3700', '#00FFC8'][Math.floor(Math.random() * 5)]
+            }});
+          }}
+
+          if (treePortal.ringProgress >= 1) {{
+            treePortal.state = 'OPEN';
+            treePortal.timer = 0;
+            emitPixieDust(avgX, avgY, 85, ['#FFE600', '#FF8800', '#00FFC8', '#FFFFFF']);
+            if (window.celestialAudio) window.celestialAudio.playChime(741, 1.8);
+          }}
+        }}
+        // ── STAGE 4: Dimensional Portal Fully Open & Active Sparkler Emission ──
+        else if (treePortal.state === 'OPEN') {{
+          treePortal.timer += dt;
+          
+          for (let s = 0; s < 4; s++) {{
+            const randIdx = Math.floor(Math.random() * numNodes);
+            const pt = pts[randIdx];
+            const nextPt = pts[(randIdx + 1) % numNodes];
+            const tang = Math.atan2(nextPt.y - pt.y, nextPt.x - pt.x) + (Math.random() - 0.5) * 0.7;
+            const spd = 50 + Math.random() * 110;
+            treePortal.sparks.push({{
+              x: pt.x + (Math.random() - 0.5) * 4,
+              y: pt.y + (Math.random() - 0.5) * 4,
+              vx: Math.cos(tang) * spd,
+              vy: Math.sin(tang) * spd + 16,
+              life: 1.0,
+              decay: 0.028 + Math.random() * 0.038,
+              size: 2.2 + Math.random() * 3.0,
+              color: ['#FFFFFF', '#FFE600', '#FF7700', '#FF3700'][Math.floor(Math.random() * 4)]
+            }});
+          }}
+
+          if (treePortal.timer >= treePortal.openDuration) {{
+            treePortal.state = 'CLOSING';
+            treePortal.timer = 0;
+          }}
+        }}
+        // ── STAGE 5: Inward Implosion & Reset ──
+        else if (treePortal.state === 'CLOSING') {{
+          treePortal.timer += dt;
+          const closeP = Math.min(1, treePortal.timer / treePortal.closeDuration);
+          
+          if (Math.random() > 0.25) {{
+            const randIdx = Math.floor(Math.random() * numNodes);
+            const pt = pts[randIdx];
+            const sx = avgX + (pt.x - avgX) * (1 - closeP);
+            const sy = avgY + (pt.y - avgY) * (1 - closeP);
+            treePortal.sparks.push({{
+              x: sx,
+              y: sy,
+              vx: (avgX - sx) * 2.5,
+              vy: (avgY - sy) * 2.5,
+              life: 1.0,
+              decay: 0.06,
+              size: 2.4,
+              color: '#FFE600'
+            }});
+          }}
+
+          if (closeP >= 1) {{
+            treePortal.state = 'IDLE';
+            treePortal.timer = 0;
+            treePortal.nextTrigger = now + 14000 + Math.random() * 9000;
+          }}
+        }}
+
+        // ─── RENDER PORTAL GRAPHICS ───
+        if (treePortal.state === 'IDLE' || treePortal.state === 'HOLD_FOR_ASSISTANT') return;
+
+        ctx.save();
+
+        // 1. Render Pyrotechnic Sparkler Embers with Glowing Fire Trails
+        for (let i = treePortal.sparks.length - 1; i >= 0; i--) {{
+          const sp = treePortal.sparks[i];
+          sp.x += sp.vx * dt;
+          sp.y += sp.vy * dt;
+          sp.vy += 45 * dt; // Gravity pull on sparks
+          sp.life -= sp.decay;
+
+          if (sp.life <= 0) {{
+            treePortal.sparks.splice(i, 1);
+            continue;
+          }}
+
+          ctx.save();
+          ctx.globalAlpha = sp.life;
+          ctx.fillStyle = sp.color;
+          ctx.shadowColor = sp.color;
+          ctx.shadowBlur = 10;
+          
+          ctx.beginPath();
+          ctx.arc(sp.x, sp.y, sp.size * sp.life, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.strokeStyle = sp.color;
+          ctx.lineWidth = sp.size * 0.6 * sp.life;
+          ctx.beginPath();
+          ctx.moveTo(sp.x, sp.y);
+          ctx.lineTo(sp.x - sp.vx * dt * 2.5, sp.y - sp.vy * dt * 2.5);
+          ctx.stroke();
+
+          ctx.restore();
+        }}
+
+        let drawP = treePortal.ringProgress;
+        let closeScale = 1.0;
+        if (treePortal.state === 'CLOSING') {{
+          closeScale = Math.max(0, 1 - treePortal.timer / treePortal.closeDuration);
+          drawP = closeScale;
+        }}
+
+        function buildElectricContourPath(targetP, scale = 1.0, jitterMag = 0) {{
+          ctx.beginPath();
+          const maxIdx = Math.max(1, Math.floor(targetP * (numNodes - 1)));
+          for (let i = 0; i <= maxIdx; i++) {{
+            const pt = pts[i];
+            const jx = jitterMag > 0 ? (Math.sin(now * 0.05 + i * 2.1) * jitterMag) : 0;
+            const jy = jitterMag > 0 ? (Math.cos(now * 0.06 + i * 1.8) * jitterMag) : 0;
+            const px = avgX + (pt.x - avgX) * scale + jx;
+            const py = avgY + (pt.y - avgY) * scale + jy;
+            if (i === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+          }}
+          if (targetP >= 0.999) ctx.closePath();
+        }}
+
+        // 2. LITERAL MYSTICAL PORTAL VIEWPORT (SHOWING REAL SITE SNAPSHOTS)
+        if (treePortal.state === 'OPEN' || treePortal.state === 'CLOSING') {{
+          const openBloom = treePortal.state === 'OPEN' 
+            ? Math.min(1.0, treePortal.timer / 0.55) 
+            : closeScale;
+
+          ctx.save();
+          ctx.globalAlpha = openBloom;
+          
+          buildElectricContourPath(1.0, closeScale, 0);
+          ctx.clip();
+
+          // 2a. Real Site Feature Image inside the portal
+          const item = portalHighlights[treePortal.highlightIdx];
+          const imgObj = portalImgs[treePortal.highlightIdx];
+          const boundR = treePortal.r * closeScale;
+          
+          if (imgObj && imgObj.complete && imgObj.naturalWidth > 0) {{
+            const imgZoom = 1.15 + Math.sin(now * 0.001) * 0.04;
+            const imgW = boundR * 2.4 * imgZoom;
+            const imgH = boundR * 2.4 * imgZoom;
+            const imgX = avgX - imgW * 0.5;
+            const imgY = avgY - imgH * 0.5;
+            ctx.drawImage(imgObj, imgX, imgY, imgW, imgH);
+          }} else {{
+            const vortexGrad = ctx.createRadialGradient(avgX, avgY, 0, avgX, avgY, boundR);
+            vortexGrad.addColorStop(0, '#060012');
+            vortexGrad.addColorStop(0.5, '#120028');
+            vortexGrad.addColorStop(1, '#FF6B00');
+            ctx.fillStyle = vortexGrad;
+            ctx.fillRect(avgX - boundR, avgY - boundR, boundR * 2, boundR * 2);
+          }}
+
+          // 2b. Luminous Mystical Cosmic Ether Overlay
+          const etherGrad = ctx.createRadialGradient(avgX, avgY, boundR * 0.25, avgX, avgY, boundR);
+          etherGrad.addColorStop(0, 'rgba(6, 0, 18, 0.45)');
+          etherGrad.addColorStop(0.70, 'rgba(18, 0, 42, 0.75)');
+          etherGrad.addColorStop(0.96, 'rgba(255, 107, 0, 0.65)');
+          etherGrad.addColorStop(1, 'rgba(255, 215, 0, 0.85)');
+          ctx.fillStyle = etherGrad;
+          ctx.fillRect(avgX - boundR, avgY - boundR, boundR * 2, boundR * 2);
+
+          // 2c. Rotating Celestial Stardust Constellation inside the portal
+          ctx.save();
+          ctx.translate(avgX, avgY);
+          ctx.rotate(now * 0.0015);
+          for (let st = 0; st < 16; st++) {{
+            const stAngle = (st / 16) * Math.PI * 2;
+            const stRadius = (boundR * 0.30) + (st % 4) * (boundR * 0.18);
+            const sx = Math.cos(stAngle) * stRadius;
+            const sy = Math.sin(stAngle) * stRadius;
+            ctx.fillStyle = ['#FFFFFF', '#00FFC8', '#FFD700', '#C77DFF'][st % 4];
+            ctx.shadowColor = '#FFFFFF';
+            ctx.shadowBlur = 8;
+            ctx.beginPath();
+            ctx.arc(sx, sy, 2.2, 0, Math.PI * 2);
+            ctx.fill();
+          }}
+          ctx.restore();
+
+          // 2d. Authentic Site Section Typography & CTA
+          if (item && openBloom > 0.3) {{
+            ctx.save();
+            ctx.globalAlpha = openBloom;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            // Tag Pill
+            ctx.font = '800 11px "Outfit", sans-serif';
+            ctx.fillStyle = item.color || '#00FFC8';
+            ctx.shadowColor = item.color || '#00FFC8';
+            ctx.shadowBlur = 10;
+            ctx.fillText(item.tag, avgX, avgY - boundR * 0.40);
+
+            // Title
+            ctx.font = '900 16px "Cinzel", serif';
+            ctx.fillStyle = '#FFFFFF';
+            ctx.shadowColor = '#FFFFFF';
+            ctx.shadowBlur = 14;
+            ctx.fillText(item.title, avgX, avgY - boundR * 0.10);
+
+            // Subtitle
+            ctx.font = '500 11px "Outfit", sans-serif';
+            ctx.fillStyle = '#E2FCF7';
+            ctx.shadowColor = 'rgba(0,0,0,0.8)';
+            ctx.shadowBlur = 6;
+            ctx.fillText(item.subtitle, avgX, avgY + boundR * 0.16);
+
+            // Action prompt / CTA
+            ctx.font = '800 12px "Outfit", sans-serif';
+            ctx.fillStyle = treePortal.isHovered ? '#FFD700' : '#00FFC8';
+            ctx.shadowColor = treePortal.isHovered ? '#FFD700' : '#00FFC8';
+            ctx.shadowBlur = treePortal.isHovered ? 20 : 8;
+            ctx.fillText(treePortal.isHovered ? '✦ CLICK TO ENTER ✦' : item.action, avgX, avgY + boundR * 0.40);
+
+            ctx.restore();
+          }}
+
+          ctx.restore(); // end clip
+        }}
+
+        // 3. ELECTRIC CRACKLING SPARKLER PLASMA RING (MULTI-STRAND JITTER)
+        ctx.save();
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        // Strand A: Outer Turbulent Fiery Plasma Sheath
+        ctx.strokeStyle = treePortal.isHovered ? '#00FFC8' : '#FF4500';
+        ctx.lineWidth = treePortal.isHovered ? 12.0 : 8.5;
+        ctx.shadowColor = treePortal.isHovered ? '#00FFC8' : '#FF3300';
+        ctx.shadowBlur = 34;
+        buildElectricContourPath(drawP, closeScale, 2.5);
+        ctx.stroke();
+
+        // Strand B: Incandescent Molten Gold Sparkler Body
+        ctx.strokeStyle = '#FFAA00';
+        ctx.lineWidth = 5.4;
+        ctx.shadowColor = '#FF8800';
+        ctx.shadowBlur = 22;
+        buildElectricContourPath(drawP, closeScale, 1.8);
+        ctx.stroke();
+
+        // Strand C: High-Voltage Electric Yellow Arc
+        ctx.strokeStyle = '#FFE600';
+        ctx.lineWidth = 3.2;
+        ctx.shadowColor = '#FFE600';
+        ctx.shadowBlur = 14;
+        buildElectricContourPath(drawP, closeScale, 1.0);
+        ctx.stroke();
+
+        // Strand D: Blazing White-Hot Electric Core Singularity
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 1.8;
+        ctx.shadowColor = '#FFFFFF';
+        ctx.shadowBlur = 10;
+        buildElectricContourPath(drawP, closeScale, 0.4);
+        ctx.stroke();
+
+        // 4. LEADING TRAVELING SPARKLER FLARE HEAD (High-Energy Magnesium Flash)
+        if (treePortal.state === 'SPUTTER_1' || treePortal.state === 'SPUTTER_2' || treePortal.state === 'DRAWING_RING') {{
+          const curIdx = Math.floor(drawP * (numNodes - 1));
+          const leadPt = pts[curIdx];
+          if (leadPt) {{
+            ctx.fillStyle = '#FFFFFF';
+            ctx.shadowColor = '#FFE600';
+            ctx.shadowBlur = 28;
+            ctx.beginPath();
+            ctx.arc(leadPt.x, leadPt.y, 6.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            for (let f = 0; f < 6; f++) {{
+              const fAng = (f / 6) * Math.PI * 2 + now * 0.08;
+              const fLen = 14 + Math.random() * 16;
+              ctx.strokeStyle = '#FFFFFF';
+              ctx.lineWidth = 1.6;
+              ctx.beginPath();
+              ctx.moveTo(leadPt.x, leadPt.y);
+              ctx.lineTo(leadPt.x + Math.cos(fAng) * fLen, leadPt.y + Math.sin(fAng) * fLen);
+              ctx.stroke();
+            }}
+          }}
+        }}
+
+        ctx.restore();
+        ctx.restore();
+      }}'''
+
+if old_highlights_start != -1 and portal_render_fn_end != -1:
+    js = js[:old_highlights_start] + new_portal_section + '\n\n' + js[portal_render_fn_end:]
+    print('Updated portal placement, click navigation, and literal snapshots!')
+else:
+    print('Error finding portal boundaries!')
+
+with open('js/main.js', 'w', encoding='utf-8') as f:
+    f.write(js)
+
+print('Updated js/main.js successfully!')
+EOF
+python3 apply_perfect_portal_and_links.py
+rm apply_perfect_portal_and_links.py
+node -c js/main.js
+
+============================================================
+
+Chunk 119 step 24:
+cat > add_calibration_gizmo.py << 'EOF'
+with open('index.html', 'r', encoding='utf-8') as f:
+    html = f.read()
+
+# Add calibration HUD element to index.html before </body>
+gizmo_html = '''
+  <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+  <!-- INTERACTIVE PORTAL CALIBRATION GIZMO (OPTION 1) -->
+  <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+  <div id="portal-calibrator" style="position:fixed; top:20px; left:50%; transform:translateX(-50%); z-index:99999999; background:rgba(6,0,18,0.92); border:2px solid #FFD700; border-radius:16px; padding:12px 24px; box-shadow:0 10px 40px rgba(0,0,0,0.8), 0 0 25px rgba(255,215,0,0.4); display:flex; align-items:center; gap:16px; font-family:'Outfit',sans-serif; backdrop-filter:blur(12px);">
+    <div style="display:flex; flex-direction:column; gap:2px;">
+      <span style="font-size:11px; font-weight:800; color:#FFD700; letter-spacing:1px; text-transform:uppercase;">✦ PORTAL CALIBRATION GIZMO ✦</span>
+      <span id="calib-coords-display" style="font-size:12px; font-family:monospace; color:#00FFC8; font-weight:700;">u: 0.235, v: 0.415, rx: 0.145, ry: 0.220</span>
+      <span style="font-size:10px; color:#E2FCF7; opacity:0.8;">Drag the center or resize with handles on screen. Changes apply live!</span>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button id="calib-copy-btn" type="button" style="background:linear-gradient(135deg, #FFD700, #FF6B00); border:none; color:#000; font-weight:800; font-size:11px; padding:8px 14px; border-radius:8px; cursor:pointer; box-shadow:0 2px 10px rgba(255,107,0,0.4);">📋 COPY NUMBERS</button>
+      <button id="calib-save-btn" type="button" style="background:linear-gradient(135deg, #00FFC8, #00A389); border:none; color:#060012; font-weight:800; font-size:11px; padding:8px 14px; border-radius:8px; cursor:pointer; box-shadow:0 2px 10px rgba(0,255,200,0.4);">💾 SAVE & LOCK</button>
+      <button id="calib-hide-btn" type="button" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.3); color:#fff; font-weight:700; font-size:11px; padding:8px 12px; border-radius:8px; cursor:pointer;">✕ HIDE</button>
+    </div>
+  </div>
+
+  <!-- Draggable / Resizable Overlay Box in Hero -->
+  <div id="portal-gizmo-box" style="position:fixed; z-index:9999999; border:2px dashed #FFD700; box-shadow:0 0 20px rgba(255,215,0,0.6), inset 0 0 25px rgba(255,107,0,0.3); border-radius:50%; pointer-events:auto; cursor:move; display:flex; align-items:center; justify-content:center;">
+    <div style="width:14px; height:14px; background:#FFFFFF; border:2px solid #FF6B00; border-radius:50%; box-shadow:0 0 10px #FFD700; pointer-events:none;"></div>
+    <div class="gizmo-handle handle-n" style="position:absolute; top:-6px; left:50%; transform:translateX(-50%); width:12px; height:12px; background:#FFD700; border-radius:50%; cursor:ns-resize; border:2px solid #000;"></div>
+    <div class="gizmo-handle handle-s" style="position:absolute; bottom:-6px; left:50%; transform:translateX(-50%); width:12px; height:12px; background:#FFD700; border-radius:50%; cursor:ns-resize; border:2px solid #000;"></div>
+    <div class="gizmo-handle handle-w" style="position:absolute; left:-6px; top:50%; transform:translateY(-50%); width:12px; height:12px; background:#FFD700; border-radius:50%; cursor:ew-resize; border:2px solid #000;"></div>
+    <div class="gizmo-handle handle-e" style="position:absolute; right:-6px; top:50%; transform:translateY(-50%); width:12px; height:12px; background:#FFD700; border-radius:50%; cursor:ew-resize; border:2px solid #000;"></div>
+    <div class="gizmo-handle handle-nw" style="position:absolute; top:8%; left:8%; width:12px; height:12px; background:#00FFC8; border-radius:50%; cursor:nwse-resize; border:2px solid #000;"></div>
+    <div class="gizmo-handle handle-ne" style="position:absolute; top:8%; right:8%; width:12px; height:12px; background:#00FFC8; border-radius:50%; cursor:nesw-resize; border:2px solid #000;"></div>
+    <div class="gizmo-handle handle-sw" style="position:absolute; bottom:8%; left:8%; width:12px; height:12px; background:#00FFC8; border-radius:50%; cursor:nesw-resize; border:2px solid #000;"></div>
+    <div class="gizmo-handle handle-se" style="position:absolute; bottom:8%; right:8%; width:12px; height:12px; background:#00FFC8; border-radius:50%; cursor:nwse-resize; border:2px solid #000;"></div>
+  </div>
+'''
+
+if 'id="portal-calibrator"' not in html:
+    html = html.replace('</body>', gizmo_html + '\n</body>')
+    with open('index.html', 'w', encoding='utf-8') as f:
+        f.write(html)
+    print('Added gizmo HTML elements into index.html!')
+else:
+    print('Gizmo already present in index.html!')
+
+# Now add calibration logic into js/main.js
+with open('js/main.js', 'r', encoding='utf-8') as f:
+    js = f.read()
+
+gizmo_js = '''
+    // ═══════════════════════════════════════════════════════════════════════════
+    // INTERACTIVE ON-SCREEN PORTAL CALIBRATION GIZMO ENGINE
+    // ═══════════════════════════════════════════════════════════════════════════
+    (function initPortalCalibrator() {
+      const gizmoBox = document.getElementById('portal-gizmo-box');
+      const calibPanel = document.getElementById('portal-calibrator');
+      const coordsDisplay = document.getElementById('calib-coords-display');
+      const copyBtn = document.getElementById('calib-copy-btn');
+      const saveBtn = document.getElementById('calib-save-btn');
+      const hideBtn = document.getElementById('calib-hide-btn');
+
+      if (!gizmoBox || !calibPanel) return;
+
+      // Saved coordinates or default
+      let saved = null;
+      try {
+        saved = JSON.parse(localStorage.getItem('beth_portal_calib'));
+      } catch (e) {}
+
+      let calibU = (saved && saved.u) || 0.235;
+      let calibV = (saved && saved.v) || 0.415;
+      let calibRx = (saved && saved.rx) || 0.145;
+      let calibRy = (saved && saved.ry) || 0.220;
+
+      function updateContourFromCalib() {
+        const numNodes = 64;
+        const newContour = [];
+        for (let i = 0; i < numNodes; i++) {
+          const angle = -Math.PI * 0.5 + (i / numNodes) * Math.PI * 2;
+          const is_top = Math.sin(angle) < 0;
+          let warp_x = 1.0, warp_y = 1.0;
+          if (is_top) {
+            warp_x = 1.0 + 0.03 * Math.cos(angle * 2.0);
+            warp_y = 1.0 + 0.02 * Math.sin(angle * 2.0);
+          } else {
+            warp_x = 0.96 + 0.04 * Math.cos(angle);
+            warp_y = 0.94 - 0.03 * Math.sin(angle);
+          }
+          const u = calibU + Math.cos(angle) * calibRx * warp_x;
+          const v = calibV + Math.sin(angle) * calibRy * warp_y;
+          newContour.push({ u: Number(u.toFixed(4)), v: Number(v.toFixed(4)) });
+        }
+        // Update live TREE_CONTOUR array
+        if (typeof TREE_CONTOUR !== 'undefined') {
+          TREE_CONTOUR.length = 0;
+          newContour.forEach(pt => TREE_CONTOUR.push(pt));
+        }
+      }
+
+      function syncGizmoToScreen() {
+        const heroBg = document.querySelector('.hero__bg') || document.querySelector('.hero');
+        const heroRect = (heroBg && heroBg.getBoundingClientRect()) || { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight };
+        
+        // Calculate background cover metrics
+        const natW = 1920, natH = 1080;
+        const w = window.innerWidth, h = window.innerHeight;
+        const scale = Math.max(w / natW, h / natH);
+        const offX = (w - natW * scale) * 0.5;
+        const offY = (h - natH * scale) * 0.5 + heroRect.top;
+
+        const screenX = offX + calibU * natW * scale;
+        const screenY = offY + calibV * natH * scale;
+        const screenW = calibRx * 2 * natW * scale;
+        const screenH = calibRy * 2 * natH * scale;
+
+        gizmoBox.style.left = (screenX - screenW * 0.5) + 'px';
+        gizmoBox.style.top = (screenY - screenH * 0.5) + 'px';
+        gizmoBox.style.width = screenW + 'px';
+        gizmoBox.style.height = screenH + 'px';
+
+        coordsDisplay.innerText = `u: ${calibU.toFixed(4)}, v: ${calibV.toFixed(4)}, rx: ${calibRx.toFixed(4)}, ry: ${calibRy.toFixed(4)}`;
+        updateContourFromCalib();
+      }
+
+      window.addEventListener('resize', syncGizmoToScreen);
+      window.addEventListener('scroll', syncGizmoToScreen, { passive: true });
+      setTimeout(syncGizmoToScreen, 200);
+
+      // Dragging and Resizing state
+      let isDragging = false;
+      let activeHandle = null;
+      let startMouseX = 0, startMouseY = 0;
+      let startU = 0, startV = 0, startRx = 0, startRy = 0;
+
+      gizmoBox.addEventListener('mousedown', (e) => {
+        if (e.target.classList.contains('gizmo-handle')) {
+          activeHandle = e.target;
+        } else {
+          isDragging = true;
+        }
+        startMouseX = e.clientX;
+        startMouseY = e.clientY;
+        startU = calibU;
+        startV = calibV;
+        startRx = calibRx;
+        startRy = calibRy;
+        e.preventDefault();
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!isDragging && !activeHandle) return;
+
+        const natW = 1920, natH = 1080;
+        const w = window.innerWidth, h = window.innerHeight;
+        const scale = Math.max(w / natW, h / natH);
+        const dxNorm = (e.clientX - startMouseX) / (natW * scale);
+        const dyNorm = (e.clientY - startMouseY) / (natH * scale);
+
+        if (isDragging) {
+          calibU = Math.max(0.02, Math.min(0.98, startU + dxNorm));
+          calibV = Math.max(0.02, Math.min(0.98, startV + dyNorm));
+        } else if (activeHandle) {
+          if (activeHandle.classList.contains('handle-e')) {
+            calibRx = Math.max(0.02, startRx + dxNorm * 0.5);
+            calibU = startU + dxNorm * 0.5;
+          } else if (activeHandle.classList.contains('handle-w')) {
+            calibRx = Math.max(0.02, startRx - dxNorm * 0.5);
+            calibU = startU + dxNorm * 0.5;
+          } else if (activeHandle.classList.contains('handle-s')) {
+            calibRy = Math.max(0.02, startRy + dyNorm * 0.5);
+            calibV = startV + dyNorm * 0.5;
+          } else if (activeHandle.classList.contains('handle-n')) {
+            calibRy = Math.max(0.02, startRy - dyNorm * 0.5);
+            calibV = startV + dyNorm * 0.5;
+          } else if (activeHandle.classList.contains('handle-se')) {
+            calibRx = Math.max(0.02, startRx + dxNorm * 0.5);
+            calibRy = Math.max(0.02, startRy + dyNorm * 0.5);
+            calibU = startU + dxNorm * 0.5;
+            calibV = startV + dyNorm * 0.5;
+          } else if (activeHandle.classList.contains('handle-sw')) {
+            calibRx = Math.max(0.02, startRx - dxNorm * 0.5);
+            calibRy = Math.max(0.02, startRy + dyNorm * 0.5);
+            calibU = startU + dxNorm * 0.5;
+            calibV = startV + dyNorm * 0.5;
+          } else if (activeHandle.classList.contains('handle-ne')) {
+            calibRx = Math.max(0.02, startRx + dxNorm * 0.5);
+            calibRy = Math.max(0.02, startRy - dyNorm * 0.5);
+            calibU = startU + dxNorm * 0.5;
+            calibV = startV + dyNorm * 0.5;
+          } else if (activeHandle.classList.contains('handle-nw')) {
+            calibRx = Math.max(0.02, startRx - dxNorm * 0.5);
+            calibRy = Math.max(0.02, startRy - dyNorm * 0.5);
+            calibU = startU + dxNorm * 0.5;
+            calibV = startV + dyNorm * 0.5;
+          }
+        }
+
+        syncGizmoToScreen();
+      });
+
+      window.addEventListener('mouseup', () => {
+        isDragging = false;
+        activeHandle = null;
+      });
+
+      // Copy to Clipboard
+      copyBtn.addEventListener('click', () => {
+        const text = `u: ${calibU.toFixed(4)}, v: ${calibV.toFixed(4)}, rx: ${calibRx.toFixed(4)}, ry: ${calibRy.toFixed(4)}`;
+        navigator.clipboard.writeText(text).then(() => {
+          copyBtn.innerText = '✓ COPIED!';
+          setTimeout(() => copyBtn.innerText = '📋 COPY NUMBERS', 2000);
+        });
+      });
+
+      // Save & Lock
+      saveBtn.addEventListener('click', () => {
+        localStorage.setItem('beth_portal_calib', JSON.stringify({
+          u: Number(calibU.toFixed(4)),
+          v: Number(calibV.toFixed(4)),
+          rx: Number(calibRx.toFixed(4)),
+          ry: Number(calibRy.toFixed(4))
+        }));
+        saveBtn.innerText = '✓ SAVED!';
+        setTimeout(() => saveBtn.innerText = '💾 SAVE & LOCK', 2000);
+        if (window.celestialAudio) window.celestialAudio.playChime(963, 1.8);
+      });
+
+      // Hide / Show
+      hideBtn.addEventListener('click', () => {
+        gizmoBox.style.display = 'none';
+        calibPanel.style.display = 'none';
+      });
+    })();
+'''
+
+if 'initPortalCalibrator' not in js:
+    js += '\n' + gizmo_js
+    with open('js/main.js', 'w', encoding='utf-8') as f:
+        f.write(js)
+    print('Added initPortalCalibrator engine to js/main.js!')
+else:
+    print('Calibrator engine already in js/main.js!')
+
+EOF
+python3 add_calibration_gizmo.py
+rm add_calibration_gizmo.py
+node -c js/main.js
+
+============================================================
+
+Chunk 119 step 32:
+cat > remove_gizmo.py << 'EOF'
+with open('index.html', 'r', encoding='utf-8') as f:
+    html = f.read()
+
+# Remove old gizmo HTML
+g_start = html.find('  <!-- ═══════════════════════════════════════════════════════════════════════════ -->\n  <!-- INTERACTIVE PORTAL CALIBRATION GIZMO')
+g_end = html.find('</body>')
+
+if g_start != -1:
+    html = html[:g_start] + html[g_end:]
+    with open('index.html', 'w', encoding='utf-8') as f:
+        f.write(html)
+    print('Cleaned up old gizmo HTML!')
+
+with open('js/main.js', 'r', encoding='utf-8') as f:
+    js = f.read()
+
+js_start = js.find('    // INTERACTIVE ON-SCREEN PORTAL CALIBRATION GIZMO ENGINE')
+if js_start != -1:
+    js = js[:js_start]
+    with open('js/main.js', 'w', encoding='utf-8') as f:
+        f.write(js)
+    print('Cleaned up old gizmo JS!')
+
+EOF
+python3 remove_gizmo.py
+rm remove_gizmo.py
+node -c js/main.js
+
+============================================================
+
+Chunk 119 step 38:
+cat > add_method_a_nudge.py << 'EOF'
+with open('index.html', 'r', encoding='utf-8') as f:
+    html = f.read()
+
+hud_html = '''
+  <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+  <!-- METHOD A: LIVE KEYBOARD ARROW NUDGE HUD -->
+  <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+  <div id="portal-nudge-hud" style="position:fixed; top:18px; left:50%; transform:translateX(-50%); z-index:99999999; background:rgba(6,0,18,0.94); border:2px solid #00FFC8; border-radius:14px; padding:10px 22px; box-shadow:0 8px 32px rgba(0,0,0,0.85), 0 0 20px rgba(0,255,200,0.35); display:flex; align-items:center; gap:16px; font-family:'Outfit',sans-serif; backdrop-filter:blur(14px); pointer-events:auto;">
+    <div style="display:flex; flex-direction:column; gap:2px;">
+      <span style="font-size:11px; font-weight:800; color:#FFD700; letter-spacing:1px; text-transform:uppercase;">✦ METHOD A: LIVE ARROW NUDGE MODE ✦</span>
+      <span id="nudge-coords-text" style="font-size:12px; font-family:monospace; color:#00FFC8; font-weight:700;">u: 0.235, v: 0.415, rx: 0.145, ry: 0.220</span>
+      <span style="font-size:10px; color:#E2FCF7; opacity:0.85;">Keys: <b>↑ ↓ ← →</b> = Move | <b>Shift + Arrows</b> = Resize | <b>Enter</b> = Save & Lock | <b>Space</b> = Force Open</span>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button id="nudge-save-btn" type="button" style="background:linear-gradient(135deg, #00FFC8, #00A389); border:none; color:#060012; font-weight:800; font-size:11px; padding:8px 14px; border-radius:8px; cursor:pointer; box-shadow:0 2px 10px rgba(0,255,200,0.4);">💾 SAVE & LOCK</button>
+      <button id="nudge-copy-btn" type="button" style="background:linear-gradient(135deg, #FFD700, #FF6B00); border:none; color:#000; font-weight:800; font-size:11px; padding:8px 12px; border-radius:8px; cursor:pointer;">📋 COPY</button>
+    </div>
+  </div>
+'''
+
+if 'id="portal-nudge-hud"' not in html:
+    html = html.replace('</body>', hud_html + '\n</body>')
+    with open('index.html', 'w', encoding='utf-8') as f:
+        f.write(html)
+    print('Added nudge HUD HTML to index.html!')
+
+with open('js/main.js', 'r', encoding='utf-8') as f:
+    js = f.read()
+
+nudge_js = '''
+    // ═══════════════════════════════════════════════════════════════════════════
+    // METHOD A: LIVE KEYBOARD ARROW NUDGE ENGINE
+    // ═══════════════════════════════════════════════════════════════════════════
+    (function initPortalArrowNudge() {
+      const hud = document.getElementById('portal-nudge-hud');
+      const coordsText = document.getElementById('nudge-coords-text');
+      const saveBtn = document.getElementById('nudge-save-btn');
+      const copyBtn = document.getElementById('nudge-copy-btn');
+
+      if (!hud) return;
+
+      let saved = null;
+      try {
+        saved = JSON.parse(localStorage.getItem('beth_portal_calib'));
+      } catch (e) {}
+
+      let calibU = (saved && saved.u) || 0.235;
+      let calibV = (saved && saved.v) || 0.415;
+      let calibRx = (saved && saved.rx) || 0.145;
+      let calibRy = (saved && saved.ry) || 0.220;
+
+      function updateLivePortalContour() {
+        const numNodes = 64;
+        const newContour = [];
+        for (let i = 0; i < numNodes; i++) {
+          const angle = -Math.PI * 0.5 + (i / numNodes) * Math.PI * 2;
+          const is_top = Math.sin(angle) < 0;
+          let warp_x = 1.0, warp_y = 1.0;
+          if (is_top) {
+            warp_x = 1.0 + 0.03 * Math.cos(angle * 2.0);
+            warp_y = 1.0 + 0.02 * Math.sin(angle * 2.0);
+          } else {
+            warp_x = 0.96 + 0.04 * Math.cos(angle);
+            warp_y = 0.94 - 0.03 * Math.sin(angle);
+          }
+          const u = calibU + Math.cos(angle) * calibRx * warp_x;
+          const v = calibV + Math.sin(angle) * calibRy * warp_y;
+          newContour.push({ u: Number(u.toFixed(4)), v: Number(v.toFixed(4)) });
+        }
+
+        if (typeof TREE_CONTOUR !== 'undefined') {
+          TREE_CONTOUR.length = 0;
+          newContour.forEach(pt => TREE_CONTOUR.push(pt));
+        }
+
+        coordsText.innerText = `u: ${calibU.toFixed(4)}, v: ${calibV.toFixed(4)}, rx: ${calibRx.toFixed(4)}, ry: ${calibRy.toFixed(4)}`;
+      }
+
+      // Initial sync
+      updateLivePortalContour();
+
+      // Keyboard arrow listener
+      window.addEventListener('keydown', (e) => {
+        // Only if not typing inside an input/textarea
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+        const step = e.altKey ? 0.001 : (e.shiftKey ? 0.004 : 0.003);
+        let handled = false;
+
+        // Force open portal on Spacebar so user can see it while adjusting
+        if (e.code === 'Space') {
+          if (typeof treePortal !== 'undefined') {
+            treePortal.state = 'OPEN';
+            treePortal.timer = 0;
+            treePortal.ringProgress = 1.0;
+            if (window.celestialAudio) window.celestialAudio.playChime(741, 1.8);
+          }
+          handled = true;
+        } else if (e.key === 'Enter') {
+          saveCoordinates();
+          handled = true;
+        } else if (e.shiftKey) {
+          // Resize mode with Shift + Arrows
+          if (e.key === 'ArrowRight') { calibRx += step; handled = true; }
+          else if (e.key === 'ArrowLeft') { calibRx = Math.max(0.02, calibRx - step); handled = true; }
+          else if (e.key === 'ArrowUp') { calibRy += step; handled = true; }
+          else if (e.key === 'ArrowDown') { calibRy = Math.max(0.02, calibRy - step); handled = true; }
+        } else {
+          // Move mode with Arrow keys
+          if (e.key === 'ArrowRight') { calibU += step; handled = true; }
+          else if (e.key === 'ArrowLeft') { calibU -= step; handled = true; }
+          else if (e.key === 'ArrowUp') { calibV -= step; handled = true; }
+          else if (e.key === 'ArrowDown') { calibV += step; handled = true; }
+        }
+
+        if (handled) {
+          e.preventDefault();
+          updateLivePortalContour();
+        }
+      });
+
+      function saveCoordinates() {
+        const data = {
+          u: Number(calibU.toFixed(4)),
+          v: Number(calibV.toFixed(4)),
+          rx: Number(calibRx.toFixed(4)),
+          ry: Number(calibRy.toFixed(4))
+        };
+        localStorage.setItem('beth_portal_calib', JSON.stringify(data));
+        saveBtn.innerText = '✓ SAVED & LOCKED!';
+        setTimeout(() => saveBtn.innerText = '💾 SAVE & LOCK', 2500);
+        if (window.celestialAudio) window.celestialAudio.playChime(963, 1.8);
+        emitPixieDust(window.innerWidth * 0.5, 60, 45, ['#00FFC8', '#FFD700', '#FFFFFF']);
+      }
+
+      saveBtn?.addEventListener('click', saveCoordinates);
+
+      copyBtn?.addEventListener('click', () => {
+        const text = `u: ${calibU.toFixed(4)}, v: ${calibV.toFixed(4)}, rx: ${calibRx.toFixed(4)}, ry: ${calibRy.toFixed(4)}`;
+        navigator.clipboard.writeText(text).then(() => {
+          copyBtn.innerText = '✓ COPIED!';
+          setTimeout(() => copyBtn.innerText = '📋 COPY', 2000);
+        });
+      });
+    })();
+'''
+
+if 'initPortalArrowNudge' not in js:
+    js += '\n' + nudge_js
+    with open('js/main.js', 'w', encoding='utf-8') as f:
+        f.write(js)
+    print('Added initPortalArrowNudge engine to js/main.js!')
+else:
+    print('Already present in js/main.js!')
+
+EOF
+python3 add_method_a_nudge.py
+rm add_method_a_nudge.py
+node -c js/main.js
+
+============================================================
+
+Chunk 119 step 46:
+cat > cleanup_nudge.py << 'EOF'
+with open('index.html', 'r', encoding='utf-8') as f:
+    html = f.read()
+
+hud_start = html.find('  <!-- ═══════════════════════════════════════════════════════════════════════════ -->\n  <!-- METHOD A: LIVE KEYBOARD ARROW NUDGE HUD')
+hud_end = html.find('</body>')
+if hud_start != -1:
+    html = html[:hud_start] + html[hud_end:]
+    with open('index.html', 'w', encoding='utf-8') as f:
+        f.write(html)
+    print('Cleaned up nudge HUD from index.html!')
+
+with open('js/main.js', 'r', encoding='utf-8') as f:
+    js = f.read()
+
+nudge_js_start = js.find('    // METHOD A: LIVE KEYBOARD ARROW NUDGE ENGINE')
+if nudge_js_start != -1:
+    js = js[:nudge_js_start]
+    with open('js/main.js', 'w', encoding='utf-8') as f:
+        f.write(js)
+    print('Cleaned up nudge JS from main.js!')
+EOF
+python3 cleanup_nudge.py
+rm cleanup_nudge.py
+node -c js/main.js
+
+============================================================
+
+Chunk 120 step 1:
+cat > extract_red_markup.py << 'EOF'
+import struct, zlib, math, json
+
+with open('/Users/bethrooney/.gemini/antigravity/brain/645b6279-1818-4280-a305-23efd07c1678/.user_uploaded/media_1787384657222.png', 'rb') as f:
+    data = f.read()
+
+pos = 8
+idat = b''
+w, h = 0, 0
+while pos < len(data):
+    length = struct.unpack('>I', data[pos:pos+4])[0]
+    chunk_type = data[pos+4:pos+8]
+    chunk_data = data[pos+8:pos+8+length]
+    pos += 8 + length + 4
+    if chunk_type == b'IHDR':
+        w, h, bitd, colort, compm, filterm, interm = struct.unpack('>IIBBBBB', chunk_data)
+    elif chunk_type == b'IDAT':
+        idat += chunk_data
+
+decomp = zlib.decompress(idat)
+bpp = 3 if colort == 2 else 4
+stride = 1 + w * bpp
+print(f"Screenshot dimensions: {w}x{h}")
+
+# The user drew a red marker loop!
+# Red color characteristics: High Red (r > 150), Low Green (g < 60), Low Blue (b < 60)
+red_pixels = []
+for y in range(h):
+    for x in range(w):
+        off = y * stride + 1 + x * bpp
+        r, g, b = decomp[off], decomp[off+1], decomp[off+2]
+        if r > 160 and g < 65 and b < 65:
+            red_pixels.append((x, y))
+
+print(f"Found {len(red_pixels)} red markup pixels!")
+
+# Find bounding box of red markup in screenshot
+min_x = min(p[0] for p in red_pixels)
+max_x = max(p[0] for p in red_pixels)
+min_y = min(p[1] for p in red_pixels)
+max_y = max(p[1] for p in red_pixels)
+
+center_x = (min_x + max_x) / 2
+center_y = (min_y + max_y) / 2
+rx = (max_x - min_x) / 2
+ry = (max_y - min_y) / 2
+
+print(f"Red Markup Bounding Box in Screenshot:")
+print(f"X: [{min_x}, {max_x}] (Width: {max_x - min_x}px)")
+print(f"Y: [{min_y}, {max_y}] (Height: {max_y - min_y}px)")
+print(f"Center: ({center_x:.1f}, {center_y:.1f})")
+print(f"Radius X: {rx:.1f}px, Radius Y: {ry:.1f}px")
+
+# Normalized relative to screenshot:
+print(f"Normalized Center: u = {center_x / w:.4f}, v = {center_y / h:.4f}")
+print(f"Normalized Radii: rx = {rx / w:.4f}, ry = {ry / h:.4f}")
+
+# Now let's calculate the exact contour points along the red markup!
+# Let's group red pixels by angle from center
+num_nodes = 64
+contour_pts = []
+for i in range(num_nodes):
+    angle = -math.pi * 0.5 + (i / num_nodes) * math.pi * 2
+    # Find red pixels along this angular sector (+/- 0.08 rad)
+    sector_pts = []
+    for px, py in red_pixels:
+        ang = math.atan2(py - center_y, px - center_x)
+        # Normalize angle diff
+        diff = (ang - angle + math.pi) % (math.pi * 2) - math.pi
+        if abs(diff) < 0.08:
+            dist = math.hypot(px - center_x, py - center_y)
+            sector_pts.append(dist)
+    if sector_pts:
+        avg_r = sum(sector_pts) / len(sector_pts)
+    else:
+        avg_r = (rx + ry) * 0.5
+    
+    pt_x = center_x + math.cos(angle) * avg_r
+    pt_y = center_y + math.sin(angle) * avg_r
+    contour_pts.append({
+        'u': round(pt_x / w, 4),
+        'v': round(pt_y / h, 4)
+    })
+
+print(f"Generated {len(contour_pts)} exact contour nodes from user's red loop!")
+with open('extracted_user_contour.json', 'w') as out_f:
+    json.dump(contour_pts, out_f)
+print("Saved extracted_user_contour.json")
+EOF
+python3 extract_red_markup.py
+
+============================================================
+
+Chunk 120 step 3:
+cat > inspect_red_clusters.py << 'EOF'
+import struct, zlib
+
+with open('/Users/bethrooney/.gemini/antigravity/brain/645b6279-1818-4280-a305-23efd07c1678/.user_uploaded/media_1787384657222.png', 'rb') as f:
+    data = f.read()
+
+pos = 8
+idat = b''
+w, h = 0, 0
+while pos < len(data):
+    length = struct.unpack('>I', data[pos:pos+4])[0]
+    chunk_type = data[pos+4:pos+8]
+    chunk_data = data[pos+8:pos+8+length]
+    pos += 8 + length + 4
+    if chunk_type == b'IHDR':
+        w, h, bitd, colort, compm, filterm, interm = struct.unpack('>IIBBBBB', chunk_data)
+    elif chunk_type == b'IDAT':
+        idat += chunk_data
+
+decomp = zlib.decompress(idat)
+bpp = 3 if colort == 2 else 4
+stride = 1 + w * bpp
+
+# The red marker drawn by the user on the left arch:
+# Let's filter for pure drawn marker red (e.g. saturation > 0.7, hue near 0/360)
+marker_pixels = []
+for y in range(h):
+    for x in range(w):
+        off = y * stride + 1 + x * bpp
+        r, g, b = decomp[off], decomp[off+1], decomp[off+2]
+        # Pure red marker line has r > 160, g < 45, b < 45
+        if r > 160 and g < 45 and b < 45 and x < w * 0.5: # On the left side of the hero!
+            marker_pixels.append((x, y))
+
+print(f"Marker pixels on left arch: {len(marker_pixels)}")
+if marker_pixels:
+    min_x = min(p[0] for p in marker_pixels)
+    max_x = max(p[0] for p in marker_pixels)
+    min_y = min(p[1] for p in marker_pixels)
+    max_y = max(p[1] for p in marker_pixels)
+    print(f"Exact Red Marker on Left Arch:")
+    print(f"X range: [{min_x}, {max_x}] (center: {(min_x+max_x)/2:.1f}, width: {max_x-min_x}px)")
+    print(f"Y range: [{min_y}, {max_y}] (center: {(min_y+max_y)/2:.1f}, height: {max_y-min_y}px)")
+    print(f"Normalized to screenshot (1024x471):")
+    cx_s = (min_x + max_x) / 2
+    cy_s = (min_y + max_y) / 2
+    print(f"Center: X_pct = {cx_s/w * 100:.2f}%, Y_pct = {cy_s/h * 100:.2f}%")
+    print(f"Width: {(max_x-min_x)/w * 100:.2f}%, Height: {(max_y-min_y)/h * 100:.2f}%")
+    print(f"Radius X: {(max_x-min_x)/(2*w):.4f}, Radius Y: {(max_y-min_y)/(2*h):.4f}")
+EOF
+python3 inspect_red_clusters.py
+rm inspect_red_clusters.py
+
+============================================================
+
+Chunk 120 step 5:
+cat > trace_exact_red_loop.py << 'EOF'
+import struct, zlib, math, json
+
+with open('/Users/bethrooney/.gemini/antigravity/brain/645b6279-1818-4280-a305-23efd07c1678/.user_uploaded/media_1787384657222.png', 'rb') as f:
+    data = f.read()
+
+pos = 8
+idat = b''
+w, h = 0, 0
+while pos < len(data):
+    length = struct.unpack('>I', data[pos:pos+4])[0]
+    chunk_type = data[pos+4:pos+8]
+    chunk_data = data[pos+8:pos+8+length]
+    pos += 8 + length + 4
+    if chunk_type == b'IHDR':
+        w, h, bitd, colort, compm, filterm, interm = struct.unpack('>IIBBBBB', chunk_data)
+    elif chunk_type == b'IDAT':
+        idat += chunk_data
+
+decomp = zlib.decompress(idat)
+bpp = 3 if colort == 2 else 4
+stride = 1 + w * bpp
+
+# Filter for the red marker circle in the hero section:
+# x between 180 and 420, y between 150 and 390
+loop_pixels = []
+for y in range(140, 400):
+    for x in range(180, 430):
+        off = y * stride + 1 + x * bpp
+        r, g, b = decomp[off], decomp[off+1], decomp[off+2]
+        # Red marker condition: High R, low G and B
+        if r > 140 and g < 60 and b < 60:
+            loop_pixels.append((x, y))
+
+print(f"Red loop pixels in hero arch: {len(loop_pixels)}")
+min_x = min(p[0] for p in loop_pixels)
+max_x = max(p[0] for p in loop_pixels)
+min_y = min(p[1] for p in loop_pixels)
+max_y = max(p[1] for p in loop_pixels)
+
+center_x = (min_x + max_x) / 2
+center_y = (min_y + max_y) / 2
+print(f"Red Loop Bounds: X=[{min_x}, {max_x}] (Width: {max_x-min_x}px), Y=[{min_y}, {max_y}] (Height: {max_y-min_y}px)")
+print(f"Center: ({center_x:.1f}, {center_y:.1f})")
+
+# In the screenshot, the browser viewport:
+# Let's map this (x, y) to background image (u, v) space:
+# In hero section (height is viewport height - nav height):
+# In hero-bg.webp cover rendering:
+# Canvas aspect = w / h_hero
+# Background image is 1376x768 (aspect ~1.792)
+# Screen width w = 1024, screen height h = 471 (aspect = 2.174)
+# Cover scaling: scale = w / 1920 or w / 1376 (scaled by width, so top/bottom are cropped or centered)
+# u = x / w
+# v = y / h_hero
+
+# Let's calculate the normalized center in background texture space:
+# Center u = center_x / w = 300 / 1024 = 0.2930
+# Center v = center_y / h = 265 / 471 = 0.5626 (or relative to hero background)
+
+# Let's generate 64 contour points directly from the user's drawn loop:
+num_nodes = 64
+contour = []
+
+for i in range(num_nodes):
+    angle = -math.pi * 0.5 + (i / num_nodes) * math.pi * 2
+    # Find average distance of red pixels in this angular direction
+    dists = []
+    for px, py in loop_pixels:
+        ang = math.atan2(py - center_y, px - center_x)
+        diff = (ang - angle + math.pi) % (math.pi * 2) - math.pi
+        if abs(diff) < 0.10:
+            dists.append(math.hypot(px - center_x, py - center_y))
+    if dists:
+        r = sum(dists) / len(dists)
+    else:
+        r = ((max_x - min_x) + (max_y - min_y)) * 0.25
+    
+    # Store normalized (u, v)
+    pt_x = center_x + math.cos(angle) * r
+    pt_y = center_y + math.sin(angle) * r
+    
+    # In background image coordinates (1920x1080):
+    # Normalized u = pt_x / w
+    # Normalized v = pt_y / h
+    u = pt_x / w
+    v = pt_y / h
+    contour.append({
+        'u': round(u, 4),
+        'v': round(v, 4)
+    })
+
+print(f"Generated {len(contour)} precise contour nodes from user's drawing!")
+with open('user_drawn_contour.json', 'w') as f:
+    json.dump(contour, f)
+print("Saved user_drawn_contour.json")
+EOF
+python3 trace_exact_red_loop.py
+rm trace_exact_red_loop.py
+
+============================================================
+
+Chunk 120 step 10:
+cat > apply_extracted_user_contour.py << 'EOF'
+import json, math
+
+# Extract from user_drawn_contour.json:
+# In the 1024x471 screenshot:
+# Center: x=304.5 (29.74%), y=269.5 (57.22%)
+# Width: 249px, Height: 259px
+
+# In 1920x1080 background space:
+# Center U = 0.298
+# Center V = 0.440
+# Radius X = 0.124 (238px in 1920 space)
+# Radius Y = 0.192 (207px in 1080 space)
+
+contour = []
+num_nodes = 64
+center_u = 0.298
+center_v = 0.440
+rx = 0.124
+ry = 0.192
+
+for i in range(num_nodes):
+    angle = -math.pi * 0.5 + (i / num_nodes) * math.pi * 2
+    # Arch shaping matching the drawn red line
+    is_top = math.sin(angle) < 0
+    if is_top:
+        warp_x = 1.0 + 0.02 * math.cos(angle * 2.0)
+        warp_y = 1.0 + 0.015 * math.sin(angle * 2.0)
+    else:
+        warp_x = 0.96 + 0.04 * math.cos(angle)
+        warp_y = 0.95 - 0.02 * math.sin(angle)
+    
+    u = center_u + math.cos(angle) * rx * warp_x
+    v = center_v + math.sin(angle) * ry * warp_y
+    contour.append({
+        'u': round(u, 4),
+        'v': round(v, 4)
+    })
+
+contour_js = json.dumps(contour)
+
+with open('js/main.js', 'r', encoding='utf-8') as f:
+    js = f.read()
+
+# Replace TREE_CONTOUR
+old_contour_start = js.find('      // 64 High-Precision Organic Contour Nodes')
+old_contour_end = js.find('      const treePortal = {')
+
+new_contour_decl = f'''      // 64 High-Precision Organic Contour Nodes calibrated to user red markup loop
+      const TREE_CONTOUR = {contour_js};\n\n'''
+
+if old_contour_start != -1 and old_contour_end != -1:
+    js = js[:old_contour_start] + new_contour_decl + js[old_contour_end:]
+    print('Updated TREE_CONTOUR to exact red markup location (center u=0.298, v=0.440, rx=0.124, ry=0.192)!')
+else:
+    print('Error finding boundaries!')
+
+with open('js/main.js', 'w', encoding='utf-8') as f:
+    f.write(js)
+
+print('Updated js/main.js successfully!')
+EOF
+python3 apply_extracted_user_contour.py
+rm apply_extracted_user_contour.py
+node -c js/main.js
+
+============================================================
+
+Chunk 120 step 18:
+cat > update_portal_inside_and_literal_view.py << 'EOF'
+import json, math
+
+# 1. Scale down contour so it fits snugly on the INSIDE of the red outline
+center_u = 0.298
+center_v = 0.440
+rx = 0.106 # scaled down ~14% to sit snugly INSIDE the red line
+ry = 0.165 # scaled down ~14% to sit snugly INSIDE the red line
+
+contour = []
+num_nodes = 64
+
+for i in range(num_nodes):
+    angle = -math.pi * 0.5 + (i / num_nodes) * math.pi * 2
+    is_top = math.sin(angle) < 0
+    if is_top:
+        warp_x = 1.0 + 0.02 * math.cos(angle * 2.0)
+        warp_y = 1.0 + 0.015 * math.sin(angle * 2.0)
+    else:
+        warp_x = 0.96 + 0.04 * math.cos(angle)
+        warp_y = 0.95 - 0.02 * math.sin(angle)
+    
+    u = center_u + math.cos(angle) * rx * warp_x
+    v = center_v + math.sin(angle) * ry * warp_y
+    contour.append({
+        'u': round(u, 4),
+        'v': round(v, 4)
+    })
+
+contour_js = json.dumps(contour)
+
+with open('js/main.js', 'r', encoding='utf-8') as f:
+    js = f.read()
+
+# Replace portalHighlights and TREE_CONTOUR
+old_highlights_start = js.find('      const portalHighlights = [')
+portal_render_fn_end = js.find('      // ─── TINKERBELL MULTI-PERCH, THE WORM & MOONWALK STATE MACHINE ───')
+
+new_portal_section = f'''      // Pure dimensional views looking directly into live sections across the website (NO ADS / NO PROMOTIONAL COPY)
+      const portalHighlights = [
+        {{
+          href: '#merch',
+          imgSrc: 'images/merch-eye-believe-hoodie-lavender.webp'
+        }},
+        {{
+          href: '#interactive-aura',
+          imgSrc: 'images/aura-silhouette-glow.webp'
+        }},
+        {{
+          href: '#events',
+          imgSrc: 'images/notes-by-beth.webp'
+        }},
+        {{
+          href: '#contact',
+          imgSrc: 'images/portrait.webp'
+        }},
+        {{
+          href: '#services',
+          imgSrc: 'images/chakra-watercolor-transparent.webp'
+        }},
+        {{
+          href: '#merch',
+          imgSrc: 'images/merch-eye-believe-hat-black.webp'
+        }},
+        {{
+          href: '#sound-sanctuary',
+          imgSrc: 'images/crystal_nebula_panorama.webp'
+        }}
+      ];
+
+      // Preload real section views for zero-lag portal rendering
+      const portalImgs = portalHighlights.map(item => {{
+        const img = new Image();
+        img.src = item.imgSrc;
+        return img;
+      }});
+
+      // 64 High-Precision Organic Contour Nodes fitted snugly on the INSIDE of the red arch outline
+      const TREE_CONTOUR = {contour_js};
+
+      const treePortal = {{
+        state: 'HOLD_FOR_ASSISTANT', // Held until Avatar Beth dives in & aEYE introduces itself
+        timer: 0,
+        sputter1Duration: 1.2,
+        sputter2Duration: 1.4,
+        drawDuration: 2.4,
+        openDuration: 11.5,
+        closeDuration: 0.85,
+        nextTrigger: Infinity,
+        ringProgress: 0,
+        highlightIdx: 0,
+        isHovered: false,
+        x: 0,
+        y: 0,
+        r: 0,
+        sparks: []
+      }};
+
+      window.startTreePortalSequence = function() {{
+        if (treePortal.state === 'HOLD_FOR_ASSISTANT') {{
+          treePortal.state = 'IDLE';
+          treePortal.nextTrigger = performance.now() + 1800;
+        }}
+      }};
+
+      // Interactive Portal Mouse Hover & Direct Click Navigation to that Section
+      window.addEventListener('mousemove', (e) => {{
+        if (treePortal.state !== 'OPEN' && treePortal.state !== 'DRAWING_RING') {{
+          treePortal.isHovered = false;
+          return;
+        }}
+        const dx = e.clientX - treePortal.x;
+        const dy = e.clientY - treePortal.y;
+        const dist = Math.hypot(dx, dy);
+        treePortal.isHovered = (dist <= treePortal.r * 1.10);
+      }}, {{ passive: true }});
+
+      window.addEventListener('click', (e) => {{
+        if (treePortal.state === 'OPEN') {{
+          const dx = e.clientX - treePortal.x;
+          const dy = e.clientY - treePortal.y;
+          const dist = Math.hypot(dx, dy);
+          if (dist <= treePortal.r * 1.10) {{
+            const item = portalHighlights[treePortal.highlightIdx];
+            if (item && item.href) {{
+              if (window.celestialAudio) window.celestialAudio.playChime(963, 1.8);
+              emitPixieDust(treePortal.x, treePortal.y, 60, ['#00FFC8', '#FFD700', '#FFFFFF', '#C77DFF']);
+              
+              if (item.href === '#sound-sanctuary') {{
+                const openSoundBtn = document.getElementById('open-sound-modal-btn');
+                if (openSoundBtn) openSoundBtn.click();
+              }} else if (item.href === '#interactive-aura') {{
+                const startAuraBtn = document.getElementById('aura-start-scan-btn');
+                const auraSec = document.getElementById('interactive-aura');
+                if (auraSec) auraSec.scrollIntoView({{ behavior: 'smooth' }});
+                if (startAuraBtn) setTimeout(() => startAuraBtn.click(), 600);
+              }} else {{
+                const targetEl = document.querySelector(item.href);
+                if (targetEl) targetEl.scrollIntoView({{ behavior: 'smooth' }});
+              }}
+            }}
+          }}
+        }}
+      }});
+
+      function updateTreePortalLogicOnly(now, dt) {{
+        if (treePortal.state === 'HOLD_FOR_ASSISTANT') return;
+
+        if (treePortal.state === 'IDLE') {{
+          if (now >= treePortal.nextTrigger) {{
+            treePortal.state = 'SPUTTER_1';
+            treePortal.timer = 0;
+            treePortal.ringProgress = 0;
+            treePortal.highlightIdx = Math.floor(Math.random() * portalHighlights.length);
+          }}
+        }} else if (treePortal.state === 'SPUTTER_1') {{
+          treePortal.timer += dt;
+          if (treePortal.timer >= treePortal.sputter1Duration) {{
+            treePortal.state = 'SPUTTER_2';
+            treePortal.timer = 0;
+          }}
+        }} else if (treePortal.state === 'SPUTTER_2') {{
+          treePortal.timer += dt;
+          if (treePortal.timer >= treePortal.sputter2Duration) {{
+            treePortal.state = 'DRAWING_RING';
+            treePortal.timer = 0;
+            treePortal.ringProgress = 0;
+          }}
+        }} else if (treePortal.state === 'DRAWING_RING') {{
+          treePortal.timer += dt;
+          treePortal.ringProgress = Math.min(1, treePortal.timer / treePortal.drawDuration);
+          if (treePortal.ringProgress >= 1) {{
+            treePortal.state = 'OPEN';
+            treePortal.timer = 0;
+          }}
+        }} else if (treePortal.state === 'OPEN') {{
+          treePortal.timer += dt;
+          if (treePortal.timer >= treePortal.openDuration) {{
+            treePortal.state = 'CLOSING';
+            treePortal.timer = 0;
+          }}
+        }} else if (treePortal.state === 'CLOSING') {{
+          treePortal.timer += dt;
+          const closeP = Math.min(1, treePortal.timer / treePortal.closeDuration);
+          if (closeP >= 1) {{
+            treePortal.state = 'IDLE';
+            treePortal.timer = 0;
+            treePortal.nextTrigger = now + 14000 + Math.random() * 9000;
+          }}
+        }}
+      }}
+
+      // ─── CINEMATIC DOCTOR STRANGE ELECTRIC SPARKLER PORTAL ENGINE ───
+      function updateAndRenderTreePortal(ctx, bgOffsetX, bgOffsetY, bgS, now, dt) {{
+        if (treePortal.state === 'HOLD_FOR_ASSISTANT') return;
+
+        // Calculate world coordinates for calibrated tree arch contour
+        const numNodes = TREE_CONTOUR.length;
+        const pts = [];
+        let avgX = 0, avgY = 0;
+
+        for (let i = 0; i < numNodes; i++) {{
+          const node = TREE_CONTOUR[i];
+          const nx = bgOffsetX + node.u * 1920 * bgS;
+          const ny = bgOffsetY + node.v * 1080 * bgS;
+          pts.push({{ x: nx, y: ny }});
+          avgX += nx;
+          avgY += ny;
+        }}
+        avgX /= numNodes;
+        avgY /= numNodes;
+        treePortal.x = avgX;
+        treePortal.y = avgY;
+
+        const dx0 = pts[0].x - avgX;
+        const dy0 = pts[0].y - avgY;
+        treePortal.r = Math.hypot(dx0, dy0) * 1.05;
+
+        // ─── STATE MACHINE ───
+        if (treePortal.state === 'IDLE') {{
+          if (now >= treePortal.nextTrigger) {{
+            treePortal.state = 'SPUTTER_1';
+            treePortal.timer = 0;
+            treePortal.ringProgress = 0;
+            treePortal.highlightIdx = Math.floor(Math.random() * portalHighlights.length);
+            if (window.celestialAudio) window.celestialAudio.playGlissando();
+          }}
+        }}
+        // ── STAGE 1: Sputter 1 (Struggles to 35%, throws chaotic sparkler sparks) ──
+        else if (treePortal.state === 'SPUTTER_1') {{
+          treePortal.timer += dt;
+          const p1 = treePortal.timer / treePortal.sputter1Duration;
+          treePortal.ringProgress = Math.min(0.35, p1 * 0.42);
+
+          const curIdx = Math.floor(treePortal.ringProgress * (numNodes - 1));
+          const pt = pts[curIdx];
+          const nextPt = pts[(curIdx + 1) % numNodes];
+          const tangAng = Math.atan2(nextPt.y - pt.y, nextPt.x - pt.x);
+
+          for (let s = 0; s < 6; s++) {{
+            const spd = 40 + Math.random() * 110;
+            const sprkAng = tangAng + (Math.random() - 0.5) * 1.2;
+            treePortal.sparks.push({{
+              x: pt.x + (Math.random() - 0.5) * 4,
+              y: pt.y + (Math.random() - 0.5) * 4,
+              vx: Math.cos(sprkAng) * spd,
+              vy: Math.sin(sprkAng) * spd + 18,
+              life: 1.0,
+              decay: 0.035 + Math.random() * 0.045,
+              size: 2.0 + Math.random() * 2.8,
+              color: ['#FFFFFF', '#FFE600', '#FF7700', '#FF3700'][Math.floor(Math.random() * 4)]
+            }});
+          }}
+
+          if (treePortal.timer >= treePortal.sputter1Duration) {{
+            treePortal.state = 'SPUTTER_2';
+            treePortal.timer = 0;
+            emitPixieDust(pt.x, pt.y, 18, ['#FF7700', '#FFE600', '#FFF']);
+          }}
+        }}
+        // ── STAGE 2: Sputter 2 (Reignites clockwise to 72%, crackles violently) ──
+        else if (treePortal.state === 'SPUTTER_2') {{
+          treePortal.timer += dt;
+          const p2 = treePortal.timer / treePortal.sputter2Duration;
+          treePortal.ringProgress = Math.min(0.72, p2 * 0.85);
+
+          const curIdx = Math.floor(treePortal.ringProgress * (numNodes - 1));
+          const pt = pts[curIdx];
+          const nextPt = pts[(curIdx + 1) % numNodes];
+          const tangAng = Math.atan2(nextPt.y - pt.y, nextPt.x - pt.x);
+
+          for (let s = 0; s < 8; s++) {{
+            const spd = 50 + Math.random() * 130;
+            const sprkAng = tangAng + (Math.random() - 0.5) * 1.0;
+            treePortal.sparks.push({{
+              x: pt.x + (Math.random() - 0.5) * 5,
+              y: pt.y + (Math.random() - 0.5) * 5,
+              vx: Math.cos(sprkAng) * spd,
+              vy: Math.sin(sprkAng) * spd + 20,
+              life: 1.0,
+              decay: 0.03 + Math.random() * 0.04,
+              size: 2.2 + Math.random() * 3.2,
+              color: ['#FFFFFF', '#FFE600', '#FF8800', '#FF3700', '#00FFC8'][Math.floor(Math.random() * 5)]
+            }});
+          }}
+
+          if (treePortal.timer >= treePortal.sputter2Duration) {{
+            treePortal.state = 'DRAWING_RING';
+            treePortal.timer = 0;
+            treePortal.ringProgress = 0;
+            if (window.celestialAudio) window.celestialAudio.playGlissando();
+          }}
+        }}
+        // ── STAGE 3: Final Masterful Sweep (Completes full 360° circle with blinding sparkler torrent) ──
+        else if (treePortal.state === 'DRAWING_RING') {{
+          treePortal.timer += dt;
+          treePortal.ringProgress = Math.min(1, treePortal.timer / treePortal.drawDuration);
+
+          const curIdx = Math.floor(treePortal.ringProgress * (numNodes - 1));
+          const pt = pts[curIdx];
+          const nextPt = pts[(curIdx + 1) % numNodes];
+          const tangAng = Math.atan2(nextPt.y - pt.y, nextPt.x - pt.x);
+
+          for (let s = 0; s < 10; s++) {{
+            const spd = 65 + Math.random() * 150;
+            const sprkAng = tangAng + (Math.random() - 0.5) * 0.8;
+            treePortal.sparks.push({{
+              x: pt.x + (Math.random() - 0.5) * 6,
+              y: pt.y + (Math.random() - 0.5) * 6,
+              vx: Math.cos(sprkAng) * spd,
+              vy: Math.sin(sprkAng) * spd + 24,
+              life: 1.0,
+              decay: 0.022 + Math.random() * 0.035,
+              size: 2.5 + Math.random() * 3.6,
+              color: ['#FFFFFF', '#FFE600', '#FF8800', '#FF3700', '#00FFC8'][Math.floor(Math.random() * 5)]
+            }});
+          }}
+
+          if (treePortal.ringProgress >= 1) {{
+            treePortal.state = 'OPEN';
+            treePortal.timer = 0;
+            emitPixieDust(avgX, avgY, 85, ['#FFE600', '#FF8800', '#00FFC8', '#FFFFFF']);
+            if (window.celestialAudio) window.celestialAudio.playChime(741, 1.8);
+          }}
+        }}
+        // ── STAGE 4: Dimensional Portal Fully Open (Pure Living View into that Section of the Site) ──
+        else if (treePortal.state === 'OPEN') {{
+          treePortal.timer += dt;
+          
+          for (let s = 0; s < 4; s++) {{
+            const randIdx = Math.floor(Math.random() * numNodes);
+            const pt = pts[randIdx];
+            const nextPt = pts[(randIdx + 1) % numNodes];
+            const tang = Math.atan2(nextPt.y - pt.y, nextPt.x - pt.x) + (Math.random() - 0.5) * 0.7;
+            const spd = 50 + Math.random() * 110;
+            treePortal.sparks.push({{
+              x: pt.x + (Math.random() - 0.5) * 4,
+              y: pt.y + (Math.random() - 0.5) * 4,
+              vx: Math.cos(tang) * spd,
+              vy: Math.sin(tang) * spd + 16,
+              life: 1.0,
+              decay: 0.028 + Math.random() * 0.038,
+              size: 2.2 + Math.random() * 3.0,
+              color: ['#FFFFFF', '#FFE600', '#FF7700', '#FF3700'][Math.floor(Math.random() * 4)]
+            }});
+          }}
+
+          if (treePortal.timer >= treePortal.openDuration) {{
+            treePortal.state = 'CLOSING';
+            treePortal.timer = 0;
+          }}
+        }}
+        // ── STAGE 5: Inward Implosion & Reset ──
+        else if (treePortal.state === 'CLOSING') {{
+          treePortal.timer += dt;
+          const closeP = Math.min(1, treePortal.timer / treePortal.closeDuration);
+          
+          if (Math.random() > 0.25) {{
+            const randIdx = Math.floor(Math.random() * numNodes);
+            const pt = pts[randIdx];
+            const sx = avgX + (pt.x - avgX) * (1 - closeP);
+            const sy = avgY + (pt.y - avgY) * (1 - closeP);
+            treePortal.sparks.push({{
+              x: sx,
+              y: sy,
+              vx: (avgX - sx) * 2.5,
+              vy: (avgY - sy) * 2.5,
+              life: 1.0,
+              decay: 0.06,
+              size: 2.4,
+              color: '#FFE600'
+            }});
+          }}
+
+          if (closeP >= 1) {{
+            treePortal.state = 'IDLE';
+            treePortal.timer = 0;
+            treePortal.nextTrigger = now + 14000 + Math.random() * 9000;
+          }}
+        }}
+
+        // ─── RENDER PORTAL GRAPHICS ───
+        if (treePortal.state === 'IDLE' || treePortal.state === 'HOLD_FOR_ASSISTANT') return;
+
+        ctx.save();
+
+        // 1. Render Pyrotechnic Sparkler Embers with Glowing Fire Trails
+        for (let i = treePortal.sparks.length - 1; i >= 0; i--) {{
+          const sp = treePortal.sparks[i];
+          sp.x += sp.vx * dt;
+          sp.y += sp.vy * dt;
+          sp.vy += 45 * dt; // Gravity pull on sparks
+          sp.life -= sp.decay;
+
+          if (sp.life <= 0) {{
+            treePortal.sparks.splice(i, 1);
+            continue;
+          }}
+
+          ctx.save();
+          ctx.globalAlpha = sp.life;
+          ctx.fillStyle = sp.color;
+          ctx.shadowColor = sp.color;
+          ctx.shadowBlur = 10;
+          
+          ctx.beginPath();
+          ctx.arc(sp.x, sp.y, sp.size * sp.life, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.strokeStyle = sp.color;
+          ctx.lineWidth = sp.size * 0.6 * sp.life;
+          ctx.beginPath();
+          ctx.moveTo(sp.x, sp.y);
+          ctx.lineTo(sp.x - sp.vx * dt * 2.5, sp.y - sp.vy * dt * 2.5);
+          ctx.stroke();
+
+          ctx.restore();
+        }}
+
+        let drawP = treePortal.ringProgress;
+        let closeScale = 1.0;
+        if (treePortal.state === 'CLOSING') {{
+          closeScale = Math.max(0, 1 - treePortal.timer / treePortal.closeDuration);
+          drawP = closeScale;
+        }}
+
+        function buildElectricContourPath(targetP, scale = 1.0, jitterMag = 0) {{
+          ctx.beginPath();
+          const maxIdx = Math.max(1, Math.floor(targetP * (numNodes - 1)));
+          for (let i = 0; i <= maxIdx; i++) {{
+            const pt = pts[i];
+            const jx = jitterMag > 0 ? (Math.sin(now * 0.05 + i * 2.1) * jitterMag) : 0;
+            const jy = jitterMag > 0 ? (Math.cos(now * 0.06 + i * 1.8) * jitterMag) : 0;
+            const px = avgX + (pt.x - avgX) * scale + jx;
+            const py = avgY + (pt.y - avgY) * scale + jy;
+            if (i === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+          }}
+          if (targetP >= 0.999) ctx.closePath();
+        }}
+
+        // 2. LITERAL MYSTICAL PORTAL VIEWPORT (ACTUAL WINDOW INTO OTHER SECTIONS OF THE SITE)
+        if (treePortal.state === 'OPEN' || treePortal.state === 'CLOSING') {{
+          const openBloom = treePortal.state === 'OPEN' 
+            ? Math.min(1.0, treePortal.timer / 0.55) 
+            : closeScale;
+
+          ctx.save();
+          ctx.globalAlpha = openBloom;
+          
+          buildElectricContourPath(1.0, closeScale, 0);
+          ctx.clip();
+
+          // 2a. Actual photographic view of that section of the site
+          const imgObj = portalImgs[treePortal.highlightIdx];
+          const boundR = treePortal.r * closeScale;
+          
+          if (imgObj && imgObj.complete && imgObj.naturalWidth > 0) {{
+            const imgZoom = 1.06 + Math.sin(now * 0.0008) * 0.03;
+            const imgW = boundR * 2.2 * imgZoom;
+            const imgH = boundR * 2.2 * imgZoom;
+            const imgX = avgX - imgW * 0.5;
+            const imgY = avgY - imgH * 0.5;
+            ctx.drawImage(imgObj, imgX, imgY, imgW, imgH);
+          }} else {{
+            const vortexGrad = ctx.createRadialGradient(avgX, avgY, 0, avgX, avgY, boundR);
+            vortexGrad.addColorStop(0, '#060012');
+            vortexGrad.addColorStop(0.5, '#120028');
+            vortexGrad.addColorStop(1, '#FF6B00');
+            ctx.fillStyle = vortexGrad;
+            ctx.fillRect(avgX - boundR, avgY - boundR, boundR * 2, boundR * 2);
+          }}
+
+          // 2b. Delicate Dimensional Ether Sheen (Subtle Mystical Edge Vignette)
+          const etherGrad = ctx.createRadialGradient(avgX, avgY, boundR * 0.65, avgX, avgY, boundR);
+          etherGrad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+          etherGrad.addColorStop(0.85, 'rgba(255, 107, 0, 0.25)');
+          etherGrad.addColorStop(1, 'rgba(255, 215, 0, 0.45)');
+          ctx.fillStyle = etherGrad;
+          ctx.fillRect(avgX - boundR, avgY - boundR, boundR * 2, boundR * 2);
+
+          // 2c. Hover state subtle glow & indicator
+          if (treePortal.isHovered) {{
+            const hovGrad = ctx.createRadialGradient(avgX, avgY, 0, avgX, avgY, boundR);
+            hovGrad.addColorStop(0, 'rgba(0, 255, 200, 0.0)');
+            hovGrad.addColorStop(0.8, 'rgba(0, 255, 200, 0.15)');
+            hovGrad.addColorStop(1, 'rgba(0, 255, 200, 0.35)');
+            ctx.fillStyle = hovGrad;
+            ctx.fillRect(avgX - boundR, avgY - boundR, boundR * 2, boundR * 2);
+          }}
+
+          ctx.restore(); // end clip
+        }}
+
+        // 3. ELECTRIC CRACKLING SPARKLER PLASMA RING (MULTI-STRAND JITTER)
+        ctx.save();
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        // Strand A: Outer Turbulent Fiery Plasma Sheath
+        ctx.strokeStyle = treePortal.isHovered ? '#00FFC8' : '#FF4500';
+        ctx.lineWidth = treePortal.isHovered ? 11.0 : 8.0;
+        ctx.shadowColor = treePortal.isHovered ? '#00FFC8' : '#FF3300';
+        ctx.shadowBlur = 32;
+        buildElectricContourPath(drawP, closeScale, 2.2);
+        ctx.stroke();
+
+        // Strand B: Incandescent Molten Gold Sparkler Body
+        ctx.strokeStyle = '#FFAA00';
+        ctx.lineWidth = 5.0;
+        ctx.shadowColor = '#FF8800';
+        ctx.shadowBlur = 20;
+        buildElectricContourPath(drawP, closeScale, 1.6);
+        ctx.stroke();
+
+        // Strand C: High-Voltage Electric Yellow Arc
+        ctx.strokeStyle = '#FFE600';
+        ctx.lineWidth = 3.0;
+        ctx.shadowColor = '#FFE600';
+        ctx.shadowBlur = 12;
+        buildElectricContourPath(drawP, closeScale, 0.9);
+        ctx.stroke();
+
+        // Strand D: Blazing White-Hot Electric Core Singularity
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 1.6;
+        ctx.shadowColor = '#FFFFFF';
+        ctx.shadowBlur = 8;
+        buildElectricContourPath(drawP, closeScale, 0.3);
+        ctx.stroke();
+
+        // 4. LEADING TRAVELING SPARKLER FLARE HEAD (High-Energy Magnesium Flash)
+        if (treePortal.state === 'SPUTTER_1' || treePortal.state === 'SPUTTER_2' || treePortal.state === 'DRAWING_RING') {{
+          const curIdx = Math.floor(drawP * (numNodes - 1));
+          const leadPt = pts[curIdx];
+          if (leadPt) {{
+            ctx.fillStyle = '#FFFFFF';
+            ctx.shadowColor = '#FFE600';
+            ctx.shadowBlur = 28;
+            ctx.beginPath();
+            ctx.arc(leadPt.x, leadPt.y, 6.0, 0, Math.PI * 2);
+            ctx.fill();
+
+            for (let f = 0; f < 6; f++) {{
+              const fAng = (f / 6) * Math.PI * 2 + now * 0.08;
+              const fLen = 14 + Math.random() * 16;
+              ctx.strokeStyle = '#FFFFFF';
+              ctx.lineWidth = 1.5;
+              ctx.beginPath();
+              ctx.moveTo(leadPt.x, leadPt.y);
+              ctx.lineTo(leadPt.x + Math.cos(fAng) * fLen, leadPt.y + Math.sin(fAng) * fLen);
+              ctx.stroke();
+            }}
+          }}
+        }}
+
+        ctx.restore();
+        ctx.restore();
+      }}'''
+
+if old_highlights_start != -1 and portal_render_fn_end != -1:
+    js = js[:old_highlights_start] + new_portal_section + '\n\n' + js[portal_render_fn_end:]
+    print('Updated portal to fit inside red outline and removed all ad text for pure portal view!')
+else:
+    print('Error finding portal boundaries!')
+
+with open('js/main.js', 'w', encoding='utf-8') as f:
+    f.write(js)
+
+print('Updated js/main.js successfully!')
+EOF
+python3 update_portal_inside_and_literal_view.py
+rm update_portal_inside_and_literal_view.py
+node -c js/main.js
+
+============================================================
+
+Chunk 120 step 26:
+cat > add_portal_description_box.py << 'EOF'
+with open('js/main.js', 'r', encoding='utf-8') as f:
+    js = f.read()
+
+# 1. Update portalHighlights with rich authentic descriptions
+new_highlights = '''      // Authentic dimensional views with description details
+      const portalHighlights = [
+        {
+          tag: '✦ SACRED APPAREL ✦',
+          title: 'Eye Believe Lavender Hoodie',
+          desc: '100% organic French terry celestial wear infused with sacred geometry and third-eye resonance.',
+          action: 'Click portal to view in Sacred Shop →',
+          href: '#merch',
+          imgSrc: 'images/merch-eye-believe-hoodie-lavender.webp',
+          color: '#C77DFF'
+        },
+        {
+          tag: '✦ INTERACTIVE BIOFIELD ✦',
+          title: '3D LiDAR Aura Scanner',
+          desc: 'Real-time quantum biofield scanner measuring auric frequency, chakra radiance, and vibrational resonance.',
+          action: 'Click portal to activate Aura Scan →',
+          href: '#interactive-aura',
+          imgSrc: 'images/aura-silhouette-glow.webp',
+          color: '#00E5D4'
+        },
+        {
+          tag: '✦ LIVE GALLERY EVENT ✦',
+          title: 'Ghost Key West 2026',
+          desc: 'An intimate, historic in-person mediumship gallery and spirit circle hosted by Beth Elise.',
+          action: 'Click portal to view Event Details →',
+          href: '#events',
+          imgSrc: 'images/notes-by-beth.webp',
+          color: '#FFD700'
+        },
+        {
+          tag: '✦ 1-ON-1 SESSIONS ✦',
+          title: 'Evidential Mediumship Readings',
+          desc: 'Private, compassionate spirit communication delivering verifiable details, soul healing, and closure.',
+          action: 'Click portal to book Private Reading →',
+          href: '#contact',
+          imgSrc: 'images/portrait.webp',
+          color: '#FFE57F'
+        },
+        {
+          tag: '✦ ENERGY RESTORATION ✦',
+          title: 'Chakra Balancing & Reiki',
+          desc: 'Harmonic 7-vortex energy alignment and Usui Reiki clearing to dissolve energetic blockages.',
+          action: 'Click portal to explore Healing Modalities →',
+          href: '#services',
+          imgSrc: 'images/chakra-watercolor-transparent.webp',
+          color: '#00FFC8'
+        },
+        {
+          tag: '✦ SACRED STREETWEAR ✦',
+          title: 'Embroidered Celestial Cap',
+          desc: 'Structured cotton streetwear cap featuring metallic starlight embroidery and custom brass closure.',
+          action: 'Click portal to view Headwear →',
+          href: '#merch',
+          imgSrc: 'images/merch-eye-believe-hat-black.webp',
+          color: '#FF80DF'
+        },
+        {
+          tag: '✦ SOUND SANCTUARY ✦',
+          title: '528Hz Solfeggio Sound Bath',
+          desc: 'Pure crystal bowl resonant frequencies tuned to 528Hz DNA repair and transformation tones.',
+          action: 'Click portal to enter Sound Sanctuary →',
+          href: '#sound-sanctuary',
+          imgSrc: 'images/crystal_nebula_panorama.webp',
+          color: '#9D4EDD'
+        }
+      ];'''
+
+# Replace portalHighlights declaration
+h_start = js.find('      // Pure dimensional views looking directly into live sections')
+if h_start == -1:
+    h_start = js.find('      const portalHighlights = [')
+h_end = js.find('      // Preload real section views for zero-lag portal rendering')
+
+if h_start != -1 and h_end != -1:
+    js = js[:h_start] + new_highlights + '\n\n      ' + js[h_end:]
+    print('Updated portalHighlights with rich description metadata!')
+else:
+    print('Error finding portalHighlights!')
+
+# 2. Add floating description container box rendering above the portal arch in updateAndRenderTreePortal
+desc_box_code = '''
+        // ─── 4. LUXURY DESCRIPTION CONTAINER BOX FLOATING ABOVE THE PORTAL ───
+        if ((treePortal.state === 'OPEN' || treePortal.state === 'CLOSING') && item) {
+          const boxBloom = treePortal.state === 'OPEN' 
+            ? Math.min(1.0, treePortal.timer / 0.6) 
+            : closeScale;
+
+          if (boxBloom > 0.05) {
+            ctx.save();
+            ctx.globalAlpha = boxBloom;
+
+            const boxW = Math.min(320, boundR * 2.1);
+            const boxH = 78;
+            const boxX = avgX - boxW * 0.5;
+            const boxY = avgY - boundR - boxH - 16; // Positioned cleanly above the top arch rim
+            const cornerR = 12;
+
+            // Background Glass Surface with Deep Indigo Sheen
+            ctx.save();
+            ctx.fillStyle = 'rgba(6, 0, 18, 0.88)';
+            ctx.shadowColor = treePortal.isHovered ? '#00FFC8' : '#FFD700';
+            ctx.shadowBlur = treePortal.isHovered ? 24 : 14;
+
+            // Draw Rounded Rectangle Box
+            ctx.beginPath();
+            ctx.moveTo(boxX + cornerR, boxY);
+            ctx.lineTo(boxX + boxW - cornerR, boxY);
+            ctx.arcTo(boxX + boxW, boxY, boxX + boxW, boxY + cornerR, cornerR);
+            ctx.lineTo(boxX + boxW, boxY + boxH - cornerR);
+            ctx.arcTo(boxX + boxW, boxY + boxH, boxX + boxW - cornerR, boxY + boxH, cornerR);
+            ctx.lineTo(boxX + cornerR, boxY + boxH);
+            ctx.arcTo(boxX, boxY + boxH, boxX, boxY + boxH - cornerR, cornerR);
+            ctx.lineTo(boxX, boxY + cornerR);
+            ctx.arcTo(boxX, boxY, boxX + cornerR, boxY, cornerR);
+            ctx.closePath();
+            ctx.fill();
+
+            // Delicate Luminous Border
+            ctx.strokeStyle = treePortal.isHovered ? 'rgba(0, 255, 200, 0.85)' : 'rgba(255, 215, 0, 0.65)';
+            ctx.lineWidth = 1.4;
+            ctx.stroke();
+            ctx.restore();
+
+            // Downward Pointer Notch pointing down to the portal rim
+            ctx.save();
+            ctx.fillStyle = 'rgba(6, 0, 18, 0.88)';
+            ctx.strokeStyle = treePortal.isHovered ? 'rgba(0, 255, 200, 0.85)' : 'rgba(255, 215, 0, 0.65)';
+            ctx.lineWidth = 1.4;
+            ctx.beginPath();
+            ctx.moveTo(avgX - 8, boxY + boxH);
+            ctx.lineTo(avgX, boxY + boxH + 7);
+            ctx.lineTo(avgX + 8, boxY + boxH);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+
+            // Typography inside the container box
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+
+            // Eyebrow Tag
+            ctx.font = '800 9.5px "Outfit", sans-serif';
+            ctx.fillStyle = item.color || '#FFD700';
+            ctx.shadowColor = item.color || '#FFD700';
+            ctx.shadowBlur = 8;
+            ctx.fillText(item.tag, avgX, boxY + 9);
+
+            // Title
+            ctx.font = '800 13px "Cinzel", serif';
+            ctx.fillStyle = '#FFFFFF';
+            ctx.shadowColor = '#FFFFFF';
+            ctx.shadowBlur = 10;
+            ctx.fillText(item.title, avgX, boxY + 23);
+
+            // 1-2 sentence description
+            ctx.font = '400 9.5px "Outfit", sans-serif';
+            ctx.fillStyle = '#E2FCF7';
+            ctx.shadowColor = 'rgba(0,0,0,0.8)';
+            ctx.shadowBlur = 4;
+            
+            // Text wrap helper
+            const maxTextW = boxW - 24;
+            const words = item.desc.split(' ');
+            let line1 = '', line2 = '';
+            for (let w = 0; w < words.length; w++) {
+              const testLine = line1 + (line1 ? ' ' : '') + words[w];
+              if (ctx.measureText(testLine).width < maxTextW && !line2) {
+                line1 = testLine;
+              } else {
+                line2 += (line2 ? ' ' : '') + words[w];
+              }
+            }
+            ctx.fillText(line1, avgX, boxY + 41);
+            if (line2) ctx.fillText(line2, avgX, boxY + 53);
+
+            // Action / Click hint
+            ctx.font = '700 8.5px "Outfit", sans-serif';
+            ctx.fillStyle = treePortal.isHovered ? '#FFD700' : '#00FFC8';
+            ctx.shadowColor = treePortal.isHovered ? '#FFD700' : '#00FFC8';
+            ctx.shadowBlur = 6;
+            ctx.fillText(treePortal.isHovered ? '✦ CLICK PORTAL TO STEP THROUGH ✦' : item.action, avgX, boxY + 64);
+
+            ctx.restore();
+          }
+        }
+'''
+
+# Find end of updateAndRenderTreePortal before ctx.restore(); ctx.restore(); }}
+portal_end_marker = js.find('        ctx.restore();\n        ctx.restore();\n      }')
+if portal_end_marker != -1:
+    js = js[:portal_end_marker] + desc_box_code + '\n        ctx.restore();\n        ctx.restore();\n      }'
+    print('Added description container box above portal!')
+else:
+    print('Error finding portal end marker!')
+
+with open('js/main.js', 'w', encoding='utf-8') as f:
+    f.write(js)
+
+print('Updated js/main.js successfully!')
+EOF
+python3 add_portal_description_box.py
+rm add_portal_description_box.py
+node -c js/main.js
+
+============================================================
+
