@@ -9,7 +9,7 @@
     window.scrollTo(0, 0);
   </script>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="description" content="Beth Elise — Psychic Medium, Reiki Healer & Certified Tapping Solution Practitioner. Book a reading, healing session, or connect with the spirit world. Located in New Jersey & available worldwide." />
   <meta name="keywords" content="psychic medium, reiki healing, tapping solution, EFT, spiritual readings, Beth Elise, New Jersey psychic" />
   <meta name="theme-color" content="#1F0038" />
@@ -649,7 +649,7 @@
       </div>
 
       <h1 class="hero__title">
-        <img src="images/logo.webp" onerror="this.onerror=null;this.src='images/logo.png'" alt="Beth Elise Psychic Medium" class="hero__logo-img"  loading="lazy" decoding="async" width="640" height="429">
+        <img src="images/logo.webp" onerror="this.onerror=null;this.src='images/logo.png'" alt="Beth Elise Psychic Medium" id="hero-logo-anchor" class="hero__logo-img" fetchpriority="high" decoding="async" width="640" height="429">
       </h1>
 
       <p class="hero__lead">
@@ -1150,7 +1150,7 @@
               <div class="chakra-reading-badge-group">
                 <span class="chakra-reading-glyph" id="chakra-res-glyph">ॐ</span>
                 <div>
-                  <h4 class="chakra-reading-title" id="chakra-res-title" style="color:#7289DA;">Third Eye Chakra (Ajna)</h4>
+                  <h3 class="chakra-reading-title" id="chakra-res-title" style="color:#7289DA;">Third Eye Chakra (Ajna)</h3>
                   <p class="chakra-reading-meta" id="chakra-res-meta">852 Hz · Light & Clairvoyance · Center of Brow</p>
                 </div>
               </div>
@@ -1764,11 +1764,11 @@
             <div class="form__row">
               <div class="form-group">
                 <label for="name">Your Name *</label>
-                <input type="text" id="name" required placeholder="Your full name" />
+                <input type="text" id="name" required placeholder="Your full name" autocomplete="name" />
               </div>
               <div class="form-group">
                 <label for="email">Your Email *</label>
-                <input type="email" id="email" required placeholder="your.email@example.com" />
+                <input type="email" id="email" required placeholder="your.email@example.com" autocomplete="email" />
               </div>
             </div>
 
@@ -1804,7 +1804,7 @@
   </section>
 
   <!-- ✦ SUBMIT TESTIMONIAL MODAL ✦ -->
-  <div id="testimonial-modal" class="modal-overlay" aria-hidden="true">
+  <div id="testimonial-modal" role="dialog" aria-modal="true" class="modal-overlay" aria-hidden="true">
     <div class="modal-card">
       <button type="button" class="modal-close" id="close-testimonial-modal-btn" aria-label="Close modal">×</button>
       <div class="modal-header">
@@ -1816,7 +1816,7 @@
         <div class="form__row">
           <div class="form-group">
             <label for="review-name">Your Name *</label>
-            <input type="text" id="review-name" required placeholder="e.g. Jessica M." />
+            <input type="text" id="review-name" required placeholder="e.g. Jessica M." autocomplete="name" />
           </div>
           <div class="form-group">
             <label for="review-service">Service Received *</label>
@@ -1832,12 +1832,12 @@
 
         <div class="form-group">
           <label for="review-text">Your Star Rating *</label>
-          <div class="star-rating-picker" id="star-picker">
-            <span class="star-pick active" data-val="1">★</span>
-            <span class="star-pick active" data-val="2">★</span>
-            <span class="star-pick active" data-val="3">★</span>
-            <span class="star-pick active" data-val="4">★</span>
-            <span class="star-pick active" data-val="5">★</span>
+          <div class="star-rating-picker" id="star-picker" role="radiogroup" aria-label="Rating">
+            <span class="star-pick active" data-val="1" role="radio" aria-checked="true" aria-label="1 Star" tabindex="0">★</span>
+            <span class="star-pick active" data-val="2" role="radio" aria-checked="true" aria-label="2 Stars" tabindex="-1">★</span>
+            <span class="star-pick active" data-val="3" role="radio" aria-checked="true" aria-label="3 Stars" tabindex="-1">★</span>
+            <span class="star-pick active" data-val="4" role="radio" aria-checked="true" aria-label="4 Stars" tabindex="-1">★</span>
+            <span class="star-pick active" data-val="5" role="radio" aria-checked="true" aria-label="5 Stars" tabindex="-1">★</span>
           </div>
         </div>
 
@@ -1926,7 +1926,7 @@
   </aside>
 
   <!-- ✦ CELESTIAL SOLFEGGIO SOUND FREQUENCY POPUP MODAL ✦ -->
-  <div id="sound-modal" class="modal-overlay" aria-hidden="true" role="dialog" aria-label="Celestial Sound Frequency Selector">
+  <div id="sound-modal" class="modal-overlay" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Celestial Sound Frequency Selector">
     <div class="modal-card sound-modal-card">
       <button type="button" class="modal-close" id="close-sound-modal-btn" aria-label="Close sound selector">&times;</button>
       <div class="modal-header">
@@ -1980,7 +1980,7 @@
   </div>
 
   <!-- ✦ SECURE ORDER CHECKOUT MODAL ✦ -->
-  <div id="checkout-modal" class="modal-overlay" aria-hidden="true" role="dialog" aria-label="Secure Sacred Checkout">
+  <div id="checkout-modal" role="dialog" aria-modal="true" class="modal-overlay" aria-hidden="true" role="dialog" aria-label="Secure Sacred Checkout">
     <div class="modal-card checkout-modal-card" style="max-width: 680px; max-height: 90vh; overflow-y: auto;">
       <button type="button" class="modal-close" id="close-checkout-modal-btn" aria-label="Close checkout">&times;</button>
       <div class="modal-header" style="text-align: center; margin-bottom: 1.5rem;">
@@ -2002,17 +2002,17 @@
         <div class="form__row">
           <div class="form-group">
             <label for="checkout-name" style="color: var(--tiffany-pale);">Full Name *</label>
-            <input type="text" id="checkout-name" required placeholder="Your full name" />
+            <input type="text" id="checkout-name" required placeholder="Your full name" autocomplete="name" />
           </div>
           <div class="form-group">
             <label for="checkout-email" style="color: var(--tiffany-pale);">Email Address *</label>
-            <input type="email" id="checkout-email" required placeholder="name@example.com" />
+            <input type="email" id="checkout-email" required placeholder="name@example.com" autocomplete="email" />
           </div>
         </div>
 
         <div class="form-group">
           <label for="checkout-phone" style="color: var(--tiffany-pale);">Phone Number (Optional)</label>
-          <input type="tel" id="checkout-phone" placeholder="(555) 000-0000" />
+          <input type="tel" id="checkout-phone" placeholder="(555) 000-0000" autocomplete="tel" />
         </div>
 
         <!-- ✦ SHIPPING ADDRESS (Distinct fields) ✦ -->
@@ -2023,22 +2023,22 @@
         <div class="form__row-street">
           <div class="form-group">
             <label for="checkout-street" style="color: var(--tiffany-pale);">Street Address *</label>
-            <input type="text" id="checkout-street" required placeholder="123 Glade Avenue" />
+            <input type="text" id="checkout-street" required placeholder="123 Glade Avenue" autocomplete="street-address" />
           </div>
           <div class="form-group">
             <label for="checkout-apt" style="color: var(--tiffany-pale);">Apt / Suite / Unit</label>
-            <input type="text" id="checkout-apt" placeholder="Suite 200" />
+            <input type="text" id="checkout-apt" placeholder="Suite 200" autocomplete="address-line2" />
           </div>
         </div>
 
         <div class="form__row-3">
           <div class="form-group">
             <label for="checkout-town" style="color: var(--tiffany-pale);">Town / City *</label>
-            <input type="text" id="checkout-town" required placeholder="Town or City" />
+            <input type="text" id="checkout-town" required placeholder="Town or City" autocomplete="address-level2" />
           </div>
           <div class="form-group">
             <label for="checkout-state" style="color: var(--tiffany-pale);">State *</label>
-            <select id="checkout-state" required>
+            <select id="checkout-state" required autocomplete="address-level1">
               <option value="" disabled selected>State...</option>
               <option value="AL">Alabama (AL)</option>
               <option value="AK">Alaska (AK)</option>
@@ -2095,7 +2095,7 @@
           </div>
           <div class="form-group">
             <label for="checkout-zip" style="color: var(--tiffany-pale);">Zip Code *</label>
-            <input type="text" id="checkout-zip" required placeholder="07011" maxlength="10" />
+            <input type="text" id="checkout-zip" required placeholder="07011" maxlength="10" autocomplete="postal-code" />
           </div>
         </div>
 
@@ -2112,26 +2112,26 @@
           <div class="billing-fields-title">✦ Billing Address</div>
           <div class="form-group" style="margin-bottom: 1rem;">
             <label for="checkout-billing-name" style="color: var(--tiffany-pale);">Billing Full Name *</label>
-            <input type="text" id="checkout-billing-name" placeholder="Full name on card" />
+            <input type="text" id="checkout-billing-name" placeholder="Full name on card" autocomplete="cc-name" />
           </div>
           <div class="form__row-street">
             <div class="form-group">
               <label for="checkout-billing-street" style="color: var(--tiffany-pale);">Billing Street Address *</label>
-              <input type="text" id="checkout-billing-street" placeholder="Street Address" />
+              <input type="text" id="checkout-billing-street" placeholder="Street Address" autocomplete="street-address" />
             </div>
             <div class="form-group">
               <label for="checkout-billing-apt" style="color: var(--tiffany-pale);">Apt / Suite</label>
-              <input type="text" id="checkout-billing-apt" placeholder="Apt / Suite" />
+              <input type="text" id="checkout-billing-apt" placeholder="Apt / Suite" autocomplete="address-line2" />
             </div>
           </div>
           <div class="form__row-3">
             <div class="form-group">
               <label for="checkout-billing-town" style="color: var(--tiffany-pale);">Town / City *</label>
-              <input type="text" id="checkout-billing-town" placeholder="Town / City" />
+              <input type="text" id="checkout-billing-town" placeholder="Town / City" autocomplete="address-level2" />
             </div>
             <div class="form-group">
               <label for="checkout-billing-state" style="color: var(--tiffany-pale);">State *</label>
-              <select id="checkout-billing-state">
+              <select id="checkout-billing-state" autocomplete="address-level1">
                 <option value="" disabled selected>State...</option>
                 <option value="AL">Alabama (AL)</option>
                 <option value="AK">Alaska (AK)</option>
@@ -2188,7 +2188,7 @@
             </div>
             <div class="form-group">
               <label for="checkout-billing-zip" style="color: var(--tiffany-pale);">Zip Code *</label>
-              <input type="text" id="checkout-billing-zip" placeholder="Zip Code" maxlength="10" />
+              <input type="text" id="checkout-billing-zip" placeholder="Zip Code" maxlength="10" autocomplete="postal-code" />
             </div>
           </div>
         </div>

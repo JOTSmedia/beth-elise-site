@@ -22,6 +22,12 @@
   const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
   const reduceMotion = () => motionQuery.matches;
 
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
   
     function restoreAeyeHomebase() {
       const widget = document.getElementById('sacred-assistant-widget');
@@ -44,17 +50,17 @@
       // PART 2: INTRO_TIMING Tuning
       const INTRO_TIMING = {
         orbDuration: 2.4,
-        flyToLogo: 1.0,
-        perchedLogo: 1.3,
-        flyToBookBtn: 1.0,
-        perchedBookBtn: 1.2,
-        flyToBadge: 0.8,
+        flyToLogo: 1.1,
+        perchedLogo: 3.6,
+        flyToBookBtn: 1.1,
+        perchedBookBtn: 3.6,
+        flyToBadge: 0.88,
         strutOnBadge: 2.2,
-        pauseOnBadgeEdge: 1.4,
-        flyToAeye: 0.9,
-        flyToAeyeFast: 0.5,
-        perchedOnAeye: 1.6,
-        perchedOnAeyeFast: 1.0,
+        pauseOnBadgeEdge: 3.6,
+        flyToAeye: 1.0,
+        flyToAeyeFast: 0.55,
+        perchedOnAeye: 3.8,
+        perchedOnAeyeFast: 2.2,
         crouch: 0.15,
         flight: 0.65
       };
@@ -272,7 +278,7 @@
       let cachedScrollY = window.scrollY;
       window.addEventListener('scroll', () => { cachedScrollY = window.scrollY; }, { passive: true });
       function resize() {
-        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const dpr = Math.min(window.devicePixelRatio || 1, 3);
         
         // heroBgCanvas
         const bgRect = heroBgCanvas.getBoundingClientRect();
@@ -1241,9 +1247,9 @@
 
         bgCtx.restore();
 
-        // 4. Doctor Strange Sling-Ring Dimensional Tree Portal (Left Arch Tree Circle)
+        // 4. Doctor Strange Sling-Ring Dimensional Tree Portal (Left Arch Tree Circle on Desktop / Over Logo on Mobile)
         if (isHeroVisible) {
-          const isMobile = (w || window.innerWidth) < 600;
+          const isMobile = (w || window.innerWidth) <= 768;
           const targetCtx = isMobile ? aCtx : bgCtx;
           
           targetCtx.save();
@@ -1692,26 +1698,23 @@
         const mouthX = targetX + (isFacingLeft ? -8 : 8);
         const mouthY = targetY - avatarHeadOffset + 8; // mouth slightly below head top
         const headTop = targetY - avatarHeadOffset - 10;
-        const rw = cachedBubbleW;
-        const rh = cachedBubbleH;
+        const rect = gEl.getBoundingClientRect();
+        const rw = rect.width || cachedBubbleW;
+        const rh = rect.height || cachedBubbleH;
 
         let side = activeSpeechBubble.preferredSide || 'auto';
 
         // Intelligent placement fallback & responsive overrides:
-        if (side === 'auto' || isMobile) {
+        if (isMobile) {
+          side = (headTop - rh - 18 < 16) ? 'bottom' : 'top';
+        } else if (side === 'auto') {
           if (targetX > window.innerWidth * 0.65) {
             side = 'side-left';
           } else if (targetX < window.innerWidth * 0.35) {
             side = 'side-right';
           } else {
-            // Avatar is centrally located
-            if (isMobile) {
-              // On mobile, side placements for centered avatars will clip or overlap the face. Use top/bottom.
-              side = (headTop - rh - 18 < 16) ? 'bottom' : 'top';
-            } else {
-              // On desktop, use side placement to avoid covering vertical content like the tagline pill or logo.
-              side = isFacingLeft ? 'side-left' : 'side-right';
-            }
+            // On desktop, use side placement to avoid covering vertical content like the tagline pill or logo.
+            side = isFacingLeft ? 'side-left' : 'side-right';
           }
         }
 
@@ -2034,8 +2037,8 @@
            - Desktop uses background-image space (bgOffsetX / bgOffsetY / bgS from cover-fit).
            - Mobile uses document space anchored to the logo.
         */
-        const isMobile = (w || window.innerWidth) < 600;
-        const isTablet = (w || window.innerWidth) >= 600 && (w || window.innerWidth) < 1024;
+        const isMobile = (w || window.innerWidth) <= 768;
+        const isTablet = (w || window.innerWidth) > 768 && (w || window.innerWidth) <= 1024;
 
         let targetCenterX = rawAvgX;
         let targetCenterY = rawAvgY;
@@ -2047,6 +2050,7 @@
         }
 
         if (isMobile) {
+          // Mobile: Portal is locked directly on top of the hero logo
           if (treePortalCache.needsRemeasure) {
              const anchor = document.getElementById('hero-logo-anchor');
              if (anchor) {
@@ -2059,16 +2063,13 @@
              treePortalCache.needsRemeasure = false;
           }
           const sy = cachedScrollY;
-          targetCenterX = treePortalCache.anchorDocX; // No horizontal scroll on mobile
-          targetCenterY = treePortalCache.anchorDocY - sy;
+          targetCenterX = treePortalCache.anchorDocX || (w * 0.5);
+          targetCenterY = (treePortalCache.anchorDocY - sy) || (h * 0.30);
           portalScale = 0.68;
-        } else if (isTablet) {
-          targetCenterX = Math.max(115, Math.min(rawAvgX, w * 0.26));
-          targetCenterY = Math.max(180, Math.min(rawAvgY, h * 0.35));
-          portalScale = 0.85;
         } else {
-          targetCenterX = Math.max(85, Math.min(rawAvgX, w - 85));
-          targetCenterY = Math.max(100, Math.min(rawAvgY, h - 100));
+          // Desktop & Widescreen: Portal stays precisely in the natural Left Tree Arch Circle
+          targetCenterX = rawAvgX;
+          targetCenterY = rawAvgY;
           portalScale = 1.0;
         }
 
@@ -2606,13 +2607,10 @@
       let __tick = 0;
       function updateAndRenderHeroTinkerbell(ctx, now, dt = 0.016) {
         __tick++;
-        if (__tick % 60 === 0) {
-          console.log('TINKERBELL TICK:', heroTinkerbell.state, 'alpha:', heroTinkerbell.alpha, 'w,h:', w, h, 'dpr:', Math.min(window.devicePixelRatio || 1, 2));
-        }
 
         // Guiding Celestial Star at sky apex (Source of descent)
         const starX = w * 0.5;
-        const starY = (w < 768) ? Math.max(160, h * 0.15) : Math.max(90, h * 0.095);
+        const starY = (w < 768) ? Math.max(90, h * 0.12) : Math.max(90, h * 0.095);
 
         // Update layout targets (efficiently cached every 300ms)
         updateHeroLayoutTargets(false);
@@ -2689,7 +2687,7 @@
         
         // 3. ARRIVAL ONTO CRESCENT MOON APEX (~2.5s)
         else if (heroTinkerbell.state === 'FLYING_TO_LOGO') {
-          heroTinkerbell.progress += dt / (heroTinkerbell.state === 'FLYING_TO_BADGE' ? INTRO_TIMING.flyToBadge : INTRO_TIMING.flyToBookBtn);
+          heroTinkerbell.progress += dt / INTRO_TIMING.flyToLogo;
           heroTinkerbell.wingPhase += dt * 24.0;
 
           const p = Math.min(1, heroTinkerbell.progress);
@@ -2739,7 +2737,7 @@
             heroTinkerbell.logoBubbleShown = true;
             showBethSpeechBubble("HI, I'M BETH ELISE!", heroTinkerbell.x, heroTinkerbell.y, 'auto');
           }
-          if (heroTinkerbell.logoBubbleShown && pt > 3.8 && !heroTinkerbell.logoBubbleHidden) {
+          if (heroTinkerbell.logoBubbleShown && pt > 3.2 && !heroTinkerbell.logoBubbleHidden) {
             heroTinkerbell.logoBubbleHidden = true;
             hideBethSpeechBubble();
           }
@@ -2760,7 +2758,7 @@
           }
 
           // Next: Fly down to the Book a Reading button
-          if (pt >= 2.8) {
+          if (pt >= 3.6) {
             heroTinkerbell.state = 'FLYING_TO_BOOK_BTN';
             heroTinkerbell.startX = heroTinkerbell.x;
             heroTinkerbell.startY = heroTinkerbell.y;
@@ -2824,8 +2822,11 @@
             showBethSpeechBubble("BOOK A READING WITH ME!", heroTinkerbell.x, heroTinkerbell.y, 'auto');
           }
           if (Math.random() > 0.6) emitPixieDust(heroTinkerbell.x + (Math.random() - 0.5) * 16, heroTinkerbell.y + 10, 1, ['#00FFC8', '#FFD700', '#FFF']);
-          if (heroTinkerbell.perchedTime >= INTRO_TIMING.perchedBookBtn) {
+          if (heroTinkerbell.perchedTime > 3.2 && heroTinkerbell.bookBubbleShown && !heroTinkerbell.bookBubbleHidden) {
+            heroTinkerbell.bookBubbleHidden = true;
             hideBethSpeechBubble();
+          }
+          if (heroTinkerbell.perchedTime >= INTRO_TIMING.perchedBookBtn) {
             if (heroBookBtn) heroBookBtn.classList.remove('fairy-moon-glow');
             heroTinkerbell.state = 'FLYING_TO_BADGE';
             heroTinkerbell.startX = heroTinkerbell.x;
@@ -3100,8 +3101,12 @@
           ctx.fill();
           ctx.restore();
 
-          // Speech bubble in corner
+          // Speech bubble in corner — stay visible for 3.4s before fading
           if (!heroTinkerbell.greetShown) { heroTinkerbell.greetShown = true; }
+          if (pt > 3.4 && !heroTinkerbell.greetHidden) {
+            heroTinkerbell.greetHidden = true;
+            hideBethSpeechBubble();
+          }
 
           if (Math.random() > 0.5) {
             emitPixieDust(heroTinkerbell.x + (Math.random() - 0.5) * 16, heroTinkerbell.y + 12, 1, ['#00FFC8', '#FFD700', '#FFFFFF']);
@@ -3256,9 +3261,9 @@
           const easeP = p * p * (3 - 2 * p);
           heroTinkerbell.catwalkLettersFade = Math.max(0, 1 - p * 3);
 
-          // Target for Avatar Beth: Top-right corner of the aEYE assistant modal menu
-          let menuCornerX = w * 0.5 + 240;
-          let menuCornerY = Math.max(40, h * 0.22);
+          // Target for Avatar Beth: Top-right corner of the aEYE assistant modal menu card
+          let menuCornerX = w * 0.5 + 220;
+          let menuCornerY = Math.max(40, h * 0.20) - 28;
           const modalCard = document.querySelector('.assistant-modal-card');
           if (modalCard) {
             const mRect = modalCard.getBoundingClientRect();
@@ -3269,11 +3274,14 @@
           }
 
           const arc = Math.sin(p * Math.PI) * (-50);
-          heroTinkerbell.x = (1 - easeP) * heroTinkerbell.startX + easeP * menuCornerX;
-          heroTinkerbell.y = (1 - easeP) * heroTinkerbell.startY + easeP * menuCornerY + arc;
+          heroTinkerbell.x = (1 - easeP) * heroTinkerbell.startX + easeP * menuCornerX + Math.sin(p * Math.PI) * 20;
+          heroTinkerbell.y = (1 - easeP) * heroTinkerbell.startY + easeP * menuCornerY - Math.sin(p * Math.PI) * 50;
           heroTinkerbell.facingLeft = true;
           heroTinkerbell.alpha = 1; // REAPPEAR!
-          heroTinkerbell.diveAngle = -0.25 * (1 - p);
+          heroTinkerbell.diveAngle = 0;
+          heroTinkerbell.jumpSquash = 1;
+          heroTinkerbell.headAngle = -0.18;
+          heroTinkerbell.bodySway = 0;
 
           // Sparkling glitter trail behind Beth's flight
           for (let t = 0; t < 3; t++) {
@@ -3300,8 +3308,8 @@
 
         // 11. HOVER AT TOP CORNER OF MODAL MENU — "HOW MAY WE HELP YOU?"
         else if (heroTinkerbell.state === 'MENU_PERCHED') {
-          let menuCornerX = w * 0.5 + 240;
-          let menuCornerY = Math.max(40, h * 0.22);
+          let menuCornerX = w * 0.5 + 220;
+          let menuCornerY = Math.max(40, h * 0.20) - 28;
           const modalCard = document.querySelector('.assistant-modal-card');
           if (modalCard) {
             const mRect = modalCard.getBoundingClientRect();
@@ -3317,6 +3325,8 @@
           heroTinkerbell.bodySway = Math.sin(now * 0.004) * 1.8;
           heroTinkerbell.facingLeft = true;
           heroTinkerbell.diveAngle = 0;
+          heroTinkerbell.jumpSquash = 1;
+          heroTinkerbell.headAngle = -0.18;
           heroTinkerbell.alpha = 1;
 
           if (!heroTinkerbell.menuBubbleShown) {
@@ -3340,6 +3350,8 @@
           heroTinkerbell.wingPhase += dt * 34.0;
           const p = Math.min(1, heroTinkerbell.progress);
           const easeP = p * p * (3 - 2 * p);
+          heroTinkerbell.scale = 1.0;
+          heroTinkerbell.scale = 1.75 - 0.75 * easeP;
           heroTinkerbell.catwalkLettersFade = Math.max(0, 1 - p * 3);
 
           let targetAeyeX = aeyeX;
@@ -3382,6 +3394,10 @@
             heroTinkerbell.diveAngle = 0;
             heroTinkerbell.splashTime = 0; // Trigger 3 expanding shockwave rings and core flash
             emitPixieDust(targetAeyeX, targetAeyeY, 60, ['#00FFC8', '#FFD700', '#FFFFFF', '#C77DFF', '#9D4EDD']);
+
+            // Force aEYE menu companion to IDLE so the Sacred Eye canvas resumes immediately
+            heroAeyeMenu.state = 'IDLE';
+            heroAeyeMenu.alpha = 0;
 
             if (aeyeWidget) {
               aeyeWidget.style.opacity = '1';
@@ -3894,7 +3910,7 @@
           const arc = Math.sin(p * Math.PI) * 50;
           heroTinkerbell.x = (1 - easeP) * heroTinkerbell.startX + easeP * targetAeyeX;
           heroTinkerbell.y = (1 - easeP) * heroTinkerbell.startY + easeP * targetAeyeY + arc;
-          heroTinkerbell.scale = 2.25 - 1.25 * easeP; // Shrinks back to 1.0x normal size!
+          heroTinkerbell.scale = 1.85 - 0.85 * easeP; // Shrinks back to 1.0x normal size!
           heroTinkerbell.alpha = p > 0.85 ? Math.max(0, (1 - p) / 0.15) : 1;
 
           // Fairy Avatar Beth dives back to home base alongside aEye
@@ -4828,15 +4844,15 @@
           aeyeWidget.style.pointerEvents = 'none';
         }
 
-        // 1. Target for Avatar Beth: Top-right corner of menu card
-        let menuCornerX = window.innerWidth * 0.5 + 240;
-        let menuCornerY = Math.max(40, window.innerHeight * 0.22);
-        const modalCard = document.querySelector('.assistant-modal-card');
-        if (modalCard) {
-          const mRect = modalCard.getBoundingClientRect();
-          if (mRect.width > 0) {
-            menuCornerX = mRect.right - 18;
-            menuCornerY = mRect.top + 28;
+        // 1. Target for Avatar Beth: Top-right corner of assistant modal card
+        let menuCornerX = window.innerWidth * 0.5 + 220;
+        let menuCornerY = Math.max(40, window.innerHeight * 0.20) - 28;
+        const modalCardInit = document.querySelector('.assistant-modal-card');
+        if (modalCardInit) {
+          const mRectInit = modalCardInit.getBoundingClientRect();
+          if (mRectInit.width > 0) {
+            menuCornerX = mRectInit.right - 18;
+            menuCornerY = mRectInit.top + 28;
           }
         }
 
@@ -4861,9 +4877,19 @@
         heroTinkerbell.startY = curAeyeY;
         heroTinkerbell.x = curAeyeX;
         heroTinkerbell.y = curAeyeY;
+        heroTinkerbell.scale = 1.75;
         heroTinkerbell.alpha = 1;
+        heroTinkerbell.scale = 1.75;
+        heroTinkerbell.diveAngle = 0;
+        heroTinkerbell.jumpSquash = 1;
         heroTinkerbell.isStrutting = false;
         heroTinkerbell.menuBubbleShown = false;
+        // Ensure canvas layer is visible for the fairy flight
+        if (heroAvatarCanvas) {
+          heroAvatarCanvas.style.display = '';
+          heroAvatarCanvas.style.opacity = '1';
+          heroAvatarCanvas.style.pointerEvents = 'none';
+        }
 
         // Setup Living aEYE flight (Races alongside Beth to top center!)
         heroAeyeMenu.state = 'MENU_TAKEOFF';
@@ -4966,6 +4992,12 @@
         heroTinkerbell.targetY = targetY;
         heroTinkerbell.scale = 1.0;
         heroTinkerbell.alpha = 1;
+        // Ensure canvas layer is visible for the aura flight
+        if (heroAvatarCanvas) {
+          heroAvatarCanvas.style.display = '';
+          heroAvatarCanvas.style.opacity = '1';
+          heroAvatarCanvas.style.pointerEvents = 'none';
+        }
 
         // Container top-right corner target for Avatar Beth
         const card = document.getElementById('aura-reading-card');
@@ -6419,6 +6451,10 @@
         locationMoonAnimId = null;
         return;
       }
+      if (document.hidden) {
+        locationMoonAnimId = requestAnimationFrame(animateLocationMoonLoop);
+        return;
+      }
       if (typeof window.renderPhotorealisticLocationMoon === 'function') {
         window.renderPhotorealisticLocationMoon();
       }
@@ -6510,7 +6546,7 @@
             const title = dot.getAttribute('title') || '';
             const dotImg = dot.getAttribute('data-img') || img;
             const isActive = dot.classList.contains('active') ? 'active' : '';
-            return `<span class="color-dot ${isActive}" style="background: ${bg};" title="${title}" data-img="${dotImg}"></span>`;
+            return `<span class="color-dot ${isActive}" style="background: ${escapeHtml(bg)};" title="${escapeHtml(title)}" data-img="${escapeHtml(dotImg)}"></span>`;
           }).join('');
 
           if (modalColorLabel) modalColorLabel.textContent = activeModalProduct.selectedColor || 'Classic';
@@ -6526,7 +6562,7 @@
           modalSizePills.innerHTML = sizePills.map(pill => {
             const text = pill.textContent.trim();
             const isActive = pill.classList.contains('active') ? 'active' : '';
-            return `<span class="size-pill ${isActive}">${text}</span>`;
+            return `<span class="size-pill ${isActive}">${escapeHtml(text)}</span>`;
           }).join('');
 
           if (modalSizeLabel) modalSizeLabel.textContent = activeModalProduct.selectedSize;
@@ -6654,11 +6690,11 @@
 
       cartItemsContainer.innerHTML = window.cartState.map((item, idx) => `
         <div class="cart-item-row" style="display:flex; gap:1rem; align-items:center; padding:0.85rem 0; border-bottom:1px solid rgba(255,215,0,0.15);">
-          <img src="${item.img}" alt="${item.name}" style="width:64px; height:64px; border-radius:8px; object-fit:cover; border:1px solid rgba(255,215,0,0.25);" />
+          <img src="${escapeHtml(item.img)}" alt="${escapeHtml(item.name)}" style="width:64px; height:64px; border-radius:8px; object-fit:cover; border:1px solid rgba(255,215,0,0.25);" />
           <div style="flex:1;">
-            <div style="font-family:var(--font-serif); font-weight:600; font-size:0.95rem; color:var(--cream);">${item.name}</div>
-            ${item.variant ? `<div style="font-size:0.78rem; color:var(--gold); margin-top:2px;">${item.variant}</div>` : ''}
-            <div style="font-size:0.85rem; color:var(--cyan); margin-top:3px;">$${item.price.toFixed(2)} × ${item.qty}</div>
+            <div style="font-family:var(--font-serif); font-weight:600; font-size:0.95rem; color:var(--cream);">${escapeHtml(item.name)}</div>
+            ${item.variant ? `<div style="font-size:0.78rem; color:var(--gold); margin-top:2px;">${escapeHtml(item.variant)}</div>` : ''}
+            <div style="font-size:0.85rem; color:var(--cyan); margin-top:3px;">${item.price.toFixed(2)} × ${item.qty}</div>
           </div>
           <div style="display:flex; align-items:center; gap:0.4rem;">
             <button type="button" onclick="window.updateCartItemQty(${idx}, -1)" style="background:rgba(255,255,255,0.1); border:none; color:#fff; width:26px; height:26px; border-radius:4px; cursor:pointer;">-</button>
@@ -7997,6 +8033,7 @@
       };
 
       function returnHome() {
+        isScanning = false;
         if (typeof hideBethSpeechBubble === 'function') {
           hideBethSpeechBubble();
         }
@@ -8051,7 +8088,14 @@
 
       rescanBtn?.addEventListener('click', (e) => {
         e.stopPropagation();
+        if (isScanning) return;
         if (typeof window.isAuraEyeInLocation === 'function' && window.isAuraEyeInLocation()) {
+          isScanning = true;
+          if (startBtn) {
+            startBtn.classList.add('is-scanning');
+            if (btnLabel) btnLabel.textContent = 'Attuning Field...';
+          }
+          if (statusText) statusText.textContent = '✦ aEYE Attuning Bio-Frequency... Scanning User ✦';
           // Eye is already inside the container! Switch container back to scanning mode & trigger in-place rapid blink rescan
           if (readingModal) {
             readingModal.classList.remove('is-results-mode');
@@ -8189,6 +8233,10 @@
       function drawStars(now) {
         if (!isVisible) {
           starAnimId = null;
+          return;
+        }
+        if (document.hidden) {
+          starAnimId = requestAnimationFrame(drawStars);
           return;
         }
 
@@ -8546,6 +8594,9 @@
           window.triggerFairyInterrupted();
         }
         modal.classList.add('active');
+        // Call takeoff synchronously — modal.classList.add('active') above
+        // triggers synchronous layout, so eyeOrb.getBoundingClientRect()
+        // already returns valid coordinates on this frame.
         if (typeof window.triggerFairyMenuTakeoff === 'function') {
           window.triggerFairyMenuTakeoff();
         }
@@ -8731,12 +8782,12 @@
         let lastStaticPaint = 0;
         let eyeIsVisible = false;
         const eyeObserver = new IntersectionObserver((entries) => { eyeIsVisible = entries[0].isIntersecting; });
-        const eyeCanvasEl = document.getElementById('sacred-eye-canvas');
+        const eyeCanvasEl = document.getElementById('assistant-avatar-canvas');
         if (eyeCanvasEl) eyeObserver.observe(eyeCanvasEl);
 
         function updateAndRenderSacredEye(now) {
           try {
-            if (!eyeCtx || (!eyeIsVisible && window.scrollY > 1500)) return;
+            if (!eyeCtx || document.hidden || (!eyeIsVisible && window.scrollY > 1500)) return;
             const aw = baseW;
             const ah = baseH;
             const acx = aw * 0.5;
@@ -8750,7 +8801,7 @@
             // Stuck-state watchdog
             if (isHiddenState) {
               if (hiddenStartTime === 0) hiddenStartTime = now;
-              else if (now - hiddenStartTime > 6000) {
+              else if (now - hiddenStartTime > 30000) {
                 // Recover stuck state
                 if (window.heroTinkerbell) window.heroTinkerbell.state = 'ASSISTANT_ACTIVE'; if (typeof window.restoreAeyeHomebase === 'function') window.restoreAeyeHomebase();
                 if (window.heroAeyeMenu) window.heroAeyeMenu.state = 'IDLE';
