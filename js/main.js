@@ -22,7 +22,43 @@
   const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
   const reduceMotion = () => motionQuery.matches;
 
-  function initMainApp() {
+  
+    function restoreAeyeHomebase() {
+      const widget = document.getElementById('sacred-assistant-widget');
+      const btn    = document.getElementById('assistant-avatar-btn');
+      if (widget) {
+        widget.classList.remove('aeye-in-flight');
+        widget.classList.add('visible');
+      }
+      if (btn) {
+        btn.style.opacity      = '1';
+        btn.style.pointerEvents = 'auto';
+        btn.style.visibility    = 'visible';
+        btn.removeAttribute('inert');
+      }
+    }
+    window.restoreAeyeHomebase = restoreAeyeHomebase;
+
+    function initMainApp() {
+
+      // PART 2: INTRO_TIMING Tuning
+      const INTRO_TIMING = {
+        orbDuration: 2.4,
+        flyToLogo: 1.0,
+        perchedLogo: 1.3,
+        flyToBookBtn: 1.0,
+        perchedBookBtn: 1.2,
+        flyToBadge: 0.8,
+        strutOnBadge: 2.2,
+        pauseOnBadgeEdge: 1.4,
+        flyToAeye: 0.9,
+        flyToAeyeFast: 0.5,
+        perchedOnAeye: 1.6,
+        perchedOnAeyeFast: 1.0,
+        crouch: 0.15,
+        flight: 0.65
+      };
+
     if ('scrollRestoration' in history) {
       history.scrollRestoration = 'manual';
     }
@@ -35,15 +71,39 @@
     const hamburger = document.querySelector('.nav__hamburger');
     const mobileMenu = document.querySelector('.nav__mobile');
 
+    // Unified Modal Body Scroll Lock Manager
+    let activeModalCount = 0;
+    window.lockBodyScroll = function() {
+      activeModalCount++;
+      if (activeModalCount === 1) {
+        document.body.style.overflow = 'hidden';
+        document.body.style.touchAction = 'none';
+      }
+    };
+    window.unlockBodyScroll = function() {
+      activeModalCount = Math.max(0, activeModalCount - 1);
+      if (activeModalCount === 0) {
+        document.body.style.overflow = '';
+        document.body.style.touchAction = '';
+      }
+    };
+
+    let navScrollTicking = false;
     window.addEventListener('scroll', () => {
-      nav?.classList.toggle('scrolled', window.scrollY > 40);
+      if (!navScrollTicking) {
+        window.requestAnimationFrame(() => {
+          nav?.classList.toggle('scrolled', window.scrollY > 40);
+          navScrollTicking = false;
+        });
+        navScrollTicking = true;
+      }
     }, { passive: true });
 
     hamburger?.addEventListener('click', () => {
       const open = hamburger.classList.toggle('active');
       mobileMenu?.classList.toggle('open', open);
       hamburger.setAttribute('aria-expanded', open);
-      document.body.style.overflow = open ? 'hidden' : '';
+      if (open) window.lockBodyScroll(); else window.unlockBodyScroll();
     });
 
     document.querySelectorAll('.nav__mobile a, .nav__link, .nav__cta').forEach(link => {
@@ -51,9 +111,11 @@
         if (typeof window.triggerFairyInterrupted === 'function') {
           window.triggerFairyInterrupted();
         }
-        hamburger?.classList.remove('active');
-        mobileMenu?.classList.remove('open');
-        document.body.style.overflow = '';
+        if (hamburger?.classList.contains('active')) {
+          hamburger.classList.remove('active');
+          mobileMenu?.classList.remove('open');
+          window.unlockBodyScroll();
+        }
       });
     });
 
@@ -74,6 +136,19 @@
       const mouse = { x: -1000, y: -1000, vx: 0, vy: 0, lastX: 0, lastY: 0 };
       const pixies = [];
       const meteors = [];
+            const treePortalCache = { rawPts: [], pts: [], anchorDocX: 0, anchorDocY: 0, needsRemeasure: true };
+      const portalViewport = { scale: 1.0, offsetLeft: 0, offsetTop: 0 };
+      if (window.visualViewport) {
+        const onVV = () => {
+          portalViewport.scale = window.visualViewport.scale;
+          portalViewport.offsetLeft = window.visualViewport.offsetLeft;
+          portalViewport.offsetTop = window.visualViewport.offsetTop;
+          treePortalCache.needsRemeasure = true;
+        };
+        window.visualViewport.addEventListener('resize', onVV, { passive: true });
+        window.visualViewport.addEventListener('scroll', onVV, { passive: true });
+        onVV();
+      }
       const embers = [];
       let lastMeteorTime = performance.now();
       let lastBolideTime = performance.now();
@@ -153,13 +228,26 @@
           }
 
           const aeyeWidget = cachedDOM.aeyeWidget;
+          let orbSize = 76;
           if (aeyeWidget) {
             const aeRect = aeyeWidget.getBoundingClientRect();
             if (aeRect.width > 0) {
+              orbSize = aeRect.width;
               const rawAeX = aeRect.left + aeRect.width * 0.5 - cRect.left;
               const rawAeY = aeRect.top + aeRect.height * 0.5 - cRect.top;
-              aeyeX = Math.max(36, Math.min(cw - 36, rawAeX));
-              aeyeY = Math.max(36, Math.min(ch - 36, rawAeY));
+              const margin = orbSize / 2 + 8;
+              aeyeX = Math.max(margin, Math.min(cw - margin, rawAeX));
+              aeyeY = Math.max(margin, Math.min(ch - margin, rawAeY));
+            } else {
+              const btn = document.getElementById('assistant-avatar-btn');
+              const widget = document.getElementById('sacred-assistant-widget');
+              orbSize = parseFloat(window.getComputedStyle(btn).width) || 76;
+              const inset = parseFloat(window.getComputedStyle(widget).right) || 24;
+              aeyeX = cw - inset - orbSize / 2;
+              aeyeY = ch - inset - orbSize / 2;
+              const margin = orbSize / 2 + 8;
+              aeyeX = Math.max(margin, Math.min(cw - margin, aeyeX));
+              aeyeY = Math.max(margin, Math.min(ch - margin, aeyeY));
             }
           }
         }
@@ -177,25 +265,62 @@
       }
 
       let cachedNavBottom = 75;
+      const logoImg = document.getElementById('hero-logo-img');
+      if (logoImg) {
+        logoImg.addEventListener('load', () => { treePortalCache.needsRemeasure = true; });
+      }
+      let cachedScrollY = window.scrollY;
+      window.addEventListener('scroll', () => { cachedScrollY = window.scrollY; }, { passive: true });
       function resize() {
-        const heroSection = document.querySelector('.hero');
-        const heroW = (heroSection && heroSection.offsetWidth) || heroBgCanvas.offsetWidth || window.innerWidth;
-        const heroH = (heroSection && heroSection.offsetHeight) || heroBgCanvas.offsetHeight || window.innerHeight;
-        heroBgCanvas.width = heroW;
-        heroBgCanvas.height = heroH;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        
+        // heroBgCanvas
+        const bgRect = heroBgCanvas.getBoundingClientRect();
+        heroBgCanvas.width = Math.round(bgRect.width * dpr);
+        heroBgCanvas.height = Math.round(bgRect.height * dpr);
+        if (bgCtx && bgCtx.setTransform) {
+          bgCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        }
 
-        w = heroAvatarCanvas.width = window.innerWidth;
-        h = heroAvatarCanvas.height = window.innerHeight;
+        // heroAvatarCanvas
+        const rect = heroAvatarCanvas.getBoundingClientRect();
+        w = rect.width;
+        h = rect.height;
+        console.assert(Math.abs(heroAvatarCanvas.getBoundingClientRect().height - h) < 1, 'canvas CSS height != logical height');
+        
+        heroAvatarCanvas.width = Math.round(rect.width * dpr);
+        heroAvatarCanvas.height = Math.round(rect.height * dpr);
+        if (aCtx && aCtx.setTransform) {
+          aCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        }
 
         const navEl = document.querySelector('.nav');
         if (navEl) cachedNavBottom = navEl.getBoundingClientRect().bottom;
 
         updateHeroLayoutTargets(true);
+        treePortalCache.needsRemeasure = true;
       }
       resize();
-      window.addEventListener('resize', resize, { passive: true });
+      let resizeTimeout = null;
+      let lastW = window.innerWidth;
+      let lastH = window.innerHeight;
+      window.addEventListener('resize', () => {
+        const curW = window.innerWidth;
+        const curH = window.innerHeight;
+        const hDiff = Math.abs(curH - lastH);
+        const wDiff = Math.abs(curW - lastW);
+        if (wDiff === 0 && hDiff > 0 && hDiff < 120) {
+          // iOS URL bar collapse/expand. Skip canvas thrash!
+          return;
+        }
+        lastW = curW;
+        lastH = curH;
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(resize, 150);
+      }, { passive: true });
       window.addEventListener('orientationchange', () => {
-        setTimeout(resize, 120);
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(resize, 150);
       }, { passive: true });
 
       // ─── INTERRUPTED CHOREOGRAPHY HANDLER ───
@@ -212,6 +337,8 @@
             !s.startsWith('MENU_')) {
           heroTinkerbell.isFastScrolled = true;
           heroTinkerbell.state = 'FLYING_TO_AEYE';
+          // Ensure Tree Portal still fires if user scrolls early
+          if (typeof window.startTreePortalSequence === 'function') window.startTreePortalSequence();
           heroTinkerbell.startX = heroTinkerbell.x;
           heroTinkerbell.startY = heroTinkerbell.y;
           heroTinkerbell.progress = 0;
@@ -231,9 +358,18 @@
       };
 
       // Fast-scroll interrupt: if user scrolls during choreography, trigger interrupted choreography
-      window.addEventListener('scroll', () => {
+      // Self-disabling: once Beth reaches ASSISTANT_ACTIVE, scrolling should not fire this anymore
+      function handleIntroScrollInterrupt() {
+        if (!heroTinkerbell) return;
+        const s = heroTinkerbell.state;
+        // Remove this listener once Beth has completed the intro
+        if (s === 'ASSISTANT_ACTIVE' || s === 'ASSISTANT_DIVED' || s.startsWith('MENU_') || s.startsWith('AURA_')) {
+          window.removeEventListener('scroll', handleIntroScrollInterrupt);
+          return;
+        }
         if (window.triggerFairyInterrupted) window.triggerFairyInterrupted();
-      }, { passive: true });
+      }
+      window.addEventListener('scroll', handleIntroScrollInterrupt, { passive: true });
 
       // Pause rendering loop when hero is out of viewport (saves 60% GPU/CPU on scroll)
       if ('IntersectionObserver' in window) {
@@ -247,21 +383,23 @@
       }
 
       // Track mouse coordinates for pixie attraction & stardust + Tree Portal Interaction
-      window.addEventListener('mousemove', (e) => {
+      const handleHeroMouseMove = (e) => {
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
         const now = performance.now();
-        const dx = e.clientX - mouse.lastX;
-        const dy = e.clientY - mouse.lastY;
+        const dx = clientX - mouse.lastX;
+        const dy = clientY - mouse.lastY;
         mouse.vx = dx * 0.3 + mouse.vx * 0.7;
         mouse.vy = dy * 0.3 + mouse.vy * 0.7;
-        mouse.x = e.clientX;
-        mouse.y = e.clientY;
-        mouse.lastX = e.clientX;
-        mouse.lastY = e.clientY;
+        mouse.x = clientX;
+        mouse.y = clientY;
+        mouse.lastX = clientX;
+        mouse.lastY = clientY;
 
         // Tree Portal Hover Detection
         if (treePortal && treePortal.state === 'OPEN') {
-          const pdx = e.clientX - treePortal.x;
-          const pdy = e.clientY - treePortal.y;
+          const pdx = clientX - treePortal.x;
+          const pdy = clientY - treePortal.y;
           treePortal.isHovered = (Math.hypot(pdx, pdy) <= treePortal.r);
           if (treePortal.isHovered) {
             document.body.style.cursor = 'pointer';
@@ -278,10 +416,12 @@
         if (now - lastMouseMoveTime > 80) {
           lastMouseMoveTime = now;
           if (pixieDust.length < 40) {
-            emitPixieDust(e.clientX, e.clientY, 2, ['#FFD700', '#00FFC8', '#00E5D4', '#FFF']);
+            emitPixieDust(clientX, clientY, 2, ['#FFD700', '#00FFC8', '#00E5D4', '#FFF']);
           }
         }
-      }, { passive: true });
+      };
+      window.addEventListener('mousemove', handleHeroMouseMove, { passive: true });
+      window.addEventListener('touchmove', handleHeroMouseMove, { passive: true });
 
       // Tree Portal Click Navigation
       window.addEventListener('click', (e) => {
@@ -292,7 +432,7 @@
             emitPixieDust(treePortal.x, treePortal.y, 60, ['#FFD700', '#FF9E00', '#00FFC8', '#FFFFFF']);
 
             if (item.href === '#sound-sanctuary') {
-              const soundBtn = document.getElementById('nav-sound-btn');
+              const soundBtn = document.getElementById('open-sound-modal-btn');
               if (soundBtn) soundBtn.click();
             } else if (item.href === '#aura-scanner' || item.href === '#interactive-aura') {
               const aSec = document.getElementById('aura-scanner');
@@ -664,13 +804,18 @@
       // ─── 3. ULTRA-SMOOTH HARDWARE-ACCELERATED RENDER LOOP ───
       let lastRenderTime = 0;
       function render(now) {
+        if (document.hidden) {
+          heroAnimId = requestAnimationFrame(render);
+          lastRenderTime = 0; // Prevent large dt jump on resume
+          return;
+        }
         heroAnimId = requestAnimationFrame(render);
 
         const dt = (lastRenderTime > 0) ? Math.min(0.05, (now - lastRenderTime) / 1000) : 0.016;
         lastRenderTime = now;
 
         // Always clear the avatar layer (it's position:fixed, always visible)
-        aCtx.clearRect(0, 0, w, h);
+        aCtx.save(); aCtx.setTransform(1, 0, 0, 1, 0, 0); aCtx.clearRect(0, 0, aCtx.canvas.width, aCtx.canvas.height); aCtx.restore();
 
         // Decay star sparkle burst effect over time
         if (globalStarSparkle > 0) {
@@ -684,8 +829,8 @@
         // Only renders when the hero section is in the viewport
         // ═══════════════════════════════════════════════
         if (isHeroVisible) {
-        const cW = heroBgCanvas.width;
-        const cH = heroBgCanvas.height;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2); const cW = heroBgCanvas.width / dpr;
+        const cH = heroBgCanvas.height / dpr;
         bgCtx.clearRect(0, 0, cW, cH);
 
         // 0. SENSIBLE LIVING LIGHT PULSES ON HERO BACKGROUND IMAGE
@@ -696,11 +841,11 @@
         if (canvasAspect > imgAspect) {
           bgS = cW / 1920;
           bgOffsetX = 0;
-          bgOffsetY = cH - 1080 * bgS; // background-position: center bottom
+          bgOffsetY = (cH - 1080 * bgS) * 0.5; // background-position: center center
         } else {
           bgS = cH / 1080;
           bgOffsetX = (cW - 1920 * bgS) * 0.5;
-          bgOffsetY = cH - 1080 * bgS;
+          bgOffsetY = (cH - 1080 * bgS) * 0.5;
         }
 
         bgCtx.save();
@@ -1011,8 +1156,8 @@
         // PHOTOREALISTIC POLARIS — TRUE NORTH STAR (Deep Space Astrophotography)
         // Authentic astronomical Airy disc, delicate Rayleigh corona & razor-thin optical diffraction rays
         // ═══════════════════════════════════════════════
-        const polarisX = heroBgCanvas.width * 0.5;
-        const polarisY = Math.max(90, heroBgCanvas.height * 0.095);
+        const polarisX = cW * 0.5;
+        const polarisY = Math.max(90, cH * 0.095);
         const isDescending = heroTinkerbell && (heroTinkerbell.state === 'SPAWNING' || heroTinkerbell.state === 'ORB_FLOATING' || heroTinkerbell.state === 'FLYING_TO_LOGO');
         
         // Organic high-frequency astronomical scintillation (twinkle)
@@ -1104,6 +1249,7 @@
           targetCtx.save();
           if (isMobile) {
             targetCtx.beginPath();
+            // 7E: clipped to cachedNavBottom (recomputed in debounced resize())
             targetCtx.rect(0, cachedNavBottom, w || window.innerWidth, (h || window.innerHeight) - cachedNavBottom);
             targetCtx.clip();
           }
@@ -1313,7 +1459,7 @@
         const canvas = document.getElementById('location-moon-canvas');
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
-        const dpr = window.devicePixelRatio || 1;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
         const w = 180;
         const h = 180;
 
@@ -1512,11 +1658,12 @@
         blinkPhase: 0,
         nextBlinkTime: 0
       };
+      window.heroAeyeMenu = heroAeyeMenu;
 
       let activeSpeechBubble = {
         visible: false,
         text: '',
-        preferredSide: 'auto', // 'auto', 'top', 'bottom', 'side-left', 'side-right'
+        preferredSide: 'auto', // 'auto', 'auto', 'bottom', 'auto', 'auto'
       };
 
       // Ascending empty bubble orb (returns to Polaris after Beth exits)
@@ -1528,6 +1675,9 @@
         progress: 0
       };
 
+      let cachedBubbleW = 240;
+      let cachedBubbleH = 58;
+
       function updateBethSpeechBubblePosition() {
         const gEl = document.getElementById('beth-greeting-bubble');
         if (!gEl || !activeSpeechBubble.visible) return;
@@ -1536,27 +1686,32 @@
         const targetX = (isAuraState && heroTinkerbell.fairyX !== undefined) ? heroTinkerbell.fairyX : heroTinkerbell.x;
         const targetY = (isAuraState && heroTinkerbell.fairyY !== undefined) ? heroTinkerbell.fairyY : heroTinkerbell.y;
         const isFacingLeft = (isAuraState && heroTinkerbell.fairyFacingLeft !== undefined) ? heroTinkerbell.fairyFacingLeft : heroTinkerbell.facingLeft;
-        const mouthX = targetX + (isFacingLeft ? -6 : 6);
-        const mouthY = targetY - 38;
-        const headTop = targetY - 56;
-        const r = gEl.getBoundingClientRect();
-        const rw = r.width > 0 ? r.width : (gEl.offsetWidth || 240);
-        const rh = r.height > 0 ? r.height : (gEl.offsetHeight || 58);
+        // Avatar head is ~45px above feet anchor on desktop, ~32px on mobile
+        const isMobile = window.innerWidth < 600;
+        const avatarHeadOffset = isMobile ? 32 : 45;
+        const mouthX = targetX + (isFacingLeft ? -8 : 8);
+        const mouthY = targetY - avatarHeadOffset + 8; // mouth slightly below head top
+        const headTop = targetY - avatarHeadOffset - 10;
+        const rw = cachedBubbleW;
+        const rh = cachedBubbleH;
 
         let side = activeSpeechBubble.preferredSide || 'auto';
 
-        // Intelligent 'auto' placement:
-        if (side === 'auto') {
-          // If in bottom right corner (aEye or menu):
+        // Intelligent placement fallback & responsive overrides:
+        if (side === 'auto' || isMobile) {
           if (targetX > window.innerWidth * 0.65) {
             side = 'side-left';
           } else if (targetX < window.innerWidth * 0.35) {
             side = 'side-right';
-          } else if (headTop - rh - 18 < 16) {
-            // Close to top edge, place to the side
-            side = isFacingLeft ? 'side-left' : 'side-right';
           } else {
-            side = 'top';
+            // Avatar is centrally located
+            if (isMobile) {
+              // On mobile, side placements for centered avatars will clip or overlap the face. Use top/bottom.
+              side = (headTop - rh - 18 < 16) ? 'bottom' : 'top';
+            } else {
+              // On desktop, use side placement to avoid covering vertical content like the tagline pill or logo.
+              side = isFacingLeft ? 'side-left' : 'side-right';
+            }
           }
         }
 
@@ -1566,17 +1721,17 @@
         if (isAuraState) {
           // In Aura Scanner modal: Avatar Beth is perched on the top-right corner of the modal card.
           // Place speech bubble clearly to her LEFT with generous margin so it NEVER touches or covers Beth.
-          left = targetX - 52 - rw;
+          left = targetX - 52 * (heroTinkerbell.scale || 1.85) - rw;
           top = mouthY - rh * 0.5;
           dirClass = 'beth-greeting--right'; // Arrow on RIGHT edge pointing right towards her mouth
         } else if (side === 'side-left' || side === 'top-left') {
-          // Bubble to the LEFT of Beth: sits snug with arrow tip ~6px from her side
-          left = (targetX - 32) - rw;
+          // Bubble to the LEFT of Beth: wider gap to avoid overlapping her body
+          left = (targetX - 48) - rw;
           top = mouthY - rh * 0.5;
           dirClass = 'beth-greeting--right'; // Arrow on RIGHT edge pointing right towards her mouth
         } else if (side === 'side-right' || side === 'top-right') {
-          // Bubble to the RIGHT of Beth: sits snug with arrow tip ~6px from her side
-          left = targetX + 32;
+          // Bubble to the RIGHT of Beth: wider gap to avoid overlapping her body
+          left = targetX + 48;
           top = mouthY - rh * 0.5;
           dirClass = 'beth-greeting--left'; // Arrow on LEFT edge pointing left towards her mouth
         } else if (side === 'bottom') {
@@ -1595,10 +1750,11 @@
         const clampedLeft = Math.max(12, Math.min(left, window.innerWidth - rw - 12));
         const clampedTop = Math.max(12, Math.min(top, window.innerHeight - rh - 12));
 
-        gEl.style.left = clampedLeft + 'px';
-        gEl.style.top = clampedTop + 'px';
+        gEl.style.left = '0';
+        gEl.style.top = '0';
         gEl.style.right = 'auto';
         gEl.style.bottom = 'auto';
+        gEl.style.transform = `translate3d(${Math.round(clampedLeft)}px, ${Math.round(clampedTop)}px, 0)`;
 
         // Set direction class
         gEl.classList.remove('beth-greeting--bottom', 'beth-greeting--right', 'beth-greeting--left', 'beth-greeting--top');
@@ -1609,11 +1765,11 @@
         if (arrowEl) {
           if (dirClass === 'beth-greeting--bottom' || dirClass === 'beth-greeting--top') {
             // Horizontal alignment along top/bottom edge pointing at mouthX
-            const relArrowX = Math.max(18, Math.min(r.width - 18, mouthX - clampedLeft));
+            const relArrowX = Math.max(18, Math.min(rw - 18, mouthX - clampedLeft));
             arrowEl.style.setProperty('--arrow-pos', relArrowX + 'px');
           } else {
             // Vertical alignment along left/right edge pointing at mouthY
-            const relArrowY = Math.max(16, Math.min(r.height - 16, mouthY - clampedTop));
+            const relArrowY = Math.max(16, Math.min(rh - 16, mouthY - clampedTop));
             arrowEl.style.setProperty('--arrow-pos', relArrowY + 'px');
           }
         }
@@ -1823,7 +1979,7 @@
       }
 
       
-      const treePortalCache = { rawPts: [], pts: [] };
+
       function updateAndRenderTreePortal(ctx, bgOffsetX, bgOffsetY, bgS, now, dt) {
               function getContourSample(t, offset = 0, scale = 1.0) {
           const clampedT = ((t % 1.0) + 1.0) % 1.0;
@@ -1873,6 +2029,11 @@
         // On mobile phones & portrait tablets, background-size: cover crops the left/right edges of the 16:9 image,
         // causing rawAvgX to be pushed off-screen (rawAvgX < 0).
         // Adaptively ensure the portal is ALWAYS 100% visible inside the hero glade across every device!
+        /* 
+           7F TWO COORDINATE SYSTEMS:
+           - Desktop uses background-image space (bgOffsetX / bgOffsetY / bgS from cover-fit).
+           - Mobile uses document space anchored to the logo.
+        */
         const isMobile = (w || window.innerWidth) < 600;
         const isTablet = (w || window.innerWidth) >= 600 && (w || window.innerWidth) < 1024;
 
@@ -1880,26 +2041,32 @@
         let targetCenterY = rawAvgY;
         let portalScale = 1.0;
 
+        // Option A: Hide on pinch zoom
+        if (isMobile && typeof portalViewport.scale === 'number' && portalViewport.scale > 1.02) {
+           return;
+        }
+
         if (isMobile) {
-          // On mobile phones: place portal on top of the logo, exactly in the center!
-          targetCenterX = (w || window.innerWidth) * 0.5;
-          targetCenterY = (h || window.innerHeight) * 0.22;
-          const heroLogo = cachedDOM.heroLogo;
-          if (heroLogo) {
-            const rect = heroLogo.getBoundingClientRect();
-            if (rect.width > 0 && rect.height > 0) {
-              targetCenterX = rect.left + (rect.width * 0.5);
-              targetCenterY = rect.top + (rect.height * 0.5);
-            }
+          if (treePortalCache.needsRemeasure) {
+             const anchor = document.getElementById('hero-logo-anchor');
+             if (anchor) {
+                const rect = anchor.getBoundingClientRect();
+                if (rect.width > 0) {
+                   treePortalCache.anchorDocX = rect.left + rect.width * 0.5 + window.scrollX;
+                   treePortalCache.anchorDocY = rect.top + rect.height * 0.5 + window.scrollY;
+                }
+             }
+             treePortalCache.needsRemeasure = false;
           }
-          portalScale = 0.68; // Gracefully scaled to fit mobile center
+          const sy = cachedScrollY;
+          targetCenterX = treePortalCache.anchorDocX; // No horizontal scroll on mobile
+          targetCenterY = treePortalCache.anchorDocY - sy;
+          portalScale = 0.68;
         } else if (isTablet) {
-          // On portrait tablets: ensure comfortable padding from the left edge
           targetCenterX = Math.max(115, Math.min(rawAvgX, w * 0.26));
           targetCenterY = Math.max(180, Math.min(rawAvgY, h * 0.35));
           portalScale = 0.85;
         } else {
-          // Desktop: ensure at least 75px margin from screen edges
           targetCenterX = Math.max(85, Math.min(rawAvgX, w - 85));
           targetCenterY = Math.max(100, Math.min(rawAvgY, h - 100));
           portalScale = 1.0;
@@ -2379,6 +2546,7 @@
 
             if (sp.life <= 0) {
               treePortal.sparks.splice(i, 1);
+              i--;
               continue;
             }
 
@@ -2434,10 +2602,17 @@
         ctx.restore(); // end portal graphics
       }
 
+
+      let __tick = 0;
       function updateAndRenderHeroTinkerbell(ctx, now, dt = 0.016) {
+        __tick++;
+        if (__tick % 60 === 0) {
+          console.log('TINKERBELL TICK:', heroTinkerbell.state, 'alpha:', heroTinkerbell.alpha, 'w,h:', w, h, 'dpr:', Math.min(window.devicePixelRatio || 1, 2));
+        }
+
         // Guiding Celestial Star at sky apex (Source of descent)
         const starX = w * 0.5;
-        const starY = Math.max(90, h * 0.095);
+        const starY = (w < 768) ? Math.max(160, h * 0.15) : Math.max(90, h * 0.095);
 
         // Update layout targets (efficiently cached every 300ms)
         updateHeroLayoutTargets(false);
@@ -2478,7 +2653,7 @@
         else if (heroTinkerbell.state === 'ORB_FLOATING') {
           heroTinkerbell.orbFlightTime += dt;
           const oft = heroTinkerbell.orbFlightTime;
-          const orbDuration = 7.5;
+          const orbDuration = 4.0;
           const progress = Math.min(1, oft / orbDuration);
 
           // Gentle celestial drift floating down from the star
@@ -2514,11 +2689,12 @@
         
         // 3. ARRIVAL ONTO CRESCENT MOON APEX (~2.5s)
         else if (heroTinkerbell.state === 'FLYING_TO_LOGO') {
-          heroTinkerbell.progress += dt / 2.5;
+          heroTinkerbell.progress += dt / (heroTinkerbell.state === 'FLYING_TO_BADGE' ? INTRO_TIMING.flyToBadge : INTRO_TIMING.flyToBookBtn);
           heroTinkerbell.wingPhase += dt * 24.0;
 
           const p = Math.min(1, heroTinkerbell.progress);
           const easeP = p * p * (3 - 2 * p);
+          heroTinkerbell.catwalkLettersFade = Math.max(0, 1 - p * 3);
           const swoop = Math.sin(p * Math.PI) * (w * 0.025);
 
           heroTinkerbell.x = (1 - easeP) * heroTinkerbell.startX + easeP * logoMoonX + swoop;
@@ -2544,7 +2720,7 @@
             emitPixieDust(heroTinkerbell.x, heroTinkerbell.y + 12, 35, ['#FFD700', '#FFFFFF', '#FFE57F', '#00FFC8', '#C77DFF']);
 
             // EXACT INSTANT SPEECH BUBBLE APPEARANCE ON TOUCHDOWN!
-            showBethSpeechBubble("HI, I'M BETH ELISE!", logoMoonX, logoMoonY, 'side-right');
+            showBethSpeechBubble("HI, I'M BETH ELISE!", logoMoonX, logoMoonY, 'auto');
           }
         }
         
@@ -2561,7 +2737,7 @@
           // Speech bubble on crescent moon
           if (!heroTinkerbell.logoBubbleShown) {
             heroTinkerbell.logoBubbleShown = true;
-            showBethSpeechBubble("HI, I'M BETH ELISE!", heroTinkerbell.x, heroTinkerbell.y, 'side-right');
+            showBethSpeechBubble("HI, I'M BETH ELISE!", heroTinkerbell.x, heroTinkerbell.y, 'auto');
           }
           if (heroTinkerbell.logoBubbleShown && pt > 3.8 && !heroTinkerbell.logoBubbleHidden) {
             heroTinkerbell.logoBubbleHidden = true;
@@ -2584,7 +2760,7 @@
           }
 
           // Next: Fly down to the Book a Reading button
-          if (pt >= 4.4) {
+          if (pt >= 2.8) {
             heroTinkerbell.state = 'FLYING_TO_BOOK_BTN';
             heroTinkerbell.startX = heroTinkerbell.x;
             heroTinkerbell.startY = heroTinkerbell.y;
@@ -2604,10 +2780,11 @@
 
         // 5. FLYING TO BOOK A READING BUTTON (~2.8s)
         else if (heroTinkerbell.state === 'FLYING_TO_BOOK_BTN') {
-          heroTinkerbell.progress += dt / 2.8;
+          heroTinkerbell.progress += dt / 1.0;
           heroTinkerbell.wingPhase += dt * 22.0;
           const p = Math.min(1, heroTinkerbell.progress);
           const easeP = p * p * (3 - 2 * p);
+          heroTinkerbell.catwalkLettersFade = Math.max(0, 1 - p * 3);
           const swoop = Math.sin(p * Math.PI) * (w * 0.06);
           heroTinkerbell.x = (1 - easeP) * heroTinkerbell.startX + easeP * heroTinkerbell.targetX + swoop;
           heroTinkerbell.y = (1 - easeP) * heroTinkerbell.startY + easeP * heroTinkerbell.targetY;
@@ -2625,7 +2802,7 @@
             emitPixieDust(heroTinkerbell.x, heroTinkerbell.y + 12, 20, ['#00FFC8', '#FFD700', '#FFFFFF']);
 
             // EXACT INSTANT SPEECH BUBBLE APPEARANCE ON TOUCHDOWN!
-            showBethSpeechBubble("BOOK A READING WITH ME!", heroTinkerbell.targetX, heroTinkerbell.targetY, 'top');
+            showBethSpeechBubble("BOOK A READING WITH ME!", heroTinkerbell.targetX, heroTinkerbell.targetY, 'auto');
           }
         }
 
@@ -2644,10 +2821,10 @@
 
           if (!heroTinkerbell.bookBubbleShown) {
             heroTinkerbell.bookBubbleShown = true;
-            showBethSpeechBubble("BOOK A READING WITH ME!", heroTinkerbell.x, heroTinkerbell.y, 'top');
+            showBethSpeechBubble("BOOK A READING WITH ME!", heroTinkerbell.x, heroTinkerbell.y, 'auto');
           }
           if (Math.random() > 0.6) emitPixieDust(heroTinkerbell.x + (Math.random() - 0.5) * 16, heroTinkerbell.y + 10, 1, ['#00FFC8', '#FFD700', '#FFF']);
-          if (heroTinkerbell.perchedTime >= 4.2) {
+          if (heroTinkerbell.perchedTime >= INTRO_TIMING.perchedBookBtn) {
             hideBethSpeechBubble();
             if (heroBookBtn) heroBookBtn.classList.remove('fairy-moon-glow');
             heroTinkerbell.state = 'FLYING_TO_BADGE';
@@ -2663,11 +2840,12 @@
 
         // 6b. FLYING UP FROM BOOK BUTTON TO LEFT EDGE OF CATWALK PILL BAR (~2.0s)
         else if (heroTinkerbell.state === 'FLYING_TO_BADGE') {
-          heroTinkerbell.progress += dt / 2.0;
+          heroTinkerbell.progress += dt / 1.2;
           heroTinkerbell.wingPhase += dt * 24.0;
 
           const p = Math.min(1, heroTinkerbell.progress);
           const easeP = p * p * (3 - 2 * p);
+          heroTinkerbell.catwalkLettersFade = Math.max(0, 1 - p * 3);
           const swoop = Math.sin(p * Math.PI) * (w * 0.04);
           const landX = badgeCenterX - 170;
 
@@ -2713,16 +2891,16 @@
               revealed: false, 
               revealTime: 0,
               x: badgeCenterX + (i - (numLetters - 1) * 0.5) * letterSpacing,
-              y: badgeTopY - (isMobile ? 20 : 24)
+              y: badgeTopY - (isMobile ? 12 : 14)
             }));
           }
         }
 
         // 7. STRUTTING ACROSS TAGLINE BADGE — Jeopardy Letter Reveal (~5.4s)
         else if (heroTinkerbell.state === 'STRUT_ON_BADGE') {
-          heroTinkerbell.progress += dt / 5.4;
+          heroTinkerbell.progress += dt / 3.6;
           heroTinkerbell.wingPhase += dt * 14.0;
-          const st = heroTinkerbell.progress * 5.4;
+          const st = heroTinkerbell.progress * INTRO_TIMING.strutOnBadge;
           heroTinkerbell.strutPhase = st * 6.5;
           const p = Math.min(1, heroTinkerbell.progress);
 
@@ -2778,8 +2956,11 @@
             heroTinkerbell.isStrutting = false;
             heroTinkerbell.facingLeft = true; // Turn back towards letters in Vanna White pose
             if (heroLogo) heroLogo.classList.add('fairy-moon-glow'); // ✦ ILLUMINATE AND PULSE LOGO DURING VANNA WHITE PRESENTATION ✦
+            if (typeof window.startTreePortalSequence === 'function') window.startTreePortalSequence();
             emitPixieDust(heroTinkerbell.x, heroTinkerbell.y, 30, ['#FFD700', '#C77DFF', '#FFFFFF', '#00FFC8']);
             if (window.celestialAudio) window.celestialAudio.playChime(852, 1.2);
+            // showBethSpeechBubble("I'M SO GLAD YOU'RE HERE!", heroTinkerbell.x, heroTinkerbell.y, 'bottom'); // User explicitly removed this bubble
+
           }
         }
 
@@ -2808,26 +2989,29 @@
           }
 
           // Phase 1 (0 to 2.7s): Facing left towards the revealed board in Vanna White presentation pose
-          if (pt < 2.7) {
+          if (pt < INTRO_TIMING.pauseOnBadgeEdge * (1.1/1.4)) {
             heroTinkerbell.facingLeft = true;
             heroTinkerbell.bodySway = Math.sin(pt * 2.8) * 1.6;
             heroTinkerbell.headAngle = -0.22; // Looking gracefully towards the letters
             heroTinkerbell.jumpSquash = 1.0;
             heroTinkerbell.catwalkLettersFade = 1.0;
           }
-          // Phase 2 (2.7 to 3.4s): Turn forward to camera, prep spring crouch!
+          // Phase 2 (1.8 to 2.4s): Turn forward to camera, prep spring crouch!
           else {
             heroTinkerbell.facingLeft = false;
             heroTinkerbell.headAngle = 0;
-            const prepP = (pt - 2.7) / 0.7;
+            const prepP = (pt - INTRO_TIMING.pauseOnBadgeEdge * (1.1/1.4)) / (INTRO_TIMING.pauseOnBadgeEdge * (0.3/1.4));
             heroTinkerbell.jumpSquash = 1 + Math.sin(prepP * Math.PI) * 0.14; // spring squash crouch
             heroTinkerbell.y = badgeTopY + Math.sin(prepP * Math.PI) * 6;
             heroTinkerbell.catwalkLettersFade = Math.max(0, 1 - prepP); // smooth fade during crouch
           }
 
-          if (heroTinkerbell.edgePauseTime >= 3.4) {
+          if (heroTinkerbell.edgePauseTime >= INTRO_TIMING.pauseOnBadgeEdge) {
             hideBethSpeechBubble();
             if (heroLogo) heroLogo.classList.remove('fairy-moon-glow');
+            
+            
+
             heroTinkerbell.state = 'FLYING_TO_AEYE';
             heroTinkerbell.startX = heroTinkerbell.x;
             heroTinkerbell.startY = heroTinkerbell.y;
@@ -2840,12 +3024,13 @@
 
         // 9. FLYING DOWN TO aEYE HOME BASE CORNER (~2.2s, or fast 0.8s on fast-scroll)
         else if (heroTinkerbell.state === 'FLYING_TO_AEYE') {
-          const flightDuration = heroTinkerbell.isFastScrolled ? 0.8 : 2.2;
+          const flightDuration = heroTinkerbell.isFastScrolled ? INTRO_TIMING.flyToAeyeFast : INTRO_TIMING.flyToAeye;
           heroTinkerbell.progress += dt / flightDuration;
           heroTinkerbell.wingPhase += dt * 28.0;
 
           const p = Math.min(1, heroTinkerbell.progress);
           const easeP = p * p * (3 - 2 * p);
+          heroTinkerbell.catwalkLettersFade = Math.max(0, 1 - p * 3);
           const swoop = Math.sin(p * Math.PI) * (w * 0.04);
 
           const targetX = aeyeX;
@@ -2916,19 +3101,13 @@
           ctx.restore();
 
           // Speech bubble in corner
-          if (!heroTinkerbell.greetShown) {
-            heroTinkerbell.greetShown = true;
-            const msg = heroTinkerbell.isFastScrolled 
-              ? "HI I'M BETH ELISE, WELCOME! USE MY aEYE IF YOU HAVE ANY QUESTIONS!" 
-              : "NICE TO MEET YOU! MY aEYE ASSISTANT WILL TAKE CARE OF YOU NOW!";
-            showBethSpeechBubble(msg, heroTinkerbell.x, heroTinkerbell.y, 'side-left');
-          }
+          if (!heroTinkerbell.greetShown) { heroTinkerbell.greetShown = true; }
 
           if (Math.random() > 0.5) {
             emitPixieDust(heroTinkerbell.x + (Math.random() - 0.5) * 16, heroTinkerbell.y + 12, 1, ['#00FFC8', '#FFD700', '#FFFFFF']);
           }
 
-          const perchLimit = heroTinkerbell.isFastScrolled ? 3.0 : 4.8;
+          const perchLimit = heroTinkerbell.isFastScrolled ? INTRO_TIMING.perchedOnAeyeFast : INTRO_TIMING.perchedOnAeye;
           if (pt >= perchLimit) {
             hideBethSpeechBubble();
             heroTinkerbell.state = 'BETH_HIGH_LEAP';
@@ -2946,8 +3125,8 @@
           heroTinkerbell.isStrutting = false;
           heroTinkerbell.facingLeft = false;
 
-          const CROUCH = 0.25;  // Compress and load spring power
-          const FLIGHT = 1.15;  // High vertical leap + Olympic headfirst swan dive
+          const CROUCH = INTRO_TIMING.crouch;  // Compress and load spring power
+          const FLIGHT = INTRO_TIMING.flight;  // High vertical leap + Olympic headfirst swan dive
           const jt = heroTinkerbell.jumpTime;
 
           if (jt < CROUCH) {
@@ -2995,25 +3174,31 @@
 
             if (f >= 1) {
               // Plunge headfirst into exact center of aEYE circle — perfectly synced aEYE appearance & splash!
-              heroTinkerbell.state = 'ASSISTANT_ACTIVE';
-              if (typeof window.startTreePortalSequence === 'function') window.startTreePortalSequence();
+              heroTinkerbell.state = 'ASSISTANT_ACTIVE'; if (typeof window.restoreAeyeHomebase === 'function') window.restoreAeyeHomebase();
+              // Portal now fires at Vanna White presentation climax (see PAUSE_ON_BADGE_EDGE above)
               heroTinkerbell.x = aeyeX;
               heroTinkerbell.y = aeyeY;
               heroTinkerbell.alpha = 0; // DISAPPEARED inside aEYE until summoned!
               heroTinkerbell.diveAngle = 0;
               heroTinkerbell.splashTime = 0; // Trigger triple expanding shockwave rings and core flash
 
-              // 1. Synchronously make the aEYE widget appear!
-              const widget = document.getElementById('sacred-assistant-widget');
-              if (widget) {
-                widget.classList.add('visible');
+              // 1. Synchronously make the aEYE widget appear and fire its startup sequences!
+              if (typeof window.activateSacredAssistantWidget === 'function') {
+                window.activateSacredAssistantWidget();
+              } else {
+                const widget = document.getElementById('sacred-assistant-widget');
+                if (widget) {
+                  widget.classList.add('visible');
+                }
               }
 
               // 2. Trigger widget splash shockwave and 360 stardust burst
               if (aeyeWidget) {
-                aeyeWidget.classList.remove('aeye-splash-active');
+                aeyeWidget.style.opacity = '1';
+                aeyeWidget.style.pointerEvents = 'auto';
+                aeyeWidget.classList.remove('splash-active');
                 void aeyeWidget.offsetWidth;
-                aeyeWidget.classList.add('aeye-splash-active');
+                aeyeWidget.classList.add('splash-active');
               }
 
               // Turn OFF logo warm glowing when she dives into the aEYE
@@ -3045,7 +3230,7 @@
                 setTimeout(() => {
                   thoughtBubble.classList.add('fading');
                   setTimeout(() => thoughtBubble.classList.add('hidden'), 500);
-                }, 6000);
+                }, 4500);
               }
 
               if (window.celestialAudio) window.celestialAudio.playChime(963, 1.4);
@@ -3055,7 +3240,7 @@
 
         // 9. ASSISTANT RESTING INSIDE aEYE (DISAPPEARED until summoned)
         else if (heroTinkerbell.state === 'ASSISTANT_DIVED' || heroTinkerbell.state === 'ASSISTANT_ACTIVE') {
-          heroTinkerbell.state = 'ASSISTANT_ACTIVE';
+          heroTinkerbell.state = 'ASSISTANT_ACTIVE'; if (typeof window.restoreAeyeHomebase === 'function') window.restoreAeyeHomebase();
           heroTinkerbell.x = aeyeX;
           heroTinkerbell.y = aeyeY;
           heroTinkerbell.alpha = 0; // DISAPPEARED!
@@ -3069,6 +3254,7 @@
           heroTinkerbell.wingPhase += dt * 32.0;
           const p = Math.min(1, heroTinkerbell.progress);
           const easeP = p * p * (3 - 2 * p);
+          heroTinkerbell.catwalkLettersFade = Math.max(0, 1 - p * 3);
 
           // Target for Avatar Beth: Top-right corner of the aEYE assistant modal menu
           let menuCornerX = w * 0.5 + 240;
@@ -3108,7 +3294,7 @@
             emitPixieDust(menuCornerX, menuCornerY, 25, ['#00FFC8', '#FFD700', '#FFFFFF']);
 
             // EXACT INSTANT SPEECH BUBBLE APPEARANCE ON TOUCHDOWN!
-            showBethSpeechBubble("How may we help you?", menuCornerX, menuCornerY, 'top');
+            showBethSpeechBubble("How may we help you?", menuCornerX, menuCornerY, 'auto');
           }
         }
 
@@ -3135,7 +3321,7 @@
 
           if (!heroTinkerbell.menuBubbleShown) {
             heroTinkerbell.menuBubbleShown = true;
-            showBethSpeechBubble("How may we help you?", heroTinkerbell.x, heroTinkerbell.y, 'top');
+            showBethSpeechBubble("How may we help you?", heroTinkerbell.x, heroTinkerbell.y, 'auto');
           }
 
           if (Math.random() > 0.75) {
@@ -3150,10 +3336,11 @@
 
         // 12. DIVE BACK DOWN TO aEYE WITH GLITTER TRAIL & SPLASH EFFECT (THEN DISAPPEAR)
         else if (heroTinkerbell.state === 'MENU_DIVE_BACK') {
-          heroTinkerbell.progress += dt / 0.85;
+          heroTinkerbell.progress += dt / INTRO_TIMING.flyToLogo;
           heroTinkerbell.wingPhase += dt * 34.0;
           const p = Math.min(1, heroTinkerbell.progress);
           const easeP = p * p * (3 - 2 * p);
+          heroTinkerbell.catwalkLettersFade = Math.max(0, 1 - p * 3);
 
           let targetAeyeX = aeyeX;
           let targetAeyeY = aeyeY;
@@ -3188,7 +3375,7 @@
 
           if (p >= 1) {
             // Dive into aEYE with explosive splash effect and DISAPPEAR!
-            heroTinkerbell.state = 'ASSISTANT_ACTIVE';
+            heroTinkerbell.state = 'ASSISTANT_ACTIVE'; if (typeof window.restoreAeyeHomebase === 'function') window.restoreAeyeHomebase();
             heroTinkerbell.x = targetAeyeX;
             heroTinkerbell.y = targetAeyeY;
             heroTinkerbell.alpha = 0; // DISAPPEARED inside aEYE until summoned again!
@@ -3197,9 +3384,19 @@
             emitPixieDust(targetAeyeX, targetAeyeY, 60, ['#00FFC8', '#FFD700', '#FFFFFF', '#C77DFF', '#9D4EDD']);
 
             if (aeyeWidget) {
-              aeyeWidget.classList.remove('aeye-splash-active');
+              aeyeWidget.style.opacity = '1';
+              aeyeWidget.style.pointerEvents = 'auto';
+              aeyeWidget.classList.remove('splash-active');
               void aeyeWidget.offsetWidth;
-              aeyeWidget.classList.add('aeye-splash-active');
+              aeyeWidget.classList.add('splash-active');
+            }
+
+            const widget = document.getElementById('sacred-assistant-widget');
+            if (widget) {
+              widget.classList.remove('aeye-in-flight');
+              
+              void widget.offsetWidth;
+              
             }
 
             if (window.celestialAudio) window.celestialAudio.playChime(963, 1.2);
@@ -3211,11 +3408,13 @@
           heroAeyeMenu.progress += dt / 0.78;
           const p = Math.min(1, heroAeyeMenu.progress);
           const easeP = p * p * (3 - 2 * p);
+          heroTinkerbell.catwalkLettersFade = Math.max(0, 1 - p * 3);
 
           const arc = Math.sin(p * Math.PI) * (-60);
           heroAeyeMenu.x = (1 - easeP) * heroAeyeMenu.startX + easeP * heroAeyeMenu.targetX;
           heroAeyeMenu.y = (1 - easeP) * heroAeyeMenu.startY + easeP * heroAeyeMenu.targetY + arc;
           heroAeyeMenu.alpha = 1;
+          
 
           if (Math.random() > 0.3) {
             emitPixieDust(
@@ -3240,9 +3439,11 @@
             if (oRect.width > 0) {
               heroAeyeMenu.x = oRect.left + oRect.width * 0.5;
               heroAeyeMenu.y = oRect.top + oRect.height * 0.5;
+              heroAeyeMenu.radius = (oRect.width * 0.5) / 1.08;
             }
           }
           heroAeyeMenu.alpha = 1;
+          
 
           // Mouse cursor tracking vs autonomous look-around saccades
           const isMouseMoving = (now - lastMouseMoveTime < 2500 && mouse.x > -100);
@@ -3281,6 +3482,7 @@
           heroAeyeMenu.progress += dt / 0.65;
           const p = Math.min(1, heroAeyeMenu.progress);
           const easeP = p * p * (3 - 2 * p);
+          heroTinkerbell.catwalkLettersFade = Math.max(0, 1 - p * 3);
 
           let targetAeyeX = aeyeX;
           let targetAeyeY = aeyeY;
@@ -3296,6 +3498,7 @@
           heroAeyeMenu.x = (1 - easeP) * heroAeyeMenu.startX + easeP * targetAeyeX;
           heroAeyeMenu.y = (1 - easeP) * heroAeyeMenu.startY + easeP * targetAeyeY + arc;
           heroAeyeMenu.alpha = 1;
+          
 
           if (Math.random() > 0.4) {
             emitPixieDust(heroAeyeMenu.x, heroAeyeMenu.y, 2, ['#00FFC8', '#FFD700', '#FFFFFF']);
@@ -3311,16 +3514,16 @@
             const widget = document.getElementById('sacred-assistant-widget');
             if (widget) {
               widget.classList.remove('aeye-in-flight');
-              widget.classList.remove('aeye-splash-active');
+              
               void widget.offsetWidth;
-              widget.classList.add('aeye-splash-active');
+              
             }
             if (aeyeWidget) {
               aeyeWidget.style.opacity = '1';
               aeyeWidget.style.pointerEvents = 'auto';
-              aeyeWidget.classList.remove('aeye-splash-active');
+              aeyeWidget.classList.remove('splash-active');
               void aeyeWidget.offsetWidth;
-              aeyeWidget.classList.add('aeye-splash-active');
+              aeyeWidget.classList.add('splash-active');
             }
           }
         }
@@ -3330,6 +3533,7 @@
           heroTinkerbell.progress += dt / 0.70;
           const p = Math.min(1, heroTinkerbell.progress);
           const easeP = p * p * (3 - 2 * p);
+          heroTinkerbell.catwalkLettersFade = Math.max(0, 1 - p * 3);
 
           // Get live portal target
           const portal = document.getElementById('aura-card-eye-portal');
@@ -3402,7 +3606,7 @@
             emitPixieDust(heroTinkerbell.x, heroTinkerbell.y, 40, ['#00FFC8', '#FFD700', '#FFFFFF', '#9D4EDD']);
             emitPixieDust(heroTinkerbell.fairyX, heroTinkerbell.fairyY, 25, ['#FFD700', '#00FFC8', '#FFFFFF']);
             if (typeof showBethSpeechBubble === 'function') {
-              showBethSpeechBubble("HANG TIGHT, WE'RE WORKING ON IT<span class=\"aura-buffering-dots\"><span class=\"bdot bdot-1\">.</span><span class=\"bdot bdot-2\">.</span><span class=\"bdot bdot-3\">.</span></span>", heroTinkerbell.fairyX, heroTinkerbell.fairyY, 'side-left');
+              showBethSpeechBubble("HANG TIGHT, WE'RE WORKING ON IT<span class=\"aura-buffering-dots\"><span class=\"bdot bdot-1\">.</span><span class=\"bdot bdot-2\">.</span><span class=\"bdot bdot-3\">.</span></span>", heroTinkerbell.fairyX, heroTinkerbell.fairyY, 'auto');
             }
             if (window.celestialAudio) window.celestialAudio.playTibetanBowl(528, 2.5, true);
           }
@@ -3590,7 +3794,7 @@
           if (heroTinkerbell.lockTimer >= 0.55) {
             heroTinkerbell.state = 'AURA_HOVER';
             if (typeof showBethSpeechBubble === 'function') {
-              showBethSpeechBubble("YOUR AURA IS LUMINOUS! ✦", heroTinkerbell.fairyX, heroTinkerbell.fairyY, 'side-left');
+              showBethSpeechBubble("YOUR AURA IS LUMINOUS! ✦", heroTinkerbell.fairyX, heroTinkerbell.fairyY, 'auto');
               setTimeout(() => {
                 if (heroTinkerbell && heroTinkerbell.state === 'AURA_HOVER') {
                   hideBethSpeechBubble();
@@ -3671,6 +3875,7 @@
           heroTinkerbell.progress += dt / 0.70;
           const p = Math.min(1, heroTinkerbell.progress);
           const easeP = p * p * (3 - 2 * p);
+          heroTinkerbell.catwalkLettersFade = Math.max(0, 1 - p * 3);
 
           if (typeof hideBethSpeechBubble === 'function') {
             hideBethSpeechBubble();
@@ -3710,7 +3915,7 @@
           }
 
           if (p >= 1) {
-            heroTinkerbell.state = 'ASSISTANT_ACTIVE';
+            heroTinkerbell.state = 'ASSISTANT_ACTIVE'; if (typeof window.restoreAeyeHomebase === 'function') window.restoreAeyeHomebase();
             heroTinkerbell.x = targetAeyeX;
             heroTinkerbell.y = targetAeyeY;
             heroTinkerbell.alpha = 0;
@@ -3720,16 +3925,16 @@
             const widget = document.getElementById('sacred-assistant-widget');
             if (widget) {
               widget.classList.remove('aeye-in-flight');
-              widget.classList.remove('aeye-splash-active');
+              
               void widget.offsetWidth;
-              widget.classList.add('aeye-splash-active');
+              
             }
             if (aeyeWidget) {
               aeyeWidget.style.opacity = '1';
               aeyeWidget.style.pointerEvents = 'auto';
-              aeyeWidget.classList.remove('aeye-splash-active');
+              aeyeWidget.classList.remove('splash-active');
               void aeyeWidget.offsetWidth;
-              aeyeWidget.classList.add('aeye-splash-active');
+              aeyeWidget.classList.add('splash-active');
             }
 
             if (window.celestialAudio) window.celestialAudio.playChime(963, 1.2);
@@ -4038,11 +4243,12 @@
 
           // Render heroAeyeMenu if active (The living aEYE companion racing / perched in menu)
           if (heroAeyeMenu.state === 'MENU_TAKEOFF' || heroAeyeMenu.state === 'MENU_PERCHED' || heroAeyeMenu.state === 'MENU_DIVE_BACK') {
+            const currentRad = heroAeyeMenu.radius || 32;
             drawUnifiedAEye(
               ctx,
               heroAeyeMenu.x,
               heroAeyeMenu.y,
-              28,
+              currentRad,
               heroAeyeMenu.gazeX || 0,
               heroAeyeMenu.gazeY || 0,
               heroAeyeMenu.blinkPhase || 0,
@@ -4610,11 +4816,13 @@
 
         let curAeyeX = Math.max(40, window.innerWidth - 60);
         let curAeyeY = Math.max(40, window.innerHeight - 60);
+        let curAeyeRad = 35.2; // Default for 76px desktop button
         if (aeyeWidget) {
           const aeRect = aeyeWidget.getBoundingClientRect();
           if (aeRect.width > 0) {
             curAeyeX = aeRect.left + aeRect.width * 0.5;
             curAeyeY = aeRect.top + aeRect.height * 0.5;
+            curAeyeRad = (aeRect.width * 0.5) / 1.08;
           }
           aeyeWidget.style.opacity = '0';
           aeyeWidget.style.pointerEvents = 'none';
@@ -4635,12 +4843,14 @@
         // 2. Target for Living aEYE: Top-center orb dais of menu card
         let menuEyeX = window.innerWidth * 0.5;
         let menuEyeY = Math.max(40, window.innerHeight * 0.20);
+        let menuEyeRad = 22.2; // Default for 48px modal icon
         const eyeOrb = document.getElementById('assistant-modal-icon-orb');
         if (eyeOrb) {
           const oRect = eyeOrb.getBoundingClientRect();
           if (oRect.width > 0) {
             menuEyeX = oRect.left + oRect.width * 0.5;
             menuEyeY = oRect.top + oRect.height * 0.5;
+            menuEyeRad = (oRect.width * 0.5) / 1.08;
           }
         }
 
@@ -4660,10 +4870,13 @@
         heroAeyeMenu.progress = 0;
         heroAeyeMenu.startX = curAeyeX;
         heroAeyeMenu.startY = curAeyeY;
+        heroAeyeMenu.startRadius = curAeyeRad;
         heroAeyeMenu.targetX = menuEyeX;
         heroAeyeMenu.targetY = menuEyeY;
+        heroAeyeMenu.targetRadius = menuEyeRad;
         heroAeyeMenu.x = curAeyeX;
         heroAeyeMenu.y = curAeyeY;
+        heroAeyeMenu.radius = curAeyeRad;
         heroAeyeMenu.alpha = 1;
         heroAeyeMenu.scale = 1.0;
 
@@ -4674,12 +4887,24 @@
       window.triggerFairyMenuDiveBack = function() {
         hideBethSpeechBubble();
         if (!heroAvatarCanvas) return;
+        // Only animate if the fairy is actually in a menu-related state
+        const s = heroTinkerbell.state || '';
+        if (!s.startsWith('MENU_') && s !== 'ASSISTANT_ACTIVE') return;
 
         // aEye races back to homebase first
         heroAeyeMenu.state = 'MENU_DIVE_BACK';
         heroAeyeMenu.progress = 0;
         heroAeyeMenu.startX = heroAeyeMenu.x || (window.innerWidth * 0.5);
         heroAeyeMenu.startY = heroAeyeMenu.y || (window.innerHeight * 0.20);
+        heroAeyeMenu.startRadius = heroAeyeMenu.radius || 22.2;
+        heroAeyeMenu.targetRadius = 35.2; // Desktop default, will interpolate
+        const aeyeWidget = cachedDOM.aeyeWidget;
+        if (aeyeWidget) {
+          const aeRect = aeyeWidget.getBoundingClientRect();
+          if (aeRect.width > 0) {
+            heroAeyeMenu.targetRadius = (aeRect.width * 0.5) / 1.08;
+          }
+        }
         heroAeyeMenu.alpha = 1;
 
         // Avatar Beth follows and dives down into homebase
@@ -4908,8 +5133,12 @@
       let lastFMeteor = performance.now();
 
       function fResize() {
-        fw = footerCanvas.width = footerCanvas.offsetWidth || window.innerWidth;
-        fh = footerCanvas.height = footerCanvas.offsetHeight || 340;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        fw = footerCanvas.offsetWidth || window.innerWidth;
+        fh = footerCanvas.offsetHeight || 340;
+        footerCanvas.width = fw * dpr;
+        footerCanvas.height = fh * dpr;
+        fCtx.scale(dpr, dpr);
       }
       fResize();
       window.addEventListener('resize', fResize, { passive: true });
@@ -4976,8 +5205,9 @@
       }
 
       function renderFooter(now) {
-        if (!fCtx || !isFooterVisible) {
-          footerAnimId = null;
+        if (!fCtx || !isFooterVisible || document.hidden) {
+          if (!isFooterVisible) footerAnimId = null;
+          else footerAnimId = requestAnimationFrame(renderFooter);
           return;
         }
         fCtx.clearRect(0, 0, fw, fh);
@@ -5099,8 +5329,10 @@
 
       function rotateToMouse(e) {
         if (isUserScrolling || !cachedBounds) return;
-        const leftX = e.clientX - cachedBounds.x;
-        const topY = e.clientY - cachedBounds.y;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const leftX = clientX - cachedBounds.x;
+        const topY = clientY - cachedBounds.y;
         const center = {
           x: leftX - cachedBounds.width / 2,
           y: topY - cachedBounds.height / 2
@@ -5138,7 +5370,12 @@
       }, { passive: true });
 
       card.addEventListener('mousemove', rotateToMouse, { passive: true });
+      card.addEventListener('touchmove', rotateToMouse, { passive: true });
       card.addEventListener('mouseleave', () => {
+        card.style.transition = 'transform 0.5s cubic-bezier(0.2, 1, 0.3, 1)';
+        removeListener();
+      }, { passive: true });
+      card.addEventListener('touchend', () => {
         card.style.transition = 'transform 0.5s cubic-bezier(0.2, 1, 0.3, 1)';
         removeListener();
       }, { passive: true });
@@ -5153,18 +5390,26 @@
         btn.style.transition = 'transform 0.1s ease-out';
       }, { passive: true });
 
-      btn.addEventListener('mousemove', (e) => {
+      const handleMagneticMove = (e) => {
         if (!btnRect) btnRect = btn.getBoundingClientRect();
-        const x = e.clientX - btnRect.left - btnRect.width / 2;
-        const y = e.clientY - btnRect.top - btnRect.height / 2;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const x = clientX - btnRect.left - btnRect.width / 2;
+        const y = clientY - btnRect.top - btnRect.height / 2;
         btn.style.transform = `translate3d(${x * 0.22}px, ${y * 0.22}px, 0) scale(1.04)`;
-      }, { passive: true });
+      };
 
-      btn.addEventListener('mouseleave', () => {
+      btn.addEventListener('mousemove', handleMagneticMove, { passive: true });
+      btn.addEventListener('touchmove', handleMagneticMove, { passive: true });
+
+      const handleMagneticLeave = () => {
         btn.style.transform = '';
         btn.style.transition = 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
         btnRect = null;
-      }, { passive: true });
+      };
+
+      btn.addEventListener('mouseleave', handleMagneticLeave, { passive: true });
+      btn.addEventListener('touchend', handleMagneticLeave, { passive: true });
     });
 
     // ─── SCROLL REVEAL ───
@@ -5296,6 +5541,7 @@
 
     openTestModalBtn?.addEventListener('click', () => {
       testModal?.classList.add('active');
+      window.lockBodyScroll();
       if (typeof window.triggerFairyInterrupted === 'function') {
         window.triggerFairyInterrupted();
       }
@@ -5303,6 +5549,7 @@
 
     closeTestModalBtn?.addEventListener('click', () => {
       testModal?.classList.remove('active');
+      window.unlockBodyScroll();
     });
 
     testModal?.addEventListener('click', (e) => {
@@ -5388,7 +5635,7 @@
           }
         }
         if (this.ctx && this.ctx.state === 'suspended') {
-          this.ctx.resume();
+          this.ctx.resume().catch(e => console.warn("Audio resume blocked:", e));
         }
       }
 
@@ -5433,7 +5680,7 @@
           this.init();
           if (!this.ctx || !this.masterGain) return;
           if (this.ctx.state === 'suspended') {
-            this.ctx.resume();
+            this.ctx.resume().catch(e => console.warn("Audio resume blocked:", e));
           }
           if (force && this.masterGain.gain.value < 0.1) {
             this.masterGain.gain.setValueAtTime(1.0, this.ctx.currentTime);
@@ -5502,7 +5749,7 @@
           this.init();
           if (!this.ctx || !this.masterGain) return;
           if (this.ctx.state === 'suspended') {
-            this.ctx.resume();
+            this.ctx.resume().catch(e => console.warn("Audio resume blocked:", e));
           }
           if (force && this.masterGain.gain.value < 0.1) {
             this.masterGain.gain.setValueAtTime(1.0, this.ctx.currentTime);
@@ -5584,6 +5831,7 @@
 
     const openSoundModal = () => {
       soundModal?.classList.add('active');
+      window.lockBodyScroll();
       if (typeof window.triggerFairyInterrupted === 'function') {
         window.triggerFairyInterrupted();
       }
@@ -5591,6 +5839,7 @@
 
     const closeSoundModal = () => {
       soundModal?.classList.remove('active');
+      window.unlockBodyScroll();
     };
     window.closeSoundModal = closeSoundModal;
 
@@ -5801,8 +6050,15 @@
     // ─── BACK TO TOP BUTTON ───────────────────────────
     const backToTopBtn = document.getElementById('back-to-top-btn');
     if (backToTopBtn) {
+      let bttScrollTicking = false;
       window.addEventListener('scroll', () => {
-        backToTopBtn.classList.toggle('visible', window.scrollY > 400);
+        if (!bttScrollTicking) {
+          window.requestAnimationFrame(() => {
+            backToTopBtn.classList.toggle('visible', window.scrollY > 400);
+            bttScrollTicking = false;
+          });
+          bttScrollTicking = true;
+        }
       }, { passive: true });
 
       backToTopBtn.addEventListener('click', () => {
@@ -6026,6 +6282,7 @@
 
     function openLocationModal() {
       locationModalBackdrop?.classList.add('open');
+      window.lockBodyScroll();
       if (typeof window.triggerFairyInterrupted === 'function') {
         window.triggerFairyInterrupted();
       }
@@ -6034,6 +6291,7 @@
 
     function closeLocationModal() {
       locationModalBackdrop?.classList.remove('open');
+      window.unlockBodyScroll();
     }
     window.closeLocationModal = closeLocationModal;
 
@@ -6186,6 +6444,35 @@
 
     let activeModalProduct = null;
 
+    if (modalColorSwatches) {
+      modalColorSwatches.addEventListener('click', (e) => {
+        const swatch = e.target.closest('.color-dot');
+        if (!swatch) return;
+        modalColorSwatches.querySelectorAll('.color-dot').forEach(s => s.classList.remove('active'));
+        swatch.classList.add('active');
+        const newTitle = swatch.getAttribute('title') || '';
+        const newImg = swatch.getAttribute('data-img');
+        if (modalColorLabel) modalColorLabel.textContent = newTitle;
+        if (modalProductImg && newImg) modalProductImg.src = newImg;
+        if (activeModalProduct) {
+          activeModalProduct.selectedColor = newTitle;
+          if (newImg) activeModalProduct.img = newImg;
+        }
+      });
+    }
+
+    if (modalSizePills) {
+      modalSizePills.addEventListener('click', (e) => {
+        const pill = e.target.closest('.size-pill');
+        if (!pill) return;
+        modalSizePills.querySelectorAll('.size-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        const newSize = pill.textContent.trim();
+        if (modalSizeLabel) modalSizeLabel.textContent = newSize;
+        if (activeModalProduct) activeModalProduct.selectedSize = newSize;
+      });
+    }
+
     window.openProductModalFromCard = function(triggerEl) {
       const card = triggerEl.closest('.merch-card, .merch-page-card');
       if (!card) return;
@@ -6227,20 +6514,6 @@
           }).join('');
 
           if (modalColorLabel) modalColorLabel.textContent = activeModalProduct.selectedColor || 'Classic';
-
-          // Swatch click inside modal
-          modalColorSwatches.querySelectorAll('.color-dot').forEach(swatch => {
-            swatch.addEventListener('click', () => {
-              modalColorSwatches.querySelectorAll('.color-dot').forEach(s => s.classList.remove('active'));
-              swatch.classList.add('active');
-              const newTitle = swatch.getAttribute('title') || '';
-              const newImg = swatch.getAttribute('data-img');
-              if (modalColorLabel) modalColorLabel.textContent = newTitle;
-              if (modalProductImg && newImg) modalProductImg.src = newImg;
-              activeModalProduct.selectedColor = newTitle;
-              activeModalProduct.img = newImg;
-            });
-          });
         } else {
           modalColorSection.style.display = 'none';
         }
@@ -6257,16 +6530,6 @@
           }).join('');
 
           if (modalSizeLabel) modalSizeLabel.textContent = activeModalProduct.selectedSize;
-
-          modalSizePills.querySelectorAll('.size-pill').forEach(pill => {
-            pill.addEventListener('click', () => {
-              modalSizePills.querySelectorAll('.size-pill').forEach(p => p.classList.remove('active'));
-              pill.classList.add('active');
-              const newSize = pill.textContent.trim();
-              if (modalSizeLabel) modalSizeLabel.textContent = newSize;
-              activeModalProduct.selectedSize = newSize;
-            });
-          });
         } else {
           modalSizeSection.style.display = 'none';
         }
@@ -6339,6 +6602,7 @@
     function openCart() {
       cartDrawer?.classList.add('active');
       cartOverlay?.classList.add('active');
+      window.lockBodyScroll();
       if (typeof window.triggerFairyInterrupted === 'function') {
         window.triggerFairyInterrupted();
       }
@@ -6348,6 +6612,7 @@
     function closeCart() {
       cartDrawer?.classList.remove('active');
       cartOverlay?.classList.remove('active');
+      window.unlockBodyScroll();
     }
 
     cartToggles.forEach(btn => btn.addEventListener('click', openCart));
@@ -6409,14 +6674,14 @@
       if (!window.cartState[idx]) return;
       window.cartState[idx].qty += delta;
       if (window.cartState[idx].qty <= 0) {
-        window.cartState.splice(idx, 1);
+        window.cartState = window.cartState.filter((_, i) => i !== idx);
       }
       updateCartUI();
     };
 
     window.removeCartItem = function(idx) {
       if (!window.cartState[idx]) return;
-      window.cartState.splice(idx, 1);
+      window.cartState = window.cartState.filter((_, i) => i !== idx);
       updateCartUI();
     };
 
@@ -6439,11 +6704,13 @@
       cartDrawer?.classList.remove('active');
       cartOverlay?.classList.remove('active');
       checkoutModal?.classList.add('active');
+      window.lockBodyScroll(); // Cart drawer is closed, so we need to add a new lock
       if (window.celestialAudio) window.celestialAudio.playChime(639);
     });
 
     closeCheckoutBtn?.addEventListener('click', () => {
       checkoutModal?.classList.remove('active');
+      window.unlockBodyScroll();
     });
 
     checkoutModal?.addEventListener('click', (e) => {
@@ -6633,6 +6900,10 @@
       let animId = null;
 
       function renderCrystalBall(now) {
+        if (document.hidden) {
+          requestAnimationFrame(renderCrystalBall);
+          return;
+        }
         ctx.clearRect(0, 0, cw, ch);
 
         // Continuous planetary rotation like Earth
@@ -6656,7 +6927,7 @@
         ctx.save();
         ctx.beginPath();
         ctx.arc(cx, cy, sphereRadius, 0, Math.PI * 2);
-        ctx.clip(); // Constrain internal 3D elements inside sphere
+        ctx.clip(); // Safe: CSS border-radius removed from #preloader-eye-canvas
 
         // Base Deep Cosmos Glass Gradient
         const cosmosGrad = ctx.createRadialGradient(cx, cy - sphereRadius * 0.2, 0, cx, cy, sphereRadius);
@@ -6798,6 +7069,8 @@
         ctx.arc(cx, cy, sphereRadius, 0, Math.PI * 2);
         ctx.stroke();
         ctx.restore();
+
+        ctx.restore(); // End outer save from line 6644
 
         if (!reduceMotion() && isCrystalBallVisible) {
           animId = requestAnimationFrame(renderCrystalBall);
@@ -7672,6 +7945,7 @@
           readingModal.hidden = false;
           readingModal.classList.remove('is-results-mode');
           readingModal.classList.add('active', 'is-scanning-mode');
+          // window.lockBodyScroll(); removed per user request
         }
 
         // 2. Measure exact live portal position inside the card
@@ -7729,6 +8003,7 @@
         if (readingModal) {
           readingModal.hidden = true;
           readingModal.classList.remove('active', 'is-scanning-mode', 'is-results-mode');
+          // window.unlockBodyScroll(); removed per user request
         }
         if (startBtn) {
           startBtn.classList.remove('is-scanning');
@@ -8172,7 +8447,7 @@
     // ─── PERSISTENT aEYE SACRED GUIDE (Photorealistic Purple Eye + Site Search) ───
     function initSacredAssistant() {
       const widget = document.getElementById('sacred-assistant-widget');
-      const avatarBtn = cachedDOM.aeyeWidget;
+      const avatarBtn = document.getElementById('assistant-avatar-btn');
       const avatarCanvas = document.getElementById('assistant-avatar-canvas');
       const bubble = document.getElementById('assistant-speech-bubble');
       const bubbleText = document.getElementById('assistant-bubble-text');
@@ -8236,15 +8511,36 @@
         if (!modal) return;
         if (modal.classList.contains('active')) {
           modal.classList.remove('active');
-          if (typeof window.triggerFairyMenuDiveBack === 'function') {
+          window.unlockBodyScroll();
+          // Only trigger fairy dive-back if she's actually in a menu flight state
+          const currentState = window.heroTinkerbell?.state || '';
+          if (currentState.startsWith('MENU_') && typeof window.triggerFairyMenuDiveBack === 'function') {
             window.triggerFairyMenuDiveBack();
+          }
+          // FAILSAFE: Always restore widget interactivity after modal close,
+          // even if the fairy flight animation doesn't complete perfectly.
+          const aeyeBtn = document.getElementById('assistant-avatar-btn');
+          if (aeyeBtn) {
+            setTimeout(() => {
+              aeyeBtn.style.opacity = '1';
+              aeyeBtn.style.pointerEvents = 'auto';
+            }, 800);
+          }
+          const sacredWidget = document.getElementById('sacred-assistant-widget');
+          if (sacredWidget) {
+            setTimeout(() => {
+              sacredWidget.classList.remove('aeye-in-flight');
+              if (!sacredWidget.classList.contains('visible')) {
+                sacredWidget.classList.add('visible');
+              }
+            }, 800);
           }
         }
       };
 
       // Open Modal on Avatar Click with fairy flight takeoff
       avatarBtn?.addEventListener('click', () => {
-        console.log('[DEBUG] aEye Avatar Button Clicked!');
+        
         if (!modal) return;
         if (typeof window.triggerFairyInterrupted === 'function') {
           window.triggerFairyInterrupted();
@@ -8254,6 +8550,8 @@
           window.triggerFairyMenuTakeoff();
         }
         if (window.celestialAudio) window.celestialAudio.playChime(852, 1.2);
+            // showBethSpeechBubble("I'M SO GLAD YOU'RE HERE!", heroTinkerbell.x, heroTinkerbell.y, 'bottom'); // User explicitly removed this bubble
+
         // Focus search input
         setTimeout(() => searchInput?.focus(), 300);
       });
@@ -8373,7 +8671,7 @@
       }
 
       // Checkout Modal
-      const checkoutBackdrop = document.getElementById('checkout-modal-backdrop');
+      const checkoutBackdrop = document.getElementById('checkout-modal');
       if (checkoutBackdrop) {
         checkoutBackdrop.addEventListener('click', (e) => {
           if (e.target === checkoutBackdrop) {
@@ -8387,10 +8685,23 @@
       // Photorealistic Living Cosmic Eye that randomly looks around, blinks, and follows cursor
       if (avatarCanvas) {
         const eyeCtx = avatarCanvas.getContext('2d');
-        const eyeW = avatarCanvas.width;
-        const eyeH = avatarCanvas.height;
-        const eyeCenterX = eyeW * 0.5;
-        const eyeCenterY = eyeH * 0.5;
+        let baseW = 76;
+        let baseH = 76;
+
+        function resizeSacredEye() {
+          const dpr = Math.min(window.devicePixelRatio || 1, 2);
+          const rect = avatarCanvas.getBoundingClientRect();
+          baseW = rect.width || 76;
+          baseH = rect.height || 76;
+          avatarCanvas.width = baseW * dpr;
+          avatarCanvas.height = baseH * dpr;
+          if (eyeCtx && eyeCtx.setTransform) {
+            eyeCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          }
+        }
+        resizeSacredEye();
+        window.addEventListener('resize', resizeSacredEye, { passive: true });
+        window.addEventListener('orientationchange', () => setTimeout(resizeSacredEye, 120), { passive: true });
 
         // Eye state variables
         let currentIrisX = 0;
@@ -8408,90 +8719,126 @@
         let lastMouseMoveTime = 0;
 
         // Listen for mouse movement across the viewport
-        window.addEventListener('mousemove', (e) => {
-          mouseX = e.clientX;
-          mouseY = e.clientY;
+        const handleSacredEyeMove = (e) => {
+          mouseX = e.touches ? e.touches[0].clientX : e.clientX;
+          mouseY = e.touches ? e.touches[0].clientY : e.clientY;
           lastMouseMoveTime = performance.now();
-        }, { passive: true });
+        };
+        window.addEventListener('mousemove', handleSacredEyeMove, { passive: true });
+        window.addEventListener('touchmove', handleSacredEyeMove, { passive: true });
+
+        let hiddenStartTime = 0;
+        let lastStaticPaint = 0;
+        let eyeIsVisible = false;
+        const eyeObserver = new IntersectionObserver((entries) => { eyeIsVisible = entries[0].isIntersecting; });
+        const eyeCanvasEl = document.getElementById('sacred-eye-canvas');
+        if (eyeCanvasEl) eyeObserver.observe(eyeCanvasEl);
 
         function updateAndRenderSacredEye(now) {
-          if (!eyeCtx) return;
-          const aw = avatarCanvas.width;
-          const ah = avatarCanvas.height;
-          const acx = aw * 0.5;
-          const acy = ah * 0.5;
+          try {
+            if (!eyeCtx || (!eyeIsVisible && window.scrollY > 1500)) return;
+            const aw = baseW;
+            const ah = baseH;
+            const acx = aw * 0.5;
+            const acy = ah * 0.5;
 
-          // Hide home base eye when the living aEYE is in flight elsewhere
-          const tinkState = (window.heroTinkerbell && window.heroTinkerbell.state) || '';
-          const menuState = (window.heroAeyeMenu && window.heroAeyeMenu.state) || 'IDLE';
-          const isHiddenState = (menuState !== 'IDLE' || tinkState.startsWith('MENU_') || tinkState.startsWith('AURA_'));
-          
-          if (!isHiddenState) {
-            eyeCtx.clearRect(0, 0, aw, ah);
-            // 1. Mouse Tracking vs Autonomous Look-Around Saccades
-          const rect = avatarCanvas.getBoundingClientRect();
-          const canvasScreenCenterX = rect.left + rect.width * 0.5;
-          const canvasScreenCenterY = rect.top + rect.height * 0.5;
-          const timeSinceMouseMove = now - lastMouseMoveTime;
-          const isMouseActive = (timeSinceMouseMove < 2500 && mouseX > -100);
+            // Hide home base eye when the living aEYE is in flight elsewhere
+            const tinkState = (window.heroTinkerbell && window.heroTinkerbell.state) || '';
+            const menuState = (window.heroAeyeMenu && window.heroAeyeMenu.state) || 'IDLE';
+            const isHiddenState = (menuState !== 'IDLE' || tinkState.startsWith('MENU_') || tinkState.startsWith('AURA_'));
 
-          if (isMouseActive) {
-            const dx = mouseX - canvasScreenCenterX;
-            const dy = mouseY - canvasScreenCenterY;
-            const dist = Math.hypot(dx, dy);
-            const maxTravel = 6.5;
-            if (dist > 0.1) {
-              const travel = Math.min(maxTravel, dist * 0.025);
-              targetIrisX = (dx / dist) * travel;
-              targetIrisY = (dy / dist) * travel;
+            // Stuck-state watchdog
+            if (isHiddenState) {
+              if (hiddenStartTime === 0) hiddenStartTime = now;
+              else if (now - hiddenStartTime > 6000) {
+                // Recover stuck state
+                if (window.heroTinkerbell) window.heroTinkerbell.state = 'ASSISTANT_ACTIVE'; if (typeof window.restoreAeyeHomebase === 'function') window.restoreAeyeHomebase();
+                if (window.heroAeyeMenu) window.heroAeyeMenu.state = 'IDLE';
+                if (typeof window.restoreAeyeHomebase === 'function') window.restoreAeyeHomebase();
+                hiddenStartTime = 0;
+              }
+            } else {
+              hiddenStartTime = 0;
             }
-          } else {
-            if (now > nextLookShiftTime) {
-              const angles = [
-                { x: 0, y: 0 },
-                { x: -5.0, y: -1.2 },
-                { x: 5.0, y: -1.2 },
-                { x: 0, y: -4.0 },
-                { x: -3.0, y: 2.5 },
-                { x: 3.0, y: 2.5 },
-                { x: 0, y: 0 }
-              ];
-              const choice = angles[Math.floor(Math.random() * angles.length)];
-              targetIrisX = choice.x;
-              targetIrisY = choice.y;
-              nextLookShiftTime = now + 2200 + Math.random() * 2600;
+
+            if (!isHiddenState) {
+              if (typeof reduceMotion === 'function' && reduceMotion()) {
+                // Repaint one static open-eye frame roughly every 2000ms
+                if (now - lastStaticPaint > 2000) {
+                  eyeCtx.save(); eyeCtx.setTransform(1, 0, 0, 1, 0, 0); eyeCtx.clearRect(0, 0, eyeCtx.canvas.width, eyeCtx.canvas.height); eyeCtx.restore();
+                  drawOrganicEye(eyeCtx, acx, acy, aw * 0.41, 0, 0, 0, 8.5, ['#7B2CBF', '#9D4EDD', '#00FFC8'], now);
+                  lastStaticPaint = now;
+                }
+              } else {
+                eyeCtx.save(); eyeCtx.setTransform(1, 0, 0, 1, 0, 0); eyeCtx.clearRect(0, 0, eyeCtx.canvas.width, eyeCtx.canvas.height); eyeCtx.restore();
+                // 1. Mouse Tracking vs Autonomous Look-Around Saccades
+                const rect = avatarCanvas.getBoundingClientRect();
+                const canvasScreenCenterX = rect.left + rect.width * 0.5;
+                const canvasScreenCenterY = rect.top + rect.height * 0.5;
+                const timeSinceMouseMove = now - lastMouseMoveTime;
+                const isMouseActive = (timeSinceMouseMove < 2500 && mouseX > -100);
+
+                if (isMouseActive) {
+                  const dx = mouseX - canvasScreenCenterX;
+                  const dy = mouseY - canvasScreenCenterY;
+                  const dist = Math.hypot(dx, dy);
+                  const maxTravel = 6.5;
+                  if (dist > 0.1) {
+                    const travel = Math.min(maxTravel, dist * 0.025);
+                    targetIrisX = (dx / dist) * travel;
+                    targetIrisY = (dy / dist) * travel;
+                  }
+                } else {
+                  if (now > nextLookShiftTime) {
+                    const angles = [
+                      { x: 0, y: 0 },
+                      { x: -5.0, y: -1.2 },
+                      { x: 5.0, y: -1.2 },
+                      { x: 0, y: -4.0 },
+                      { x: -3.0, y: 2.5 },
+                      { x: 3.0, y: 2.5 },
+                      { x: 0, y: 0 }
+                    ];
+                    const choice = angles[Math.floor(Math.random() * angles.length)];
+                    targetIrisX = choice.x;
+                    targetIrisY = choice.y;
+                    nextLookShiftTime = now + 2200 + Math.random() * 2600;
+                  }
+                }
+
+                currentIrisX += (targetIrisX - currentIrisX) * 0.15;
+                currentIrisY += (targetIrisY - currentIrisY) * 0.15;
+
+                // 2. Organic Blinking
+                if (now > nextBlinkTime && !isBlinking) {
+                  isBlinking = true;
+                }
+                if (isBlinking) {
+                  blinkProgress += 0.20;
+                  if (blinkProgress >= 1.0) {
+                    blinkProgress = 1.0;
+                    isBlinking = false;
+                    const isDouble = Math.random() > 0.75;
+                    nextBlinkTime = now + (isDouble ? 280 : (3200 + Math.random() * 2800));
+                  }
+                } else if (blinkProgress > 0) {
+                  blinkProgress -= 0.20;
+                  if (blinkProgress < 0) blinkProgress = 0;
+                }
+
+                // 3. Render Unified Living Organic aEye (Almond Shape, Gold Rim & Couture Eyelashes)
+                const normGazeX = (currentIrisX / 6.5);
+                const normGazeY = (currentIrisY / 6.5);
+                const eyeRadius = aw * 0.41;
+                const colors = ['#7B2CBF', '#9D4EDD', '#00FFC8'];
+                drawOrganicEye(eyeCtx, acx, acy, eyeRadius, normGazeX, normGazeY, blinkProgress, 8.5, colors, now);
+              }
             }
+          } catch (e) {
+            console.warn("updateAndRenderSacredEye error:", e);
+          } finally {
+            requestAnimationFrame(updateAndRenderSacredEye);
           }
-
-          currentIrisX += (targetIrisX - currentIrisX) * 0.15;
-          currentIrisY += (targetIrisY - currentIrisY) * 0.15;
-
-          // 2. Organic Blinking
-          if (now > nextBlinkTime && !isBlinking) {
-            isBlinking = true;
-          }
-          if (isBlinking) {
-            blinkProgress += 0.20;
-            if (blinkProgress >= 1.0) {
-              blinkProgress = 1.0;
-              isBlinking = false;
-              const isDouble = Math.random() > 0.75;
-              nextBlinkTime = now + (isDouble ? 280 : (3200 + Math.random() * 2800));
-            }
-          } else if (blinkProgress > 0) {
-            blinkProgress -= 0.20;
-            if (blinkProgress < 0) blinkProgress = 0;
-          }
-
-          // 3. Render Unified Living Organic aEye (Almond Shape, Gold Rim & Couture Eyelashes)
-          const normGazeX = (currentIrisX / 6.5);
-          const normGazeY = (currentIrisY / 6.5);
-          const eyeRadius = 31.0;
-          const colors = ['#7B2CBF', '#9D4EDD', '#00FFC8'];
-          drawOrganicEye(eyeCtx, acx, acy, eyeRadius, normGazeX, normGazeY, blinkProgress, 8.5, colors, now);
-          } // End if (!isHiddenState)
-
-          if (!reduceMotion()) requestAnimationFrame(updateAndRenderSacredEye);
         }
 
         requestAnimationFrame(updateAndRenderSacredEye);
@@ -8503,8 +8850,18 @@
         avatarBtn?.classList.add('splash-active');
         setTimeout(() => avatarBtn?.classList.remove('splash-active'), 1500);
         
-        tipIndex = 0;
-        showThoughtBubble();
+        const thoughtBubble = document.getElementById('assistant-speech-bubble');
+        const bubbleTxt = document.getElementById('assistant-bubble-text');
+        if (thoughtBubble && bubbleTxt) {
+          thoughtBubble.classList.remove('hidden', 'fading');
+          thoughtBubble.style.opacity = '1';
+          thoughtBubble.style.transform = 'translateY(0)';
+          bubbleTxt.innerHTML = "✦ HI, I'M YOUR <span class=\"aeye-brand\"><span class=\"aeye-a\">a</span><span class=\"aeye-eye\">EYE</span></span> ASSISTANT. CLICK ME FOR ANY HELP YOU NEED. ✦";
+          setTimeout(() => {
+            thoughtBubble.classList.add('fading');
+            setTimeout(() => thoughtBubble.classList.add('hidden'), 500);
+          }, 4500);
+        }
 
         if (window.celestialAudio) window.celestialAudio.playChime(963, 1.8);
       };
@@ -8516,15 +8873,32 @@
       const revealWidget = () => {
         if (!widget.classList.contains('visible')) {
           widget.classList.add('visible');
-          tipIndex = 0;
-          showThoughtBubble();
+          if (avatarBtn) {
+            avatarBtn.style.opacity = '1';
+            avatarBtn.style.pointerEvents = 'auto';
+            avatarBtn.classList.remove('splash-active');
+            void avatarBtn.offsetWidth;
+            avatarBtn.classList.add('splash-active');
+          }
+          const thoughtBubble = document.getElementById('assistant-speech-bubble');
+        const bubbleTxt = document.getElementById('assistant-bubble-text');
+        if (thoughtBubble && bubbleTxt) {
+          thoughtBubble.classList.remove('hidden', 'fading');
+          thoughtBubble.style.opacity = '1';
+          thoughtBubble.style.transform = 'translateY(0)';
+          bubbleTxt.innerHTML = "✦ HI, I'M YOUR <span class=\"aeye-brand\"><span class=\"aeye-a\">a</span><span class=\"aeye-eye\">EYE</span></span> ASSISTANT. CLICK ME FOR ANY HELP YOU NEED. ✦";
+          setTimeout(() => {
+            thoughtBubble.classList.add('fading');
+            setTimeout(() => thoughtBubble.classList.add('hidden'), 500);
+          }, 4500);
+        }
         }
       };
 
       // With reduced motion the fairy never flies, so nothing would ever hand
       // the assistant over. Show it straight away instead of after the wait.
       if (reduceMotion()) setTimeout(revealWidget, 600);
-      else setTimeout(revealWidget, 48000);
+      // removed hardcoded 16s reveal fallback so it strictly waits for Beths dive
     }
 
     // ─── DYNAMIC EXPIRING EVENTS COUNTDOWN & MANAGEMENT ────────
@@ -8584,9 +8958,9 @@
           }
         }
 
-        // 2. Assistant Modal
+        // 2. Assistant Modal (FIXED: .assistant-modal-content → .assistant-modal-card)
         const assistantModal = document.getElementById('assistant-modal');
-        if (assistantModal && assistantModal.classList.contains('active') && !target.closest('.assistant-modal-content') && !target.closest('.assistant-card') && !target.closest('#assistant-avatar-btn')) {
+        if (assistantModal && assistantModal.classList.contains('active') && !target.closest('.assistant-modal-card') && !target.closest('.assistant-link-card') && !target.closest('#assistant-avatar-btn')) {
           if (typeof window.closeAssistantModal === 'function') {
             window.closeAssistantModal();
           }
@@ -8594,35 +8968,37 @@
 
         // 3. Sound Modal
         const soundModal = document.getElementById('sound-modal');
-        if (soundModal && soundModal.classList.contains('active') && !target.closest('.sound-modal-card') && !target.closest('#nav-sound-btn') && !target.closest('#mobile-sound-btn')) {
+        if (soundModal && soundModal.classList.contains('active') && !target.closest('.sound-modal-card') && !target.closest('#open-sound-modal-btn') && !target.closest('#open-sound-modal-mobile-btn')) {
           if (typeof window.closeSoundModal === 'function') {
             window.closeSoundModal();
           }
         }
 
-        // 4. Location Modal
+        // 4. Location Modal (FIXED: .location-modal-card → .location-modal)
         const locModal = document.getElementById('location-modal-backdrop');
-        if (locModal && locModal.classList.contains('open') && !target.closest('.location-modal-card') && !target.closest('#hero-location-badge')) {
+        if (locModal && locModal.classList.contains('open') && !target.closest('.location-modal') && !target.closest('#hero-location-badge')) {
           if (typeof window.closeLocationModal === 'function') {
             window.closeLocationModal();
           }
         }
 
-        // 5. Testimonial Modal
+        // 5. Testimonial Modal (FIXED: .modal__card → .modal-card)
         const testModal = document.getElementById('testimonial-modal');
-        if (testModal && testModal.classList.contains('active') && !target.closest('.modal__card') && !target.closest('#open-testimonial-modal-btn')) {
+        if (testModal && testModal.classList.contains('active') && !target.closest('.modal-card') && !target.closest('#open-testimonial-modal-btn')) {
           testModal.classList.remove('active');
+          window.unlockBodyScroll();
         }
 
-        // 6. Product Modal
+        // 6. Product Modal (FIXED: .product-modal-card → .product-modal-container)
         const prodModal = document.getElementById('product-modal-backdrop');
-        if (prodModal && prodModal.classList.contains('open') && !target.closest('.product-modal-card') && !target.closest('.merch__card')) {
+        if (prodModal && prodModal.classList.contains('open') && !target.closest('.product-modal-container') && !target.closest('.merch-card') && !target.closest('.merch-card__quickview-btn')) {
           prodModal.classList.remove('open');
+          window.unlockBodyScroll();
         }
 
-        // 7. Cart Drawer
+        // 7. Cart Drawer (FIXED: checked 'active' class)
         const cartDrawer = document.getElementById('cart-drawer');
-        if (cartDrawer && cartDrawer.classList.contains('open') && !target.closest('.cart-drawer') && !target.closest('.nav__cart-btn') && !target.closest('.nav__cart-btn-mobile') && !target.closest('.merch__btn')) {
+        if (cartDrawer && cartDrawer.classList.contains('active') && !target.closest('.cart-drawer') && !target.closest('.nav__cart-btn') && !target.closest('.nav__cart-btn-mobile') && !target.closest('.merch-card__btn')) {
           if (typeof window.closeCart === 'function') {
             window.closeCart();
           }
@@ -8632,12 +9008,13 @@
         const checkoutModal = document.getElementById('checkout-modal');
         if (checkoutModal && checkoutModal.classList.contains('active') && !target.closest('.checkout-modal-card') && !target.closest('#cart-checkout-btn')) {
           checkoutModal.classList.remove('active');
+          window.unlockBodyScroll();
         }
 
         // 9. Mobile Nav
         const mobileNav = document.getElementById('mobile-nav');
         const hamburger = document.getElementById('nav-hamburger');
-        if (mobileNav && mobileNav.classList.contains('active') && !target.closest('.mobile-nav') && !target.closest('#nav-hamburger')) {
+        if (mobileNav && mobileNav.classList.contains('active') && !target.closest('#mobile-nav') && !target.closest('#nav-hamburger')) {
           mobileNav.classList.remove('active');
           hamburger?.classList.remove('active');
           hamburger?.setAttribute('aria-expanded', 'false');

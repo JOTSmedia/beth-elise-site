@@ -67,7 +67,7 @@
 
   /* ✦ Layout */
   --section-pad: 5.5rem 2rem;
-  --nav-height: 80px;
+  --nav-height: 56px;
   --indigo-deep: #1F0038;
   --indigo-medium: #2D0052;
   --tiffany: #00E5D4;
@@ -1782,44 +1782,34 @@ p {
 
 .nav__links a {
   font-family: var(--font-sans);
-  font-size: 1.02rem;
+  font-size: 0.9rem;
   font-weight: 800;
-  letter-spacing: 0.09em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: #FFFFFF !important;
   position: relative;
-  padding: 0.5rem 1.05rem;
-  border-radius: var(--radius-pill);
+  padding: 0.2rem 0.5rem;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
-  background: rgba(255, 255, 255, 0.06);
-  border: 1.5px solid rgba(0, 229, 212, 0.35);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
   white-space: nowrap;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
 }
 
 .nav__links a:hover,
 .nav__links a.active {
   color: #FFFFFF !important;
   text-shadow: 0 0 14px #00E5D4, 0 0 28px #00FFC8, 0 0 40px rgba(0, 229, 212, 0.95) !important;
-  background: rgba(0, 229, 212, 0.28);
-  border-color: #00FFC8;
   transform: translateY(-2px);
-  box-shadow: 0 0 25px rgba(0, 229, 212, 0.6), 0 6px 20px rgba(0, 0, 0, 0.5);
 }
 
 .nav__links a::after {
   content: '';
   position: absolute;
-  bottom: 3px; left: 50%;
+  bottom: -4px; left: 50%;
   transform: translateX(-50%);
-  width: 0; height: 2px;
-  background: var(--gradient-cta);
-  border-radius: 2px;
+  width: 0; height: 1.5px;
+  background: #00FFC8;
   transition: width 0.3s ease;
-  box-shadow: 0 0 10px #00E5D4;
+  box-shadow: 0 0 8px #00E5D4;
 }
 
 .nav__links a:hover::after,
@@ -1951,7 +1941,7 @@ p {
 }
 
 @media (max-width: 992px) {
-  :root { --nav-height: 72px; }
+  :root { --nav-height: 60px; }
   .nav__links { display: none; }
   .nav__cta .btn-inquire { display: none; }
   .nav__hamburger { display: flex; }
@@ -2177,6 +2167,7 @@ p {
 }
 
 .hero__tagline-pill {
+  margin-top: -30px;
   display: inline-flex;
   align-items: center;
   gap: 0.6rem;
@@ -2197,6 +2188,7 @@ p {
 }
 
 .hero__lead {
+  margin-top: 30px;
   font-family: var(--font-body);
   font-size: clamp(1.15rem, 2.5vw, 1.35rem);
   font-weight: 600;
@@ -3208,6 +3200,7 @@ p {
 }
 
 .chakra-hotspot-node {
+  pointer-events: auto;
   position: absolute;
   left: 50%;
   top: 50%;
@@ -4535,6 +4528,7 @@ p {
   height: 280px;
   margin: 0 auto;
   display: flex;
+  border-radius: 50%;
   align-items: center;
   justify-content: center;
   cursor: pointer;
@@ -4584,7 +4578,6 @@ p {
   width: 280px;
   height: 280px;
   display: block;
-  border-radius: 50%;
   filter: drop-shadow(0 0 32px rgba(0, 229, 212, 0.85)) drop-shadow(0 0 55px rgba(199, 125, 255, 0.65)) drop-shadow(0 0 80px rgba(255, 215, 0, 0.45));
   transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s ease;
   user-select: none;
@@ -6081,7 +6074,7 @@ p {
 @media (max-width: 768px) {
   :root {
     --section-pad: 3rem 1.25rem;
-    --nav-height: 70px;
+    --nav-height: 60px;
   }
   .nav { padding: 0 1.25rem; }
   .nav__links { display: none; }
@@ -6123,6 +6116,7 @@ p {
     margin: clamp(0.15rem, 0.5vh, 0.4rem) auto clamp(0.35rem, 1.0vh, 0.85rem) !important;
   }
   .hero__tagline-pill {
+    margin-top: -15px !important;
     font-size: clamp(0.70rem, 2.2vw, 0.82rem) !important;
     padding: clamp(0.28rem, 0.7vh, 0.42rem) clamp(0.75rem, 2.5vw, 1.25rem) !important;
     margin-bottom: clamp(0.35rem, 1.0vh, 0.75rem) !important;
@@ -6130,6 +6124,7 @@ p {
     letter-spacing: clamp(0.08em, 0.3vw, 0.15em) !important;
   }
   .hero__lead {
+    margin-top: 15px !important;
     font-size: clamp(0.85rem, 2.4vw, 1.05rem) !important;
     line-height: clamp(1.42, 3.8vw, 1.62) !important;
     max-width: min(90vw, 560px) !important;
@@ -6246,12 +6241,14 @@ p {
     margin: clamp(0.10rem, 0.4vh, 0.3rem) auto clamp(0.25rem, 0.8vh, 0.65rem) !important;
   }
   .hero__tagline-pill {
+    margin-top: -10px !important;
     font-size: clamp(0.66rem, 2.1vw, 0.74rem) !important;
     padding: clamp(0.25rem, 0.6vh, 0.35rem) clamp(0.65rem, 2.2vw, 0.95rem) !important;
     letter-spacing: clamp(0.06em, 0.25vw, 0.12em) !important;
     margin-bottom: clamp(0.25rem, 0.8vh, 0.55rem) !important;
   }
   .hero__lead {
+    margin-top: 10px !important;
     font-size: clamp(0.82rem, 2.3vw, 0.90rem) !important;
     line-height: clamp(1.40, 3.6vw, 1.52) !important;
     margin-bottom: clamp(0.55rem, 1.5vh, 1.05rem) !important;

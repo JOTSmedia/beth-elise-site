@@ -1,0 +1,1076 @@
+n1790:        */
+1791:       function beatWing(ctx, img, pivotSrc, beat, mirrored) {
+1792:         if (!img.complete || !img.naturalWidth) return;
+1793:         const p = avLocal(pivotSrc);
+1794:         const dir = mirrored ? -1 : 1;
+1795:         // Primary flap + secondary gossamer flutter harmonic
+1796:         const microFlutter = 0.045 * Math.sin(beat * 2.5);
+1797:         const tilt = dir * (-0.16 + 0.32 * (0.5 + 0.5 * beat) + microFlutter);
+1798:         const spread = 0.82 + 0.28 * (0.5 + 0.5 * beat);
+1799: 
+1800:         ctx.save();
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.
+"}
+{"step_index":392,"source":"MODEL","type":"PLANNER_RESPONSE","status":"DONE","created_at":"2026-08-21T21:50:33Z","tool_calls":[{"name":"replace_file_content","args":{"AllowMultiple":false,"Description":"Implement supermodel human leg anatomy and fluid wave cloth physics for dress train in main.js","EndLine":1786,"Instruction":"Update gait, drawLeg, and drawTrain with supermodel human leg contours and liquid silk chiffon wave physics","ReplacementContent":"      /** Hip and knee kinematics for realistic high-fashion supermodel catwalk */
+      function gait(phase) {
+        // Standardized runway catwalk cycle 0..2pi
+        const p = ((phase % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+
+        // Hip swing: graceful stride (+0.28 forward, -0.24 back)
+        const hip = 0.28 * Math.sin(p);
+
+        // Knee kinematics (Human Catwalk):
+        // Stance phase (0 to pi): leg is straight, bearing weight naturally.
+        // Swing phase (pi to 2pi): knee flexes gently backwards to lift foot over ground (max 0.36 rad).
+        let knee = 0;
+        if (p > Math.PI && p < Math.PI * 1.92) {
+          const swingProg = (p - Math.PI) / (Math.PI * 0.92);
+          knee = 0.36 * Math.sin(swingProg * Math.PI);
+        }
+
+        // Ankle points gracefully in high-heel arch
+        const ankle = 0.10 * Math.sin(p);
+
+        return { hip, knee, ankle };
+      }
+
+      function drawLeg(ctx, hipSrc, phase, tone, shoeFill) {
+        const hp = avLocal(hipSrc);
+        const thigh = THIGH_LEN * AV_K;
+        const shin = SHIN_LEN * AV_K;
+        const a = gait(phase);
+
+        // Calculate joint positions in world-local space
+        const kneeX = hp.x + Math.sin(a.hip) * thigh;
+        const kneeY = hp.y + Math.cos(a.hip) * thigh;
+        const shinAng = a.hip - a.knee;
+        const ankX = kneeX + Math.sin(shinAng) * shin;
+        const ankY = kneeY + Math.cos(shinAng) * shin;
+
+        ctx.save();
+
+        // 1. Draw Thigh (smooth contoured feminine cylinder from hip to knee)
+        const hipWidth = 22 * AV_K;
+        const kneeWidth = 14 * AV_K;
+        const perpThighX = Math.cos(a.hip);
+        const perpThighY = -Math.sin(a.hip);
+
+        ctx.fillStyle = tone.thigh;
+        ctx.beginPath();
+        ctx.moveTo(hp.x - perpThighX * hipWidth, hp.y - perpThighY * hipWidth);
+        ctx.lineTo(hp.x + perpThighX * hipWidth, hp.y + perpThighY * hipWidth);
+        ctx.lineTo(kneeX + perpThighX * kneeWidth, kneeY + perpThighY * kneeWidth);
+        ctx.lineTo(kneeX - perpThighX * kneeWidth, kneeY - perpThighY * kneeWidth);
+        ctx.closePath();
+        ctx.fill();
+
+        // 2. Draw Calf & Shin (graceful anatomical curve tapering to slender ankle)
+        const ankWidth = 9 * AV_K;
+        const perpShinX = Math.cos(shinAng);
+        const perpShinY = -Math.sin(shinAng);
+
+        const midCalfX = (kneeX + ankX) * 0.5;
+        const midCalfY = (kneeY + ankY) * 0.5;
+        const calfBulge = 16 * AV_K;
+
+        ctx.fillStyle = tone.shin;
+        ctx.beginPath();
+        ctx.moveTo(kneeX - perpShinX * kneeWidth, kneeY - perpShinY * kneeWidth);
+        // Shin front (straight/smooth)
+        ctx.lineTo(ankX - perpShinX * ankWidth, ankY - perpShinY * ankWidth);
+        ctx.lineTo(ankX + perpShinX * ankWidth, ankY + perpShinY * ankWidth);
+        // Calf back (graceful muscular curve)
+        ctx.quadraticCurveTo(
+          midCalfX + perpShinX * calfBulge,
+          midCalfY + perpShinY * calfBulge,
+          kneeX + perpShinX * kneeWidth,
+          kneeY + perpShinY * kneeWidth
+        );
+        ctx.closePath();
+        ctx.fill();
+
+        // 3. High-Fashion Pointed Stiletto Pump
+        ctx.translate(ankX, ankY);
+        ctx.rotate(shinAng * 0.35 + a.ankle);
+
+        // Shoe body
+        ctx.fillStyle = shoeFill;
+        ctx.beginPath();
+        ctx.moveTo(-9 * AV_K, -4 * AV_K); // Heel counter
+        ctx.lineTo(6 * AV_K, 0);          // Ankle front
+        ctx.quadraticCurveTo(26 * AV_K, 12 * AV_K, 30 * AV_K, 22 * AV_K); // Instep to pointed toe
+        ctx.lineTo(15 * AV_K, 22 * AV_K); // Ball of foot
+        ctx.quadraticCurveTo(0, 12 * AV_K, -8 * AV_K, 10 * AV_K); // Arch
+        ctx.closePath();
+        ctx.fill();
+
+        // Sleek Stiletto Heel
+        ctx.strokeStyle = shoeFill;
+        ctx.lineWidth = 3.5 * AV_K;
+        ctx.beginPath();
+        ctx.moveTo(-6 * AV_K, 10 * AV_K);
+        ctx.lineTo(-8 * AV_K, 24 * AV_K);
+        ctx.stroke();
+
+        // Starlight glint on shoe
+        ctx.fillStyle = '#FFD700';
+        ctx.beginPath();
+        ctx.arc(8 * AV_K, 3 * AV_K, 2 * AV_K, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      /**
+       * Flowing liquid silk chiffon dress train.
+       * Drapes naturally and ripples in smooth traveling waves following the hips
+       * instead of rotating as a rigid stick.
+       */
+      function drawTrain(ctx, walkPhase, isWalking, drift) {
+        if (!imgTrain.complete || !imgTrain.naturalWidth) return;
+        const p = avLocal(PIV_TRAIN);
+        
+        ctx.save();
+        const numSlices = 7;
+        const sliceH = AV_DRAW / numSlices;
+        const srcSliceH = imgTrain.naturalHeight / numSlices;
+
+        for (let i = 0; i < numSlices; i++) {
+          const lag = i * 0.35;
+          const wave = isWalking
+            ? Math.sin(walkPhase - 0.8 - lag) * (i * 1.8 * AV_K)
+            : Math.sin(drift * 0.5 - lag) * (i * 0.8 * AV_K);
+          
+          const sliceBillow = 1 + (i / numSlices) * 0.06 * Math.sin(walkPhase - lag);
+
+          ctx.save();
+          ctx.translate(p.x + wave, p.y);
+          ctx.scale(sliceBillow, 1);
+          ctx.translate(-p.x, -p.y);
+
+          ctx.drawImage(
+            imgTrain,
+            0, i * srcSliceH, imgTrain.naturalWidth, srcSliceH,
+            AV_OX, AV_OY + i * sliceH, AV_DRAW, sliceH + 0.5
+          );
+          ctx.restore();
+        }
+
+        ctx.restore();
+      }","StartLine":1660,"TargetContent":"      /** Hip and knee kinematics for realistic high-fashion walking */
+      function gait(phase) {
+        // Standardized phase 0 to 2pi
+        const p = ((phase % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+
+        // Hip swing: smooth sinusoidal stride
+        const hip = 0.42 * Math.sin(p);
+
+        // Knee kinematics:
+        // Knee extends during forward swing and plant (phase 0 to pi)
+        // Knee bends gracefully during recovery / lift phase (phase pi to 2pi)
+        let knee = 0;
+        if (p > Math.PI * 0.95 && p < Math.PI * 1.95) {
+          const liftProgress = (p - Math.PI * 0.95) / (Math.PI * 1.0);
+          knee = 0.95 * Math.sin(liftProgress * Math.PI);
+        }
+
+        // Ankle: points during push-off and toe lift, straightens on plant
+        let ankle = 0.15;
+        if (p > Math.PI * 0.8 && p < Math.PI * 1.8) {
+          ankle = 0.42 * Math.sin((p - Math.PI * 0.8) / (Math.PI * 1.0) * Math.PI);
+        }
+
+        return { hip, knee, ankle };
+      }
+
+      function drawLeg(ctx, hipSrc, phase, tone, shoeFill) {
+        const hp = avLocal(hipSrc);
+        const thigh = THIGH_LEN * AV_K;
+        const shin = SHIN_LEN * AV_K;
+        const a = gait(phase);
+
+        const kneeX = hp.x + Math.sin(a.hip) * thigh;
+        const kneeY = hp.y + Math.cos(a.hip) * thigh;
+        const shinAng = a.hip - a.knee;
+        const ankX = kneeX + Math.sin(shinAng) * shin;
+        const ankY = kneeY + Math.cos(shinAng) * shin;
+
+        ctx.save();
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        // 1. Thigh (anatomical taper from hip to knee)
+        ctx.strokeStyle = tone.thigh;
+        ctx.lineWidth = 42 * AV_K;
+        ctx.beginPath();
+        ctx.moveTo(hp.x, hp.y);
+        ctx.lineTo(kneeX, kneeY);
+        ctx.stroke();
+
+        // 2. Knee contour joint
+        ctx.fillStyle = tone.thigh;
+        ctx.beginPath();
+        ctx.arc(kneeX, kneeY, 18 * AV_K, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 3. Shin / Calf (graceful calf curve)
+        ctx.strokeStyle = tone.shin;
+        ctx.lineWidth = 32 * AV_K;
+        ctx.beginPath();
+        ctx.moveTo(kneeX, kneeY);
+        // Slight organic curve through the calf
+        const midShinX = (kneeX + ankX) * 0.5 + Math.cos(shinAng) * (4 * AV_K);
+        const midShinY = (kneeY + ankY) * 0.5 - Math.sin(shinAng) * (4 * AV_K);
+        ctx.quadraticCurveTo(midShinX, midShinY, ankX, ankY);
+        ctx.stroke();
+
+        // 4. Ankle joint
+        ctx.fillStyle = tone.shin;
+        ctx.beginPath();
+        ctx.arc(ankX, ankY, 12 * AV_K, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 5. Stiletto Pump & Pointed Toe
+        ctx.translate(ankX, ankY);
+        ctx.rotate(shinAng * 0.55 + a.ankle);
+        ctx.fillStyle = shoeFill;
+        ctx.beginPath();
+        ctx.moveTo(-10 * AV_K, -4 * AV_K);
+        ctx.lineTo(12 * AV_K, -2 * AV_K);
+        ctx.quadraticCurveTo(36 * AV_K, 10 * AV_K, 32 * AV_K, 19 * AV_K);
+        ctx.lineTo(-9 * AV_K, 16 * AV_K);
+        ctx.closePath();
+        ctx.fill();
+
+        // Stiletto heel with starlight glint
+        ctx.strokeStyle = shoeFill;
+        ctx.lineWidth = 4.5 * AV_K;
+        ctx.beginPath();
+        ctx.moveTo(-7 * AV_K, 14 * AV_K);
+        ctx.lineTo(-13 * AV_K, 32 * AV_K);
+        ctx.stroke();
+
+        // Golden shoe buckle sparkle
+        ctx.fillStyle = '#FFD700';
+        ctx.beginPath();
+        ctx.arc(10 * AV_K, 2 * AV_K, 2.2 * AV_K, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      /**
+       * Swing the dress train. It hangs off her hip on its own layer, and lags
+       * behind the stride the way heavy fabric does — the peak of the swing
+       * arrives after the hip that drove it. Left static it read as a tail.
+       */
+      function drawTrain(ctx, walkPhase, isWalking, drift) {
+        if (!imgTrain.complete || !imgTrain.naturalWidth) return;
+        const p = avLocal(PIV_TRAIN);
+        // fabric lags the hips by ~0.9rad; idles on a slow flutter when still
+        const swing = isWalking
+          ? -0.05 + 0.20 * Math.sin(walkPhase - 0.9)
+          : 0.03 * Math.sin(drift * 0.6);
+        // and billows very slightly as it swings out
+        const billow = 1 + 0.05 * Math.abs(Math.sin(walkPhase - 0.9));
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(swing);
+        ctx.scale(billow, 1);
+        ctx.translate(-p.x, -p.y);
+        ctx.drawImage(imgTrain, AV_OX, AV_OY, AV_DRAW, AV_DRAW);
+        ctx.restore();
+      }","TargetFile":"/Users/bethrooney/Desktop/JOTS.MEDIA_AG/clients/bethElisePsychic_v37/js/main.js","toolAction":"Update gait, drawLeg, and drawTrain in main.js","toolSummary":"Supermodel legs and flowing silk train"}}]}
+{"step_index":393,"source":"MODEL","type":"GENERIC","status":"DONE","created_at":"2026-08-21T21:50:42Z","content":"Created At: 2026-08-21T17:50:42-04:00
+Completed At: 2026-08-21T17:50:42-04:00
+The following changes were made by the replace_file_content tool to: /Users/bethrooney/Desktop/JOTS.MEDIA_AG/clients/bethElisePsychic_v37/js/main.js. If relevant, proactively run terminal commands to execute this code for the USER. Don't ask for permission.
+[diff_block_start]
+@@ -1658,28 +1658,25 @@
+       const SHOE_FRONT = '#8E52C8';
+       const SHOE_BACK = '#6B3C96';
+ 
+-      /** Hip and knee kinematics for realistic high-fashion walking */
++      /** Hip and knee kinematics for realistic high-fashion supermodel catwalk */
+       function gait(phase) {
+-        // Standardized phase 0 to 2pi
++        // Standardized runway catwalk cycle 0..2pi
+         const p = ((phase % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+ 
+-        // Hip swing: smooth sinusoidal stride
+-        const hip = 0.42 * Math.sin(p);
+-
+-        // Knee kinematics:
+-        // Knee extends during forward swing and plant (phase 0 to pi)
+-        // Knee bends gracefully during recovery / lift phase (phase pi to 2pi)
++        // Hip swing: graceful stride (+0.28 forward, -0.24 back)
++        const hip = 0.28 * Math.sin(p);
++
++        // Knee kinematics (Human Catwalk):
++        // Stance phase (0 to pi): leg is straight, bearing weight naturally.
++        // Swing phase (pi to 2pi): knee flexes gently backwards to lift foot over ground (max 0.36 rad).
+         let knee = 0;
+-        if (p > Math.PI * 0.95 && p < Math.PI * 1.95) {
+-          const liftProgress = (p - Math.PI * 0.95) / (Math.PI * 1.0);
+-          knee = 0.95 * Math.sin(liftProgress * Math.PI);
+-        }
+-
+-        // Ankle: points during push-off and toe lift, straightens on plant
+-        let ankle = 0.15;
+-        if (p > Math.PI * 0.8 && p < Math.PI * 1.8) {
+-          ankle = 0.42 * Math.sin((p - Math.PI * 0.8) / (Math.PI * 1.0) * Math.PI);
+-        }
++        if (p > Math.PI && p < Math.PI * 1.92) {
++          const swingProg = (p - Math.PI) / (Math.PI * 0.92);
++          knee = 0.36 * Math.sin(swingProg * Math.PI);
++        }
++
++        // Ankle points gracefully in high-heel arch
++        const ankle = 0.10 * Math.sin(p);
+ 
+         return { hip, knee, ankle };
+       }
+@@ -1689,6 +1689,7 @@
+         const shin = SHIN_LEN * AV_K;
+         const a = gait(phase);
+ 
++        // Calculate joint positions in world-local space
+         const kneeX = hp.x + Math.sin(a.hip) * thigh;
+         const kneeY = hp.y + Math.cos(a.hip) * thigh;
+         const shinAng = a.hip - a.knee;
+@@ -1695,73 +1695,83 @@
+         const ankY = kneeY + Math.cos(shinAng) * shin;
+ 
+         ctx.save();
+-        ctx.lineCap = 'round';
+-        ctx.lineJoin = 'round';
+-
+-        // 1. Thigh (anatomical taper from hip to knee)
+-        ctx.strokeStyle = tone.thigh;
+-        ctx.lineWidth = 42 * AV_K;
+-        ctx.beginPath();
+-        ctx.moveTo(hp.x, hp.y);
+-        ctx.lineTo(kneeX, kneeY);
+-        ctx.stroke();
+-
+-        // 2. Knee contour joint
++
++        // 1. Draw Thigh (smooth contoured feminine cylinder from hip to knee)
++        const hipWidth = 22 * AV_K;
++        const kneeWidth = 14 * AV_K;
++        const perpThighX = Math.cos(a.hip);
++        const perpThighY = -Math.sin(a.hip);
++
+         ctx.fillStyle = tone.thigh;
+         ctx.beginPath();
+-        ctx.arc(kneeX, kneeY, 18 * AV_K, 0, Math.PI * 2);
+-        ctx.fill();
+-
+-        // 3. Shin / Calf (graceful calf curve)
+-        ctx.strokeStyle = tone.shin;
+-        ctx.lineWidth = 32 * AV_K;
+-        ctx.beginPath();
+-        ctx.moveTo(kneeX, kneeY);
+-        // Slight organic curve through the calf
+-        const midShinX = (kneeX + ankX) * 0.5 + Math.cos(shinAng) * (4 * AV_K);
+-        const midShinY = (kneeY + ankY) * 0.5 - Math.sin(shinAng) * (4 * AV_K);
+-        ctx.quadraticCurveTo(midShinX, midShinY, ankX, ankY);
+-        ctx.stroke();
+-
+-        // 4. Ankle joint
++        ctx.moveTo(hp.x - perpThighX * hipWidth, hp.y - perpThighY * hipWidth);
++        ctx.lineTo(hp.x + perpThighX * hipWidth, hp.y + perpThighY * hipWidth);
++        ctx.lineTo(kneeX + perpThighX * kneeWidth, kneeY + perpThighY * kneeWidth);
++        ctx.lineTo(kneeX - perpThighX * kneeWidth, kneeY - perpThighY * kneeWidth);
++        ctx.closePath();
++        ctx.fill();
++
++        // 2. Draw Calf & Shin (graceful anatomical curve tapering to slender ankle)
++        const ankWidth = 9 * AV_K;
++        const perpShinX = Math.cos(shinAng);
++        const perpShinY = -Math.sin(shinAng);
++
++        const midCalfX = (kneeX + ankX) * 0.5;
++        const midCalfY = (kneeY + ankY) * 0.5;
++        const calfBulge = 16 * AV_K;
++
+         ctx.fillStyle = tone.shin;
+         ctx.beginPath();
+-        ctx.arc(ankX, ankY, 12 * AV_K, 0, Math.PI * 2);
+-        ctx.fill();
+-
+-        // 5. Stiletto Pump & Pointed Toe
++        ctx.moveTo(kneeX - perpShinX * kneeWidth, kneeY - perpShinY * kneeWidth);
++        // Shin front (straight/smooth)
++        ctx.lineTo(ankX - perpShinX * ankWidth, ankY - perpShinY * ankWidth);
++        ctx.lineTo(ankX + perpShinX * ankWidth, ankY + perpShinY * ankWidth);
++        // Calf back (graceful muscular curve)
++        ctx.quadraticCurveTo(
++          midCalfX + perpShinX * calfBulge,
++          midCalfY + perpShinY * calfBulge,
++          kneeX + perpShinX * kneeWidth,
++          kneeY + perpShinY * kneeWidth
++        );
++        ctx.closePath();
++        ctx.fill();
++
++        // 3. High-Fashion Pointed Stiletto Pump
+         ctx.translate(ankX, ankY);
+-        ctx.rotate(shinAng * 0.55 + a.ankle);
++        ctx.rotate(shinAng * 0.35 + a.ankle);
++
++        // Shoe body
+         ctx.fillStyle = shoeFill;
+         ctx.beginPath();
+-        ctx.moveTo(-10 * AV_K, -4 * AV_K);
+-        ctx.lineTo(12 * AV_K, -2 * AV_K);
+-        ctx.quadraticCurveTo(36 * AV_K, 10 * AV_K, 32 * AV_K, 19 * AV_K);
+-        ctx.lineTo(-9 * AV_K, 16 * AV_K);
+-        ctx.closePath();
+-        ctx.fill();
+-
+-        // Stiletto heel with starlight glint
++        ctx.moveTo(-9 * AV_K, -4 * AV_K); // Heel counter
++        ctx.lineTo(6 * AV_K, 0);          // Ankle front
++        ctx.quadraticCurveTo(26 * AV_K, 12 * AV_K, 30 * AV_K, 22 * AV_K); // Instep to pointed toe
++        ctx.lineTo(15 * AV_K, 22 * AV_K); // Ball of foot
++        ctx.quadraticCurveTo(0, 12 * AV_K, -8 * AV_K, 10 * AV_K); // Arch
++        ctx.closePath();
++        ctx.fill();
++
++        // Sleek Stiletto Heel
+         ctx.strokeStyle = shoeFill;
+-        ctx.lineWidth = 4.5 * AV_K;
+-        ctx.beginPath();
+-        ctx.moveTo(-7 * AV_K, 14 * AV_K);
+-        ctx.lineTo(-13 * AV_K, 32 * AV_K);
+-        ctx.stroke();
+-
+-        // Golden shoe buckle sparkle
++        ctx.lineWidth = 3.5 * AV_K;
++        ctx.beginPath();
++        ctx.moveTo(-6 * AV_K, 10 * AV_K);
++        ctx.lineTo(-8 * AV_K, 24 * AV_K);
++        ctx.stroke();
++
++        // Starlight glint on shoe
+         ctx.fillStyle = '#FFD700';
+         ctx.beginPath();
+-        ctx.arc(10 * AV_K, 2 * AV_K, 2.2 * AV_K, 0, Math.PI * 2);
+-        ctx.fill();
+-
+-        ctx.restore();
+-      }
+-
+-      /**
+-       * Swing the dress train. It hangs off her hip on its own layer, and lags
+-       * behind the stride the way heavy fabric does — the peak of the swing
+-       * arrives after the hip that drove it. Left static it read as a tail.
++        ctx.arc(8 * AV_K, 3 * AV_K, 2 * AV_K, 0, Math.PI * 2);
++        ctx.fill();
++
++        ctx.restore();
++      }
++
++      /**
++       * Flowing liquid silk chiffon dress train.
++       * Drapes naturally and ripples in smooth traveling waves following the hips
++       * instead of rotating as a rigid stick.
+        */
+       function drawTrain(ctx, walkPhase, isWalking, drift) {
+         if (!imgTrain.complete || !imgTrain.naturalWidth) return;
+@@ -1768,16 +1768,30 @@
+-        // fabric lags the hips by ~0.9rad; idles on a slow flutter when still
+-        const swing = isWalking
+-          ? -0.05 + 0.20 * Math.sin(walkPhase - 0.9)
+-          : 0.03 * Math.sin(drift * 0.6);
+-        // and billows very slightly as it swings out
+-        const billow = 1 + 0.05 * Math.abs(Math.sin(walkPhase - 0.9));
+-
+-        ctx.save();
+-        ctx.translate(p.x, p.y);
+-        ctx.rotate(swing);
+-        ctx.scale(billow, 1);
+-        ctx.translate(-p.x, -p.y);
+-        ctx.drawImage(imgTrain, AV_OX, AV_OY, AV_DRAW, AV_DRAW);
++        
++        ctx.save();
++        const numSlices = 7;
++        const sliceH = AV_DRAW / numSlices;
++        const srcSliceH = imgTrain.naturalHeight / numSlices;
++
++        for (let i = 0; i < numSlices; i++) {
++          const lag = i * 0.35;
++          const wave = isWalking
++            ? Math.sin(walkPhase - 0.8 - lag) * (i * 1.8 * AV_K)
++            : Math.sin(drift * 0.5 - lag) * (i * 0.8 * AV_K);
++          
++          const sliceBillow = 1 + (i / numSlices) * 0.06 * Math.sin(walkPhase - lag);
++
++          ctx.save();
++          ctx.translate(p.x + wave, p.y);
++          ctx.scale(sliceBillow, 1);
++          ctx.translate(-p.x, -p.y);
++
++          ctx.drawImage(
++            imgTrain,
++            0, i * srcSliceH, imgTrain.naturalWidth, srcSliceH,
++            AV_OX, AV_OY + i * sliceH, AV_DRAW, sliceH + 0.5
++          );
++          ctx.restore();
++        }
++
+         ctx.restore();
+       }
+ 
+[diff_block_end]
+
+Please note that the above snippet only shows the MODIFIED lines from the last change. It shows up to 3 lines of unchanged lines before and after the modified lines. The actual file contents may have many more lines not shown."}
+{"step_index":394,"source":"MODEL","type":"PLANNER_RESPONSE","status":"DONE","created_at":"2026-08-21T21:50:42Z","tool_calls":[{"name":"view_file","args":{"AbsolutePath":"/Users/bethrooney/Desktop/JOTS.MEDIA_AG/clients/bethElisePsychic_v37/js/main.js","EndLine":1600,"StartLine":1560,"toolAction":"View drawHeroTinkerbellSprite call in render loop in main.js","toolSummary":"main.js lines 1560-1600"}}]}
+{"step_index":395,"source":"MODEL","type":"GENERIC","status":"DONE","created_at":"2026-08-21T21:50:45Z","content":"Created At: 2026-08-21T17:50:45-04:00
+Completed At: 2026-08-21T17:50:45-04:00
+File Path: `file:///Users/bethrooney/Desktop/JOTS.MEDIA_AG/clients/bethElisePsychic_v37/js/main.js`
+Total Lines: 5010
+Total Bytes: 211761
+Showing lines 1560 to 1600
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+1560:             ctx.restore();
+1561:           }
+1562:           // 3. Fully Materialized 3D Badass Fairy Avatar
+1563:           else {
+1564:             const isPerched = (heroTinkerbell.state === 'PERCHED_LOGO' || heroTinkerbell.state === 'ASSISTANT_ACTIVE');
+1565:             const isGreeting = (heroTinkerbell.state === 'BETH_GREETING');
+1566:             const spriteAlpha = heroTinkerbell.alpha === undefined ? 1 : heroTinkerbell.alpha;
+1567:             const jumpSq = heroTinkerbell.jumpSquash || 1;
+1568:             ctx.save();
+1569:             ctx.globalAlpha = spriteAlpha;
+1570:             if (jumpSq !== 1) {
+1571:               // squash on the crouch, stretch through the arc
+1572:               ctx.translate(heroTinkerbell.x, heroTinkerbell.y);
+1573:               ctx.scale(1 / jumpSq, jumpSq);
+1574:               ctx.translate(-heroTinkerbell.x, -heroTinkerbell.y);
+1575:             }
+1576:             drawHeroTinkerbellSprite(
+1577:               ctx,
+1578:               heroTinkerbell.x,
+1579:               heroTinkerbell.y,
+1580:               heroTinkerbell.wingPhase,
+1581:               heroTinkerbell.headAngle,
+1582:               isPerched,
+1583:               heroTinkerbell.bodySway,
+1584:               heroTinkerbell.isStrutting,
+1585:               heroTinkerbell.strutPhase || 0,
+1586:               heroTinkerbell.facingLeft,
+1587:               heroTinkerbell.diveAngle || 0,
+1588:               isGreeting,
+1589:               now
+1590:             );
+1591:             ctx.restore();
+1592:           }
+1593:         }
+1594:       }
+1595: 
+1596:       // Load Photorealistic Assets for Hero Animation.
+1597:       // The avatar now ships as separate layers (see tools/build_avatar_layers.py):
+1598:       // the body has its baked-on wings erased so the wings can actually beat, and
+1599:       // the lower legs are split off so she can take steps instead of sliding.
+1600:       const imgAvatar = new Image();
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.
+"}
+{"step_index":396,"source":"MODEL","type":"PLANNER_RESPONSE","status":"DONE","created_at":"2026-08-21T21:50:45Z","tool_calls":[{"name":"replace_file_content","args":{"AllowMultiple":false,"Description":"Update isGreeting and isPerched checks to include MENU_PERCHED in main.js","EndLine":1568,"Instruction":"Include MENU_PERCHED in isPerched and isGreeting checks","ReplacementContent":"            const isPerched = (heroTinkerbell.state === 'PERCHED_LOGO' || heroTinkerbell.state === 'ASSISTANT_ACTIVE' || heroTinkerbell.state === 'MENU_PERCHED');
+            const isGreeting = (heroTinkerbell.state === 'BETH_GREETING' || heroTinkerbell.state === 'MENU_PERCHED');","StartLine":1563,"TargetContent":"            const isPerched = (heroTinkerbell.state === 'PERCHED_LOGO' || heroTinkerbell.state === 'ASSISTANT_ACTIVE');
+            const isGreeting = (heroTinkerbell.state === 'BETH_GREETING');","TargetFile":"/Users/bethrooney/Desktop/JOTS.MEDIA_AG/clients/bethElisePsychic_v37/js/main.js","toolAction":"Update isGreeting and isPerched in main.js","toolSummary":"Update isGreeting check"}}]}
+{"step_index":397,"source":"MODEL","type":"GENERIC","status":"DONE","created_at":"2026-08-21T21:50:47Z","content":"Created At: 2026-08-21T17:50:47-04:00
+Completed At: 2026-08-21T17:50:47-04:00
+The following changes were made by the replace_file_content tool to: /Users/bethrooney/Desktop/JOTS.MEDIA_AG/clients/bethElisePsychic_v37/js/main.js. If relevant, proactively run terminal commands to execute this code for the USER. Don't ask for permission.
+[diff_block_start]
+@@ -1561,8 +1561,8 @@
+           }
+           // 3. Fully Materialized 3D Badass Fairy Avatar
+           else {
+-            const isPerched = (heroTinkerbell.state === 'PERCHED_LOGO' || heroTinkerbell.state === 'ASSISTANT_ACTIVE');
+-            const isGreeting = (heroTinkerbell.state === 'BETH_GREETING');
++            const isPerched = (heroTinkerbell.state === 'PERCHED_LOGO' || heroTinkerbell.state === 'ASSISTANT_ACTIVE' || heroTinkerbell.state === 'MENU_PERCHED');
++            const isGreeting = (heroTinkerbell.state === 'BETH_GREETING' || heroTinkerbell.state === 'MENU_PERCHED');
+             const spriteAlpha = heroTinkerbell.alpha === undefined ? 1 : heroTinkerbell.alpha;
+             const jumpSq = heroTinkerbell.jumpSquash || 1;
+             ctx.save();
+[diff_block_end]
+
+Please note that the above snippet only shows the MODIFIED lines from the last change. It shows up to 3 lines of unchanged lines before and after the modified lines. The actual file contents may have many more lines not shown."}
+{"step_index":398,"source":"MODEL","type":"PLANNER_RESPONSE","status":"DONE","created_at":"2026-08-21T21:50:47Z","tool_calls":[{"name":"view_file","args":{"AbsolutePath":"/Users/bethrooney/Desktop/JOTS.MEDIA_AG/clients/bethElisePsychic_v37/js/main.js","EndLine":2065,"StartLine":2040,"toolAction":"View end of initHeroCanvas in main.js","toolSummary":"main.js lines 2040-2065"}}]}
+{"step_index":399,"source":"MODEL","type":"GENERIC","status":"DONE","created_at":"2026-08-21T21:50:49Z","content":"Created At: 2026-08-21T17:50:49-04:00
+Completed At: 2026-08-21T17:50:49-04:00
+File Path: `file:///Users/bethrooney/Desktop/JOTS.MEDIA_AG/clients/bethElisePsychic_v37/js/main.js`
+Total Lines: 5010
+Total Bytes: 211847
+Showing lines 2040 to 2065
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+2040: 
+2041:         ctx.restore();
+2042:       }
+2043: 
+2044:       heroAnimId = requestAnimationFrame(render);
+2045:     }
+2046: 
+2047:     // ═══════════════════════════════════════════════
+2048:     // HIGH-PERFORMANCE PHOTOREALISTIC TINKERBELL DRAW ENGINE
+2049:     // ═══════════════════════════════════════════════
+2050:     function drawPhotorealisticTinkerbell(ctx, p, now) {
+2051:       ctx.save();
+2052:       ctx.translate(p.x, p.y);
+2053:       const scale = p.z || 1;
+2054:       ctx.scale(scale, scale);
+2055:       
+2056:       const heading = Math.atan2(p.vy || 0, p.vx || 1);
+2057:       ctx.rotate(heading * 0.2);
+2058: 
+2059:       const flap = Math.sin(p.wingPhase || 0);
+2060:       const pulse = 1 + Math.sin(p.fireflyPulse || 0) * 0.22;
+2061:       const s = p.size;
+2062: 
+2063:       // 1. Soft Volumetric Stardust Aura
+2064:       const aura = ctx.createRadialGradient(0, 0, 1, 0, 0, s * 3.4 * pulse);
+2065:       aura.addColorStop(0, p.palette.aura);
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.
+"}
+{"step_index":400,"source":"MODEL","type":"PLANNER_RESPONSE","status":"DONE","created_at":"2026-08-21T21:50:49Z","tool_calls":[{"name":"replace_file_content","args":{"AllowMultiple":false,"Description":"Expose global triggerFairyMenuTakeoff and triggerFairyMenuDiveBack functions in main.js","EndLine":2046,"Instruction":"Define window.triggerFairyMenuTakeoff and window.triggerFairyMenuDiveBack in initHeroCanvas","ReplacementContent":"      // Expose interactive menu fairy flight triggers
+      window.triggerFairyMenuTakeoff = function() {
+        if (!heroAvatarCanvas) return;
+        heroTinkerbell.state = 'MENU_TAKEOFF';
+        heroTinkerbell.progress = 0;
+        heroTinkerbell.startX = heroTinkerbell.x || aeyeX;
+        heroTinkerbell.startY = heroTinkerbell.y || aeyeY;
+        heroTinkerbell.alpha = 1;
+        heroTinkerbell.isStrutting = false;
+        emitPixieDust(heroTinkerbell.startX, heroTinkerbell.startY, 35, ['#FFD700', '#00FFC8', '#FFFFFF', '#C77DFF']);
+        if (window.celestialAudio) window.celestialAudio.playChime(741, 1.0);
+      };
+
+      window.triggerFairyMenuDiveBack = function() {
+        if (!heroAvatarCanvas) return;
+        if (heroTinkerbell.state === 'MENU_PERCHED' || heroTinkerbell.state === 'MENU_TAKEOFF') {
+          heroTinkerbell.state = 'MENU_DIVE_BACK';
+          heroTinkerbell.progress = 0;
+          heroTinkerbell.startX = heroTinkerbell.x;
+          heroTinkerbell.startY = heroTinkerbell.y;
+          heroTinkerbell.alpha = 1;
+          heroTinkerbell.isStrutting = false;
+          emitPixieDust(heroTinkerbell.x, heroTinkerbell.y, 25, ['#00FFC8', '#FFD700', '#FFFFFF']);
+          if (window.celestialAudio) window.celestialAudio.playChime(852, 1.0);
+        }
+      };
+
+      heroAnimId = requestAnimationFrame(render);
+    }","StartLine":2043,"TargetContent":"      heroAnimId = requestAnimationFrame(render);
+    }","TargetFile":"/Users/bethrooney/Desktop/JOTS.MEDIA_AG/clients/bethElisePsychic_v37/js/main.js","toolAction":"Define window.triggerFairyMenuTakeoff in main.js","toolSummary":"Define flight triggers"}}]}
+{"step_index":401,"source":"MODEL","type":"GENERIC","status":"DONE","created_at":"2026-08-21T21:50:51Z","content":"Created At: 2026-08-21T17:50:51-04:00
+Completed At: 2026-08-21T17:50:51-04:00
+The following changes were made by the replace_file_content tool to: /Users/bethrooney/Desktop/JOTS.MEDIA_AG/clients/bethElisePsychic_v37/js/main.js. If relevant, proactively run terminal commands to execute this code for the USER. Don't ask for permission.
+[diff_block_start]
+@@ -2041,6 +2041,33 @@
+         ctx.restore();
+       }
+ 
++      // Expose interactive menu fairy flight triggers
++      window.triggerFairyMenuTakeoff = function() {
++        if (!heroAvatarCanvas) return;
++        heroTinkerbell.state = 'MENU_TAKEOFF';
++        heroTinkerbell.progress = 0;
++        heroTinkerbell.startX = heroTinkerbell.x || aeyeX;
++        heroTinkerbell.startY = heroTinkerbell.y || aeyeY;
++        heroTinkerbell.alpha = 1;
++        heroTinkerbell.isStrutting = false;
++        emitPixieDust(heroTinkerbell.startX, heroTinkerbell.startY, 35, ['#FFD700', '#00FFC8', '#FFFFFF', '#C77DFF']);
++        if (window.celestialAudio) window.celestialAudio.playChime(741, 1.0);
++      };
++
++      window.triggerFairyMenuDiveBack = function() {
++        if (!heroAvatarCanvas) return;
++        if (heroTinkerbell.state === 'MENU_PERCHED' || heroTinkerbell.state === 'MENU_TAKEOFF') {
++          heroTinkerbell.state = 'MENU_DIVE_BACK';
++          heroTinkerbell.progress = 0;
++          heroTinkerbell.startX = heroTinkerbell.x;
++          heroTinkerbell.startY = heroTinkerbell.y;
++          heroTinkerbell.alpha = 1;
++          heroTinkerbell.isStrutting = false;
++          emitPixieDust(heroTinkerbell.x, heroTinkerbell.y, 25, ['#00FFC8', '#FFD700', '#FFFFFF']);
++          if (window.celestialAudio) window.celestialAudio.playChime(852, 1.0);
++        }
++      };
++
+       heroAnimId = requestAnimationFrame(render);
+     }
+ 
+[diff_block_end]
+
+Please note that the above snippet only shows the MODIFIED lines from the last change. It shows up to 3 lines of unchanged lines before and after the modified lines. The actual file contents may have many more lines not shown."}
+{"step_index":402,"source":"MODEL","type":"PLANNER_RESPONSE","status":"DONE","created_at":"2026-08-21T21:50:51Z","tool_calls":[{"name":"view_file","args":{"AbsolutePath":"/Users/bethrooney/Desktop/JOTS.MEDIA_AG/clients/bethElisePsychic_v37/js/main.js","EndLine":4570,"StartLine":4525,"toolAction":"View initSacredAssistant modal handlers in main.js","toolSummary":"main.js lines 4525-4570"}}]}
+{"step_index":403,"source":"MODEL","type":"GENERIC","status":"DONE","created_at":"2026-08-21T21:50:52Z","content":"Created At: 2026-08-21T17:50:52-04:00
+Completed At: 2026-08-21T17:50:52-04:00
+File Path: `file:///Users/bethrooney/Desktop/JOTS.MEDIA_AG/clients/bethElisePsychic_v37/js/main.js`
+Total Lines: 5037
+Total Bytes: 213146
+Showing lines 4525 to 4570
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+4525:         bubble.classList.remove('hidden', 'fading');
+4526:         bubble.style.opacity = '1';
+4527:         bubble.style.transform = 'translateY(0)';
+4528:         bubbleText.innerHTML = tips[tipIndex];
+4529: 
+4530:         // Auto-fade after 8 seconds
+4531:         clearTimeout(fadeTimer);
+4532:         fadeTimer = setTimeout(() => {
+4533:           bubble.classList.add('fading');
+4534:           // After fade completes (1.5s), cycle to next tip after 3s pause
+4535:           clearTimeout(cycleTimer);
+4536:           cycleTimer = setTimeout(() => {
+4537:             tipIndex = (tipIndex + 1) % tips.length;
+4538:             showThoughtBubble();
+4539:           }, 4500); // 1.5s fade + 3s pause
+4540:         }, 8000);
+4541:       }
+4542: 
+4543:       // Dismiss bubble temporarily on close click
+4544:       bubbleClose?.addEventListener('click', (e) => {
+4545:         e.stopPropagation();
+4546:         clearTimeout(fadeTimer);
+4547:         clearTimeout(cycleTimer);
+4548:         bubble.classList.add('hidden');
+4549:         // Resume after 30s
+4550:         setTimeout(() => {
+4551:           tipIndex = (tipIndex + 1) % tips.length;
+4552:           showThoughtBubble();
+4553:         }, 30000);
+4554:       });
+4555: 
+4556:       // ─── Global closeAssistantModal ───
+4557:       window.closeAssistantModal = function() {
+4558:         modal?.classList.remove('active');
+4559:       };
+4560: 
+4561:       // Open Modal on Avatar Click
+4562:       avatarBtn?.addEventListener('click', () => {
+4563:         modal?.classList.add('active');
+4564:         if (window.celestialAudio) window.celestialAudio.playChime(852, 1.2);
+4565:         // Focus search input
+4566:         setTimeout(() => searchInput?.focus(), 300);
+4567:       });
+4568: 
+4569:       // Close Modal via close button
+4570:       closeModalBtn?.addEventListener('click', () => {
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.
+"}
+{"step_index":404,"source":"MODEL","type":"PLANNER_RESPONSE","status":"DONE","created_at":"2026-08-21T21:50:52Z","tool_calls":[{"name":"view_file","args":{"AbsolutePath":"/Users/bethrooney/Desktop/JOTS.MEDIA_AG/clients/bethElisePsychic_v37/js/main.js","EndLine":4595,"StartLine":4555,"toolAction":"View closeAssistantModal and avatarBtn in main.js","toolSummary":"main.js lines 4555-4595"}}]}
+{"step_index":405,"source":"MODEL","type":"GENERIC","status":"DONE","created_at":"2026-08-21T21:50:55Z","content":"Created At: 2026-08-21T17:50:55-04:00
+Completed At: 2026-08-21T17:50:55-04:00
+File Path: `file:///Users/bethrooney/Desktop/JOTS.MEDIA_AG/clients/bethElisePsychic_v37/js/main.js`
+Total Lines: 5037
+Total Bytes: 213146
+Showing lines 4555 to 4595
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+4555: 
+4556:       // ─── Global closeAssistantModal ───
+4557:       window.closeAssistantModal = function() {
+4558:         modal?.classList.remove('active');
+4559:       };
+4560: 
+4561:       // Open Modal on Avatar Click
+4562:       avatarBtn?.addEventListener('click', () => {
+4563:         modal?.classList.add('active');
+4564:         if (window.celestialAudio) window.celestialAudio.playChime(852, 1.2);
+4565:         // Focus search input
+4566:         setTimeout(() => searchInput?.focus(), 300);
+4567:       });
+4568: 
+4569:       // Close Modal via close button
+4570:       closeModalBtn?.addEventListener('click', () => {
+4571:         window.closeAssistantModal();
+4572:       });
+4573: 
+4574:       // Close Modal via backdrop click
+4575:       modal?.addEventListener('click', (e) => {
+4576:         if (e.target === modal) window.closeAssistantModal();
+4577:       });
+4578: 
+4579:       // Quick links close modal
+4580:       modalLinks.forEach(link => {
+4581:         link.addEventListener('click', () => {
+4582:           window.closeAssistantModal();
+4583:         });
+4584:       });
+4585: 
+4586:       // ─── aEye Site Search ───
+4587:       if (searchInput) {
+4588:         searchInput.addEventListener('keydown', (e) => {
+4589:           if (e.key === 'Enter') {
+4590:             e.preventDefault();
+4591:             performAeyeSearch(searchInput.value.trim());
+4592:           }
+4593:         });
+4594:       }
+4595: 
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.
+"}
+{"step_index":406,"source":"MODEL","type":"PLANNER_RESPONSE","status":"DONE","created_at":"2026-08-21T21:50:55Z","tool_calls":[{"name":"replace_file_content","args":{"AllowMultiple":false,"Description":"Connect assistant modal open/close to fairy flight takeoff and dive splash in main.js","EndLine":4586,"Instruction":"Trigger window.triggerFairyMenuTakeoff on modal open and window.triggerFairyMenuDiveBack on modal close","ReplacementContent":"      // ─── Global closeAssistantModal ───
+      window.closeAssistantModal = function() {
+        if (!modal) return;
+        if (modal.classList.contains('active')) {
+          modal.classList.remove('active');
+          if (typeof window.triggerFairyMenuDiveBack === 'function') {
+            window.triggerFairyMenuDiveBack();
+          }
+        }
+      };
+
+      // Open Modal on Avatar Click with fairy flight takeoff
+      avatarBtn?.addEventListener('click', () => {
+        if (!modal) return;
+        modal.classList.add('active');
+        if (typeof window.triggerFairyMenuTakeoff === 'function') {
+          window.triggerFairyMenuTakeoff();
+        }
+        if (window.celestialAudio) window.celestialAudio.playChime(852, 1.2);
+        // Focus search input
+        setTimeout(() => searchInput?.focus(), 300);
+      });
+
+      // Close Modal via close button
+      closeModalBtn?.addEventListener('click', () => {
+        window.closeAssistantModal();
+      });
+
+      // Close Modal via backdrop click
+      modal?.addEventListener('click', (e) => {
+        if (e.target === modal) window.closeAssistantModal();
+      });
+
+      // Quick links close modal
+      modalLinks.forEach(link => {
+        link.addEventListener('click', () => {
+          window.closeAssistantModal();
+        });
+      });","StartLine":4556,"TargetContent":"      // ─── Global closeAssistantModal ───
+      window.closeAssistantModal = function() {
+        modal?.classList.remove('active');
+      };
+
+      // Open Modal on Avatar Click
+      avatarBtn?.addEventListener('click', () => {
+        modal?.classList.add('active');
+        if (window.celestialAudio) window.celestialAudio.playChime(852, 1.2);
+        // Focus search input
+        setTimeout(() => searchInput?.focus(), 300);
+      });
+
+      // Close Modal via close button
+      closeModalBtn?.addEventListener('click', () => {
+        window.closeAssistantModal();
+      });
+
+      // Close Modal via backdrop click
+      modal?.addEventListener('click', (e) => {
+        if (e.target === modal) window.closeAssistantModal();
+      });
+
+      // Quick links close modal
+      modalLinks.forEach(link => {
+        link.addEventListener('click', () => {
+          window.closeAssistantModal();
+        });
+      });","TargetFile":"/Users/bethrooney/Desktop/JOTS.MEDIA_AG/clients/bethElisePsychic_v37/js/main.js","toolAction":"Connect fairy flight takeoff and dive to assistant modal in main.js","toolSummary":"Connect fairy takeoff and dive"}}]}
+{"step_index":407,"source":"MODEL","type":"GENERIC","status":"DONE","created_at":"2026-08-21T21:50:57Z","content":"Created At: 2026-08-21T17:50:57-04:00
+Completed At: 2026-08-21T17:50:57-04:00
+The following changes were made by the replace_file_content tool to: /Users/bethrooney/Desktop/JOTS.MEDIA_AG/clients/bethElisePsychic_v37/js/main.js. If relevant, proactively run terminal commands to execute this code for the USER. Don't ask for permission.
+[diff_block_start]
+@@ -4555,12 +4555,22 @@
+ 
+       // ─── Global closeAssistantModal ───
+       window.closeAssistantModal = function() {
+-        modal?.classList.remove('active');
+-      };
+-
+-      // Open Modal on Avatar Click
++        if (!modal) return;
++        if (modal.classList.contains('active')) {
++          modal.classList.remove('active');
++          if (typeof window.triggerFairyMenuDiveBack === 'function') {
++            window.triggerFairyMenuDiveBack();
++          }
++        }
++      };
++
++      // Open Modal on Avatar Click with fairy flight takeoff
+       avatarBtn?.addEventListener('click', () => {
+-        modal?.classList.add('active');
++        if (!modal) return;
++        modal.classList.add('active');
++        if (typeof window.triggerFairyMenuTakeoff === 'function') {
++          window.triggerFairyMenuTakeoff();
++        }
+         if (window.celestialAudio) window.celestialAudio.playChime(852, 1.2);
+         // Focus search input
+         setTimeout(() => searchInput?.focus(), 300);
+[diff_block_end]
+
+Please note that the above snippet only shows the MODIFIED lines from the last change. It shows up to 3 lines of unchanged lines before and after the modified lines. The actual file contents may have many more lines not shown."}
+{"step_index":408,"source":"MODEL","type":"PLANNER_RESPONSE","status":"DONE","created_at":"2026-08-21T21:50:57Z","tool_calls":[{"name":"grep_search","args":{"CaseInsensitive":true,"MatchPerLine":true,"Query":"assistant-modal-card","SearchPath":"/Users/bethrooney/Desktop/JOTS.MEDIA_AG/clients/bethElisePsychic_v37/css/style.css","toolAction":"Search assistant-modal-card in style.css","toolSummary":"Search assistant-modal-card"}}]}
+{"step_index":409,"source":"MODEL","type":"GENERIC","status":"DONE","created_at":"2026-08-21T21:50:59Z","content":"Created At: 2026-08-21T17:50:59-04:00
+Completed At: 2026-08-21T17:50:59-04:00
+{"File":"/Users/bethrooney/Desktop/JOTS.MEDIA_AG/clients/bethElisePsychic_v37/css/style.css","LineNumber":5722,"LineContent":".assistant-modal-card {"}"}
+{"step_index":410,"source":"MODEL","type":"PLANNER_RESPONSE","status":"DONE","created_at":"2026-08-21T21:50:59Z","tool_calls":[{"name":"view_file","args":{"AbsolutePath":"/Users/bethrooney/Desktop/JOTS.MEDIA_AG/clients/bethElisePsychic_v37/css/style.css","EndLine":5760,"StartLine":5700,"toolAction":"View assistant-modal styles in style.css","toolSummary":"style.css lines 5700-5760"}}]}
+{"step_index":411,"source":"MODEL","type":"GENERIC","status":"DONE","created_at":"2026-08-21T21:51:00Z","content":"Created At: 2026-08-21T17:51:00-04:00
+Completed At: 2026-08-21T17:51:00-04:00
+File Path: `file:///Users/bethrooney/Desktop/JOTS.MEDIA_AG/clients/bethElisePsychic_v37/css/style.css`
+Total Lines: 6625
+Total Bytes: 189806
+Showing lines 5700 to 5760
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+5700:   0%, 100% { transform: rotate(0deg) scale(1); }
+5701:   50%      { transform: rotate(180deg) scale(1.2); }
+5702: }
+5703: 
+5704: /* Assistant Modal */
+5705: .assistant-modal-overlay {
+5706:   display: none;
+5707:   position: fixed;
+5708:   inset: 0;
+5709:   background: rgba(10, 2, 25, 0.85);
+5710:   backdrop-filter: blur(12px);
+5711:   -webkit-backdrop-filter: blur(12px);
+5712:   z-index: 100000;
+5713:   align-items: center;
+5714:   justify-content: center;
+5715:   padding: 1.5rem;
+5716: }
+5717: 
+5718: .assistant-modal-overlay.active {
+5719:   display: flex;
+5720: }
+5721: 
+5722: .assistant-modal-card {
+5723:   position: relative;
+5724:   background: rgba(18, 5, 42, 0.96);
+5725:   backdrop-filter: blur(20px);
+5726:   -webkit-backdrop-filter: blur(20px);
+5727:   border-radius: 28px 8px 28px 8px;
+5728:   border: 1.5px solid rgba(0, 229, 212, 0.65);
+5729:   outline: 1.5px solid rgba(255, 215, 0, 0.45);
+5730:   outline-offset: 5px;
+5731:   box-shadow: 0 25px 75px rgba(0, 0, 0, 0.9), 0 0 35px rgba(0, 229, 212, 0.25);
+5732:   padding: 2.25rem 2rem;
+5733:   max-width: 500px;
+5734:   width: 100%;
+5735: }
+5736: 
+5737: .assistant-modal-header {
+5738:   text-align: center;
+5739:   margin-bottom: 1.5rem;
+5740: }
+5741: 
+5742: .assistant-modal-icon {
+5743:   font-size: 2.2rem;
+5744:   display: block;
+5745:   margin-bottom: 0.5rem;
+5746:   filter: drop-shadow(0 0 10px #00E5D4);
+5747: }
+5748: 
+5749: .assistant-modal-header h3 {
+5750:   font-family: var(--font-sans);
+5751:   font-size: 1.45rem;
+5752:   font-weight: 900;
+5753:   color: #FFFFFF;
+5754:   margin-bottom: 0.35rem;
+5755: }
+5756: 
+5757: .assistant-modal-header p {
+5758:   color: var(--tiffany-pale);
+5759:   font-size: 0.92rem;
+5760: }
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.
+"}
+{"step_index":412,"source":"MODEL","type":"PLANNER_RESPONSE","status":"DONE","created_at":"2026-08-21T21:51:00Z","thinking":"**Analyzing Z-Index Conflicts**
+
+I'm currently investigating a potential z-index conflict. Specifically, the `.assistant-modal-overlay` element in `css/style.css` has a z-index of 100000, and I'm checking to see how this interacts with the `#hero-avatar-canvas` element, particularly its absolute positioning and inset properties. I've located the relevant lines in `style.css` and will continue this deep dive.
+
+
+**Investigating Hero Canvas Position**
+
+I'm now focused on the `#hero-avatar-canvas` element and its behavior when the modal is open. My concern is whether the modal overlay's high z-index is masking it. I'm exploring if the canvas element needs to stay within `.hero` or if a fixed positioning and higher z-index would resolve the potential layering issue. I'm also planning to trace the drawing process of the `heroAvatarCanvas` through `js/main.js` and determine which elements are drawn, like the star portal, glinda orb, and avatar.
+
+
+**Visualizing Overlay Interactions**
+
+I'm now picturing Beth's movement across the screen, overlaying the modal. I'm imagining the speech bubble, a dive into the aEYE with a splash, and a menu takeoff. I'm focusing on how she'll appear perched on the modal menu corner, and then dive back into the aEYE. I'm exploring the implications of positioning the `heroAvatarCanvas` as fixed to the viewport with a high `z-index`. I'm comparing this approach to the current absolute positioning of `heroBgCanvas`.
+
+
+","tool_calls":[{"name":"view_file","args":{"AbsolutePath":"/Users/bethrooney/Desktop/JOTS.MEDIA_AG/clients/bethElisePsychic_v37/js/main.js","EndLine":118,"StartLine":95,"toolAction":"View resize and IntersectionObserver in main.js","toolSummary":"main.js lines 95-118"}}]}
+{"step_index":413,"source":"MODEL","type":"GENERIC","status":"DONE","created_at":"2026-08-21T21:51:07Z","content":"Created At: 2026-08-21T17:51:07-04:00
+Completed At: 2026-08-21T17:51:07-04:00
+File Path: `file:///Users/bethrooney/Desktop/JOTS.MEDIA_AG/clients/bethElisePsychic_v37/js/main.js`
+Total Lines: 5047
+Total Bytes: 213540
+Showing lines 95 to 118
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+95:       function resize() {
+96:         const heroSection = document.querySelector('.hero');
+97:         const heroW = (heroSection && heroSection.offsetWidth) || heroBgCanvas.offsetWidth || window.innerWidth;
+98:         const heroH = (heroSection && heroSection.offsetHeight) || heroBgCanvas.offsetHeight || window.innerHeight;
+99:         w = heroBgCanvas.width = heroAvatarCanvas.width = heroW;
+100:         h = heroBgCanvas.height = heroAvatarCanvas.height = heroH;
+101:       }
+102:       resize();
+103:       window.addEventListener('resize', resize, { passive: true });
+104: 
+105:       // Pause rendering loop when hero is out of viewport (saves 60% GPU/CPU on scroll)
+106:       if ('IntersectionObserver' in window) {
+107:         const heroObserver = new IntersectionObserver((entries) => {
+108:           isHeroVisible = entries[0].isIntersecting;
+109:           if (isHeroVisible && !heroAnimId) {
+110:             heroAnimId = requestAnimationFrame(render);
+111:           }
+112:         }, { threshold: 0.05 });
+113:         heroObserver.observe(heroBgCanvas);
+114:       }
+115: 
+116:       // Track mouse coordinates for pixie attraction & stardust (Throttled)
+117:       window.addEventListener('mousemove', (e) => {
+118:         const now = performance.now();
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.
+"}
+{"step_index":415,"source":"MODEL","type":"GENERIC","status":"DONE","created_at":"2026-08-21T21:51:09Z","content":"Created At: 2026-08-21T17:51:09-04:00
+Completed At: 2026-08-21T17:51:09-04:00
+File Path: `file:///Users/bethrooney/Desktop/JOTS.MEDIA_AG/clients/bethElisePsychic_v37/js/main.js`
+Total Lines: 5047
+Total Bytes: 213540
+Showing lines 200 to 220
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+200:       }
+201: 
+202:       function emitPixieDust(x, y, count = 2, colors = ['#FFD700', '#00FFC8', '#FFF']) {
+203:         for (let i = 0; i < count; i++) {
+204:           pixieDust.push({
+205:             x: x + (Math.random() - 0.5) * 10,
+206:             y: y + (Math.random() - 0.5) * 10,
+207:             vx: (Math.random() - 0.5) * 1.4,
+208:             vy: (Math.random() - 0.5) * 1.4 - 0.3,
+209:             life: 1.0,
+210:             decay: 0.020 + Math.random() * 0.025,
+211:             size: 1.8 + Math.random() * 2.5,
+212:             color: colors[Math.floor(Math.random() * colors.length)],
+213:             isDiamond: Math.random() > 0.5
+214:           });
+215:         }
+216:       }
+217: 
+218:       function triggerMeteor(isBolide = false) {
+219:         if (meteors.length >= 3) return;
+220:         const startX = Math.random() * (w * 0.75);
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.
+"}
+{"step_index":414,"source":"MODEL","type":"PLANNER_RESPONSE","status":"DONE","created_at":"2026-08-21T21:51:07Z","tool_calls":[{"name":"view_file","args":{"AbsolutePath":"/Users/bethrooney/Desktop/JOTS.MEDIA_AG/clients/bethElisePsychic_v37/js/main.js","EndLine":220,"StartLine":200,"toolAction":"View render loop frame request in main.js","toolSummary":"main.js lines 200-220"}}]}
+{"step_index":416,"source":"MODEL","type":"PLANNER_RESPONSE","status":"DONE","created_at":"2026-08-21T21:51:09Z","tool_calls":[{"name":"grep_search","args":{"CaseInsensitive":true,"MatchPerLine":true,"Query":"requestAnimationFrame(render)","SearchPath":"/Users/bethrooney/Desktop/JOTS.MEDIA_AG/clients/bethElisePsychic_v37/js/main.js","toolAction":"Search requestAnimationFrame(render) in main.js","toolSummary":"Search in main.js"}}]}
+{"step_index":417,"source":"MODEL","type":"GENERIC","status":"DONE","created_at":"2026-08-21T21:51:13Z","content":"Created At: 2026-08-21T17:51:13-04:00
+Completed At: 2026-08-21T17:51:13-04:00
+{"File":"/Users/bethrooney/Desktop/JOTS.MEDIA_AG/clients/bethElisePsychic_v37/js/main.js","LineNumber":110,"LineContent":"            heroAnimId = requestAnimationFrame(render);"}
+{"File":"/Users/bethrooney/Desktop/JOTS.MEDIA_AG/clients/bethElisePsychic_v37/js/main.js","LineNumber":520,"LineContent":"        if (

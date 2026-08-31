@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <canvas id="c" width="76" height="76" style="background: red;"></canvas>
+  <script>
+    const canvas = document.getElementById('c');
+    const eyeCtx = canvas.getContext('2d');
+    
+    function drawOrganicEye(ctx, cx, cy, r, gazeX, gazeY, blinkPhase, pupilRadius, colors, now, isLocked = false) {
+      ctx.save();
+      ctx.translate(cx, cy);
+
+      const aw = r * 1.58;
+      const ah = r * 0.96;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(-aw * 0.50, 0);
+      ctx.bezierCurveTo(-aw * 0.32, -ah * 0.60, aw * 0.16, -ah * 0.54, aw * 0.50, -ah * 0.04);
+      ctx.bezierCurveTo(aw * 0.22, ah * 0.52, -aw * 0.30, ah * 0.44, -aw * 0.50, 0);
+      ctx.closePath();
+      ctx.clip();
+
+      const scleraGrad = ctx.createRadialGradient(-r * 0.15, -r * 0.15, 2, 0, 0, r);
+      scleraGrad.addColorStop(0, '#FFFFFF');
+      scleraGrad.addColorStop(1, '#C8ACEC');
+      ctx.fillStyle = scleraGrad;
+      ctx.fillRect(-aw * 0.65, -ah * 0.65, aw * 1.3, ah * 1.3);
+      
+      const irisR = r * 0.49;
+      ctx.fillStyle = 'purple';
+      ctx.beginPath();
+      ctx.arc(0, 0, irisR, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+      ctx.restore();
+    }
+
+    drawOrganicEye(eyeCtx, 38, 38, 31.0, 0, 0, 0, 8.5, [], 1000);
+    
+    // Save to file
+    const dataURL = canvas.toDataURL();
+    console.log(dataURL);
+  </script>
+</body>
+</html>
