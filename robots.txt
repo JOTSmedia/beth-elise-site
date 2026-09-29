@@ -1,5 +1,0 @@
-# Beth Elise Psychic Medium
-User-agent: *
-Allow: /
-
-Sitemap: https://bethelisepsychic.com/sitemap.xml
