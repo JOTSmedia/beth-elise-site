@@ -1,0 +1,5 @@
+# Beth Elise Psychic Medium
+User-agent: *
+Allow: /
+
+Sitemap: https://jotsmedia.github.io/beth-elise-site/sitemap.xml
